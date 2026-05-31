@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU: THE KNIGHT'S TALE - PERFECT COST MATH EDITION (v8.5.2)
- * Update: Fixed Cost Multiplier Typo (Strict 10x Scale applied)
+ * GOU: THE KNIGHT'S TALE - 100% PROBABILITY FIX & CLEAN MODAL (v8.6.0)
+ * Update: Fixed 0~4 Level Fail Bug (Escaped Math.min 0.99 trap), Clearer Pet/Castle Table
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -101,7 +101,6 @@ export default function App() {
     return { pool: cost * r.pool, burn: cost * r.burn, jackpot: cost * r.jackpot, lp: cost * r.lp, reserve: cost * r.reserve };
   }, [hState.rates]);
 
-  // 🔥 비용 계산식 1, 10, 100 깔끔한 정규 스케일로 완벽 복구!
   const getCost = useCallback((lvl, nLvl) => {
     let baseCost = 0;
     if (lvl < 10) baseCost = 1000 + (lvl * 100);
@@ -130,28 +129,37 @@ export default function App() {
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
   }, [hState.mult]);
   
+  // 🔥 100% 버그 완벽 방어식 (0~4강은 Math.min 을 아예 거치지 않음!)
   const getRate = useCallback((lvl, rLvl) => {
+    if (lvl < 5) return 1.0; // 0~4강 절대 실패 불가
+    
     let baseRate = 0;
-    if (lvl < 5) baseRate = 1.0;
-    else if (lvl < 10) baseRate = 0.7;
+    if (lvl < 10) baseRate = 0.7;
     else if (lvl < 15) baseRate = 0.6;
     else if (lvl < 20) baseRate = 0.5;
-    else baseRate = [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][lvl - 20] || 0.1;
-    return baseRate === 1.0 ? 1.0 : Math.min(0.99, baseRate + (rLvl * 0.001));
+    else {
+      const rates = [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20];
+      baseRate = rates[lvl - 20] || 0.1;
+    }
+    return Math.min(0.99, baseRate + (rLvl * 0.001));
   }, []);
 
   const getPetRate = useCallback((lvl, ringLvl) => {
+    if (lvl < 5) return 1.0; // 0~4강 절대 실패 불가
+
     let baseRate = 0;
-    if (lvl < 5) baseRate = 1.0;
-    else if (lvl < 10) baseRate = 0.7;
+    if (lvl < 10) baseRate = 0.7;
     else if (lvl < 15) baseRate = 0.65;
     else if (lvl < 20) baseRate = 0.6;
     else if (lvl < 25) baseRate = 0.55;
     else if (lvl < 30) baseRate = 0.5;
     else if (lvl < 35) baseRate = 0.45;
     else if (lvl < 40) baseRate = 0.4;
-    else baseRate = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 40] || 0.1;
-    return baseRate === 1.0 ? 1.0 : Math.min(0.99, baseRate + (ringLvl * 0.001));
+    else {
+      const rates = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20];
+      baseRate = rates[lvl - 40] || 0.1;
+    }
+    return Math.min(0.99, baseRate + (ringLvl * 0.001));
   }, []);
 
   const checkHunt = useCallback((stats, currentNow) => {
@@ -375,7 +383,7 @@ export default function App() {
 
 
   // ==========================================
-  // 🟢 1. 지갑 연동 화면 (사각 로딩 삭제, 게임 켜자마자 바로 표시)
+  // 🟢 1. 지갑 연동 화면 (사각 로딩창 없이 켜자마자 바로 표시)
   // ==========================================
   if (state.screen === 'wallet') {
     return (
@@ -393,6 +401,7 @@ export default function App() {
         <p style={{ margin: '10px 0 30px 0', color: '#aaa', textAlign: 'center', fontSize: '13px', padding: '0 20px', lineHeight: '1.5', wordBreak: 'keep-all' }}>
           시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.<br/>TON 생태계 지갑을 연결하여 영지를 활성화하십시오.
         </p>
+        
         <button onClick={() => setModals(m => ({ ...m, wallet: true }))} 
                 style={{ background: '#0098EA', color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '10px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 0 15px rgba(0,152,234,0.5)', zIndex: 10 }}>
           TON 지갑 연결하기
@@ -558,7 +567,7 @@ export default function App() {
         })}
       </div>
 
-      {/* ⚔️ 장비 바둑판 (1:1 비율) */}
+      {/* ⚔️ 장비 바둑판 */}
       <div className="gears-grid">
         {gears.map((g, index) => {
           const animClass = anims[g.id] ? `anim-${anims[g.id]}` : '';
@@ -678,10 +687,11 @@ export default function App() {
         </div>
       )}
 
+      {/* 🔥 가독성 개선된 확률/비용 테이블 모달 */}
       {modals.prob && (
         <div className="modal-overlay">
           <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '25px 20px', background: 'rgba(20,20,25,0.95)', maxHeight: '80vh', overflowY: 'auto' }}>
-            <h2 style={{ textAlign: 'center', color: '#06b6d4', marginTop: 0 }}>📊 강화 성공 확률</h2>
+            <h2 style={{ textAlign: 'center', color: '#06b6d4', marginTop: 0 }}>📊 확률 & 기본 비용</h2>
             <p style={{fontSize:'11px', color:'#aaa', textAlign: 'center', marginBottom: '20px'}}>* 실제 비용은 반감기 및 목걸이 레벨에 따라 감소합니다.</p>
             
             <h3 style={{color: '#e6d5b8', fontSize: '15px'}}>⚔️ 일반 장비 강화</h3>
@@ -692,11 +702,10 @@ export default function App() {
                 </tr>
               </thead>
               <tbody style={{ color: '#fff' }}>
-                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>1,000</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>1,000</td></tr>
-                <tr><td style={{padding: '8px 0'}}>10~14강</td><td>60%</td><td>10,000</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>15~19강</td><td>50%</td><td>10,000</td></tr>
-                <tr><td style={{padding: '8px 0'}}>20~29강</td><td style={{color:'#ef4444'}}>47~20%</td><td>100,000</td></tr>
+                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>1,000~</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>1,500~</td></tr>
+                <tr><td style={{padding: '8px 0'}}>10~19강</td><td>60~50%</td><td>10,000~</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>20~29강</td><td style={{color:'#ef4444'}}>47~20%</td><td>100,000~</td></tr>
               </tbody>
             </table>
 
@@ -704,16 +713,16 @@ export default function App() {
             <table style={{ width: '100%', fontSize: '13px', textAlign: 'center', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #555', color: '#fbbf24' }}>
-                  <th style={{paddingBottom: '8px'}}>구간</th><th style={{paddingBottom: '8px'}}>성공률</th><th style={{paddingBottom: '8px'}}>비용 척도</th>
+                  <th style={{paddingBottom: '8px'}}>구간</th><th style={{paddingBottom: '8px'}}>성공률</th><th style={{paddingBottom: '8px'}}>펫 / 성 기본비용</th>
                 </tr>
               </thead>
               <tbody style={{ color: '#fff' }}>
-                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>기본</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>기본</td></tr>
-                <tr><td style={{padding: '8px 0'}}>10~19강</td><td>65~60%</td><td>x10 배</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>20~29강</td><td>55~50%</td><td>x100 배</td></tr>
-                <tr><td style={{padding: '8px 0'}}>30~39강</td><td>45~40%</td><td>x1,000 배</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>40~50강</td><td style={{color:'#ef4444'}}>38~20%</td><td>x10,000 배</td></tr>
+                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>100~ / 1,000~</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>150~ / 1,500~</td></tr>
+                <tr><td style={{padding: '8px 0'}}>10~19강</td><td>65~60%</td><td>1,000~ / 10,000~</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>20~29강</td><td>55~50%</td><td>10,000~ / 100,000~</td></tr>
+                <tr><td style={{padding: '8px 0'}}>30~39강</td><td>45~40%</td><td>100,000~ / 1,000,000~</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>40~50강</td><td style={{color:'#ef4444'}}>38~20%</td><td>1,000,000~ / 10,000,000~</td></tr>
               </tbody>
             </table>
 
