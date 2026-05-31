@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU: THE KNIGHT'S TALE - LOGIC FIX & STABLE EDITION (v8.5.1)
- * Update: Fixed 100% Prob Bug (Math.min 0.99 cap), Added Max Level 50 Cap for Pet/Castle
+ * GOU: THE KNIGHT'S TALE - PERFECT COST MATH EDITION (v8.5.2)
+ * Update: Fixed Cost Multiplier Typo (Strict 10x Scale applied)
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -101,35 +101,35 @@ export default function App() {
     return { pool: cost * r.pool, burn: cost * r.burn, jackpot: cost * r.jackpot, lp: cost * r.lp, reserve: cost * r.reserve };
   }, [hState.rates]);
 
+  // 🔥 비용 계산식 1, 10, 100 깔끔한 정규 스케일로 완벽 복구!
   const getCost = useCallback((lvl, nLvl) => {
     let baseCost = 0;
-    if (lvl < 10) baseCost = 1000 + (lvl * 150);
-    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1500);
-    else baseCost = 100000 + ((lvl - 20) * 15000);
+    if (lvl < 10) baseCost = 1000 + (lvl * 100);
+    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
+    else baseCost = 100000 + ((lvl - 20) * 10000);
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
   }, [hState.mult]);
 
   const getPetCost = useCallback((lvl, nLvl) => {
     let baseCost = 0;
-    if (lvl < 10) baseCost = 100 + (lvl * 20);
-    else if (lvl < 20) baseCost = 1000 + ((lvl - 10) * 200);
-    else if (lvl < 30) baseCost = 10000 + ((lvl - 20) * 2000);
-    else if (lvl < 40) baseCost = 100000 + ((lvl - 30) * 20000);
-    else baseCost = 1000000 + ((lvl - 40) * 200000);
+    if (lvl < 10) baseCost = 100 + (lvl * 10);
+    else if (lvl < 20) baseCost = 1000 + ((lvl - 10) * 100);
+    else if (lvl < 30) baseCost = 10000 + ((lvl - 20) * 1000);
+    else if (lvl < 40) baseCost = 100000 + ((lvl - 30) * 10000);
+    else baseCost = 1000000 + ((lvl - 40) * 100000);
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
   }, [hState.mult]);
 
   const getCastleCost = useCallback((lvl, nLvl) => {
     let baseCost = 0;
-    if (lvl < 10) baseCost = 1000 + (lvl * 200);
-    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 2000);
-    else if (lvl < 30) baseCost = 100000 + ((lvl - 20) * 20000);
-    else if (lvl < 40) baseCost = 1000000 + ((lvl - 30) * 200000);
-    else baseCost = 10000000 + ((lvl - 40) * 2000000);
+    if (lvl < 10) baseCost = 1000 + (lvl * 100);
+    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
+    else if (lvl < 30) baseCost = 100000 + ((lvl - 20) * 10000);
+    else if (lvl < 40) baseCost = 1000000 + ((lvl - 30) * 100000);
+    else baseCost = 10000000 + ((lvl - 40) * 1000000);
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
   }, [hState.mult]);
   
-  // 🔥 1~4강 100% 버그 수정 (0.99 Cap 회피)
   const getRate = useCallback((lvl, rLvl) => {
     let baseRate = 0;
     if (lvl < 5) baseRate = 1.0;
@@ -198,7 +198,6 @@ export default function App() {
     });
   };
 
-  // 🔥 펫 50강 MAX 레벨 캡 추가
   const upgradePet = () => {
     if (!state.petActive || state.petLevel >= 50) return;
     const cost = getPetCost(state.petLevel, gears[5].lvl);
@@ -218,7 +217,6 @@ export default function App() {
     });
   };
 
-  // 🔥 성 50강 MAX 레벨 캡 추가
   const upgradeCastle = () => {
     if (!state.castleActive || state.castleLevel >= 50) return;
     const cost = getCastleCost(state.castleLevel, gears[5].lvl);
@@ -377,7 +375,7 @@ export default function App() {
 
 
   // ==========================================
-  // 🟢 1. 지갑 연동 화면 (시작화면)
+  // 🟢 1. 지갑 연동 화면 (사각 로딩 삭제, 게임 켜자마자 바로 표시)
   // ==========================================
   if (state.screen === 'wallet') {
     return (
@@ -400,7 +398,6 @@ export default function App() {
           TON 지갑 연결하기
         </button>
 
-        {/* 텔레그램 화면 강제 압축형 다중 지갑 선택 모달 */}
         {modals.wallet && (
           <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', background: 'rgba(20,20,25,0.98)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', padding: '15px 15px calc(15px + env(safe-area-inset-bottom))', zIndex: 9999, boxShadow: '0 -5px 20px rgba(0,0,0,0.8)', borderTop: '1px solid #0098EA', boxSizing: 'border-box' }}>
             <h3 style={{ margin: '0 0 12px 0', color: '#fff', textAlign: 'center', fontSize: '15px' }}>지갑 선택</h3>
