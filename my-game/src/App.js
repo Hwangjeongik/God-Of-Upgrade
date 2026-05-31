@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU3: THE KNIGHT'S TALE - STABLE BOOT & SPLASH SCREEN EDITION (v8.1.0)
- * Update: Added Splash Screen, Separated Engine Phases (Loading -> Wallet -> Game)
- * Fix: Telegram SDK and Mining Loop no longer choke the initial render.
+ * GOU3: THE KNIGHT'S TALE - FULLSCREEN SPLASH & BOTTOM NAV EDITION (v8.2.0)
+ * Update: Fullscreen Splash Image, Bottom Navigation Bar, Modal Z-Index fix, UI Alignment
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -17,7 +16,6 @@ export default function App() {
     { name: '화산', mult: 12, req: { atk: 230, hp: 2300, def: 115, acc: 46, sum: 125 } }
   ], []);
 
-  // 🔴 화면 제어 상태 추가: 'loading', 'wallet', 'game'
   const [state, setState] = useState({
     screen: 'loading', 
     walletAddress: "",
@@ -29,7 +27,7 @@ export default function App() {
     currentHunt: '초원',
     autoTimers: {},
     userName: "사령관", userTitle: "견습 기사",
-    isRankingOpen: false, showTitleInput: false,
+    showTitleInput: false,
 
     petActive: true, petLevel: 49, petName: "고대 황금 드래곤", petHuntEndTime: 0,
     castleActive: false, castleLevel: 0, castleName: "", castleHuntEndTime: 0,
@@ -150,7 +148,6 @@ export default function App() {
           lp: s.lp + (success ? 0 : dist.lp), reserve: s.reserve + (success ? 0 : dist.reserve)
         };
       });
-
       return prev.map(item => item.id === id ? { ...item, lvl: success ? item.lvl + 1 : item.lvl - 1 } : item);
     });
   };
@@ -249,7 +246,6 @@ export default function App() {
     }
   };
 
-  // 텔레그램 SDK 초기화 (단 1번만 실행되어 충돌 방지!)
   useEffect(() => {
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -260,19 +256,17 @@ export default function App() {
     }
   }, []);
 
-  // 로딩 화면 타이머 (2초 뒤 지갑 화면으로 넘어감)
+  // ⏱️ 로딩 화면 2초 타이머
   useEffect(() => {
     if (state.screen === 'loading') {
-      const timer = setTimeout(() => {
-        setState(s => ({ ...s, screen: 'wallet' }));
-      }, 2000);
+      const timer = setTimeout(() => { setState(s => ({ ...s, screen: 'wallet' })); }, 2000);
       return () => clearTimeout(timer);
     }
   }, [state.screen]);
 
-  // 메인 게임 엔진 루프 (게임 스크린에 진입했을 때만 가동되도록 수정!)
+  // ⚙️ 메인 엔진 루프
   useEffect(() => {
-    if (state.screen !== 'game') return; // 🔴 지갑 연결 전에 엔진 가동 차단!
+    if (state.screen !== 'game') return;
 
     const timer = setInterval(() => {
       const nowTime = Date.now();
@@ -291,7 +285,7 @@ export default function App() {
             else if (minLvl >= 30) { tier = "ALL 30강"; amount = s.jackpot; }
             
             if (amount > 0) {
-              const newLog = `[${today.toLocaleDateString()}] ${s.userName}(${tier}) - ${Math.floor(amount).toLocaleString()} GOU 정산 수령 완료`;
+              const newLog = `[${today.toLocaleDateString()}] ${s.userName}(${tier}) - ${Math.floor(amount).toLocaleString()} GOU 정산 완료`;
               return { ...s, balance: s.balance + amount, jackpot: 0, lastJackpotDate: dateString, settlementLogs: [newLog, ...s.settlementLogs].slice(0, 5) };
             }
           }
@@ -315,18 +309,18 @@ export default function App() {
   }, [state.userName, state.userTitle, state.castleLevel, state.petLevel, currentStats.sum, mockRankings]);
 
   // ==========================================
-  // 🟢 1. 초기 로딩 (Splash Screen) 화면
+  // 🟢 1. 꽉 찬 전체화면 로딩 (Splash)
   // ==========================================
   if (state.screen === 'loading') {
     return (
-      <div style={{ background: '#000', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fbbf24', fontFamily: "'Cinzel', serif" }}>
-        {/* public 폴더에 splash.png 이미지를 넣으면 여기가 예쁘게 나옵니다! */}
-        <div style={{ width: '150px', height: '150px', marginBottom: '20px', borderRadius: '20px', overflow: 'hidden', border: '2px solid #fbbf24' }}>
-          <img src={`${process.env.PUBLIC_URL}/splash.png`} alt="Loading..." style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-               onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<div style="font-size:80px; text-align:center; line-height:150px;">⚔️</div>'; }} />
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fbbf24', fontFamily: "'Cinzel', serif", zIndex: 9999 }}>
+        <img src={`${process.env.PUBLIC_URL}/splash.png`} alt="Splash" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} 
+             onError={(e) => { e.target.style.display = 'none'; }} />
+        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center' }}>
+          <div style={{ fontSize: '60px', marginBottom: '20px' }}>⚔️</div>
+          <h1 style={{ letterSpacing: '3px', textShadow: '0 0 20px #000', margin: '0 0 10px 0' }}>GOD OF UPGRADE 3</h1>
+          <p style={{ color: '#aaa', textShadow: '0 0 10px #000', fontWeight: 'bold' }}>엔진을 예열하는 중입니다...</p>
         </div>
-        <h2>LOADING...</h2>
-        <div style={{ fontSize: '12px', color: '#aaa' }}>엔진을 예열하는 중입니다</div>
       </div>
     );
   }
@@ -337,11 +331,7 @@ export default function App() {
   if (state.screen === 'wallet') {
     return (
       <div style={{ background: '#111', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8', fontFamily: "'Cinzel', serif" }}>
-        {imageErrors['ton'] ? (
-          <div style={{ fontSize: '80px', marginBottom: '20px' }}>💎</div>
-        ) : (
-          <img src={`${process.env.PUBLIC_URL}/ton_logo.png`} alt="TON" style={{ width: '100px', marginBottom: '30px' }} onError={() => handleImgError('ton')} />
-        )}
+        {imageErrors['ton'] ? <div style={{ fontSize: '80px', marginBottom: '20px' }}>💎</div> : <img src={`${process.env.PUBLIC_URL}/ton_logo.png`} alt="TON" style={{ width: '100px', marginBottom: '30px' }} onError={() => handleImgError('ton')} />}
         <h1 style={{ color: '#fbbf24', textAlign: 'center', letterSpacing: '2px' }}>GOD OF UPGRADE 3</h1>
         <p style={{ margin: '20px 0 40px 0', color: '#aaa', textAlign: 'center', fontSize: '14px', padding: '0 20px' }}>
           시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.<br/>TON 지갑을 연결하여 영지를 활성화하십시오.
@@ -361,101 +351,116 @@ export default function App() {
     <div className="main-wrap" style={{ 
       backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.6), rgba(26, 15, 20, 0.8)), url("${process.env.PUBLIC_URL}/background.jpg")`,
       backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed',
-      color: '#e6d5b8', minHeight: '100vh', fontFamily: "'Cinzel', serif", display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '50px'
+      color: '#e6d5b8', minHeight: '100vh', fontFamily: "'Cinzel', serif", display: 'flex', flexDirection: 'column', alignItems: 'center', 
+      paddingBottom: '80px' // 하단 네비게이션 바 공간 확보
     }}>
       <style>{`
         * { box-sizing: border-box; }
         .animated-entry { animation: slideUp 0.6s ease-out forwards; }
         .hunt-active { animation: breathing 2s infinite ease-in-out; border-color: #fbbf24 !important; background: rgba(251, 191, 36, 0.15) !important; }
-        .btn-neon { background: transparent; color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.6); padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+        .btn-neon { background: transparent; color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.6); padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
         .btn-auto-on { background: rgba(6, 182, 212, 0.2); color: #06b6d4; border: 1px solid #06b6d4; }
         .glass-panel { background: rgba(20, 20, 25, 0.6); backdrop-filter: blur(10px); border: 1px solid rgba(197, 160, 89, 0.3); border-radius: 12px; }
-        .sticky-header { position: sticky; top: 0; z-index: 100; width: 100%; background: rgba(15,15,20,0.95); border-bottom: 2px solid #fbbf24; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); margin-bottom: 20px; }
+        
+        /* 상단 고정 헤더 */
+        .sticky-header { position: sticky; top: 0; z-index: 100; width: 100%; background: rgba(15,15,20,0.95); border-bottom: 2px solid #fbbf24; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); margin-bottom: 20px; }
         .balance-sticky { font-size: 24px; font-weight: bold; color: #fbbf24; }
+        
+        /* 하단 고정 네비게이션 바 (랭킹/확률/토큰) */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15,15,20,0.95); border-top: 1px solid #fbbf24; display: flex; justify-content: space-around; padding: 10px 5px; z-index: 900; backdrop-filter: blur(10px); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        .bottom-nav button { flex: 1; background: transparent; border: none; color: #e6d5b8; font-weight: bold; font-size: 15px; padding: 10px 0; border-right: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+        .bottom-nav button:last-child { border-right: none; }
+        .bottom-nav button:active { color: #fbbf24; }
+        
+        /* 모달 최상위 강제 고정 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; alignItems: center; justifyContent: center; padding: 20px; }
+        
+        /* 레이아웃 구조 */
         .grid-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 850px; padding: 0 10px; margin-bottom: 15px; }
         .stat-box { padding: 15px; text-align: center; border-radius: 8px; }
-        .grid-hunts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 100%; max-width: 850px; margin-bottom: 20px; padding: 0 10px; }
-        .hunt-box { padding: 15px; display: flex; flex-direction: column; justify-content: center; text-align: center; border-radius: 12px; }
+        .grid-hunts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; max-width: 850px; margin-bottom: 20px; padding: 0 10px; }
+        .hunt-box { padding: 12px; display: flex; flex-direction: column; justify-content: center; text-align: center; border-radius: 12px; }
+        
         .gears-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 850px; padding: 0 10px; }
-        .gear-card { padding: 15px; border-top: 4px solid #555; text-align: center; }
+        .gear-card { padding: 15px; border-top: 4px solid #555; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+        
+        /* 이미지 기본 크기 (PC) */
         .img-box { width: 80px; height: 80px; font-size: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; }
         .img-box-gear { background: rgba(0,0,0,0.5); border: 1px solid rgba(197,160,89,0.3); }
-        .img-box-special { width: 120px; height: 120px; font-size: 70px; background: linear-gradient(135deg, rgba(26,11,46,0.5), rgba(59,7,100,0.5)); border: 2px solid rgba(251,191,36,0.5); }
+        .img-box-special { width: 100px; height: 100px; font-size: 60px; background: linear-gradient(135deg, rgba(26,11,46,0.5), rgba(59,7,100,0.5)); border: 2px solid rgba(251,191,36,0.5); }
+        
+        /* 깔끔한 정렬용 배지 */
+        .stat-badge { background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 6px; width: 100%; }
         
         @media (max-width: 768px) {
           .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
           .hunt-box:nth-child(5) { grid-column: 1 / -1; }
           .gears-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-          .img-box { width: 75px !important; height: 75px !important; font-size: 40px !important; }
-          .img-box-special { width: 100px !important; height: 100px !important; font-size: 60px !important; }
+          .img-box { width: 70px !important; height: 70px !important; font-size: 40px !important; }
         }
       `}</style>
 
-      {/* 🔴 STICKY 상단 헤더 */}
+      {/* 🔴 STICKY 상단 헤더 (항상 보유량 표시 - 모달 아래로 배치됨) */}
       <div className="sticky-header">
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <div style={{ fontSize: '11px', color: '#06b6d4' }}>{state.walletAddress}</div>
-          <div style={{ fontSize: '14px', fontWeight: 'bold' }}>[{state.userTitle}] {state.userName}</div>
+          <div style={{ fontSize: '13px', fontWeight: 'bold' }}>[{state.userTitle}] {state.userName}</div>
         </div>
-        <div className="balance-sticky">
-          {Math.floor(state.balance).toLocaleString()} <span style={{fontSize: '14px', color: '#c5a059', fontWeight: 'normal'}}>GOU</span>
+        <div style={{ textAlign: 'right' }}>
+          <div className="balance-sticky">
+            {Math.floor(state.balance).toLocaleString()} <span style={{fontSize: '12px', color: '#c5a059', fontWeight: 'normal'}}>GOU</span>
+          </div>
         </div>
       </div>
 
       <div style={{ width: '100%', maxWidth: '850px', padding: '0 10px', marginBottom: '20px' }}>
         <div className="grid-stats">
           <div className="glass-panel stat-box" style={{ border: '1px solid rgba(6,182,212,0.3)' }}>
-            <div style={{ color: '#06b6d4', fontSize: '13px', fontWeight: 'bold' }}>📈 일일 획득량</div>
-            <div style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold', margin: '5px 0' }}>+{dailyGainDisplay.toLocaleString()}</div>
-            <button onClick={watchAd} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 0', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', width: '100%', cursor: 'pointer' }}>
+            <div style={{ color: '#06b6d4', fontSize: '12px', fontWeight: 'bold' }}>📈 일일 획득량</div>
+            <div style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold', margin: '5px 0' }}>+{dailyGainDisplay.toLocaleString()}</div>
+            <button onClick={watchAd} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 0', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', width: '100%', cursor: 'pointer' }}>
               {state.adBuffEndTime > Date.now() ? '버프 활성화 됨 🔥' : '광고 보고 2배 받기'}
             </button>
           </div>
           <div className="glass-panel stat-box" style={{ border: '1px solid rgba(239,68,68,0.3)' }}>
-            <div style={{ color: '#ef4444', fontSize: '13px', fontWeight: 'bold' }}>🔥 누적 소각 (단계: {hState.step})</div>
-            <div style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold', margin: '5px 0' }}>{Math.floor(state.burned).toLocaleString()}</div>
+            <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 'bold' }}>🔥 누적 소각 (단계: {hState.step})</div>
+            <div style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold', margin: '5px 0' }}>{Math.floor(state.burned).toLocaleString()}</div>
             <div style={{ fontSize: '11px', color: '#aaa' }}>반감기 배율: X{hState.mult}</div>
           </div>
           <div className="glass-panel stat-box" style={{ border: '1px solid rgba(197,160,89,0.3)' }}>
-            <div style={{ color: '#c5a059', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px' }}>⚔️ 통합 보너스 (+{totalBonusPct}%)</div>
-            <div style={{ fontSize: '12px' }}>ALL 30강: +{setBonus}% | 펫: +{petBonus}% | 성: +{castleBonus}%</div>
+            <div style={{ color: '#c5a059', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>⚔️ 통합 보너스 (+{totalBonusPct}%)</div>
+            <div style={{ fontSize: '11px' }}>ALL 30강: +{setBonus}% | 펫: +{petBonus}% | 성: +{castleBonus}%</div>
           </div>
           <div className="glass-panel stat-box" onClick={handleDEXClick} style={{ border: '1px solid rgba(147,51,234,0.5)', background: 'rgba(147,51,234,0.1)', cursor: 'pointer' }}>
-            <div style={{ color: '#a855f7', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px' }}>💱 DEX 스왑 풀</div>
-            <div style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold', marginTop: '10px' }}>거래소 접속 ➡️</div>
+            <div style={{ color: '#a855f7', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>💱 DEX 스왑 풀</div>
+            <div style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', marginTop: '8px' }}>거래소 접속 ➡️</div>
           </div>
         </div>
 
         {/* 🏆 시즌 자동 정산 현황판 */}
-        <div className="glass-panel" style={{ padding: '20px', marginTop: '15px', textAlign: 'center', border: '1px solid rgba(251,191,36,0.5)' }}>
-          <div style={{ color: '#fbbf24', fontSize: '16px', fontWeight: 'bold' }}>🏆 1주차 시즌 보상 기금</div>
-          <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#fff', margin: '10px 0' }}>
-            {Math.floor(state.jackpot).toLocaleString()} <span style={{fontSize:'16px'}}>GOU</span>
+        <div className="glass-panel" style={{ padding: '20px', marginTop: '10px', textAlign: 'center', border: '1px solid rgba(251,191,36,0.5)' }}>
+          <div style={{ color: '#fbbf24', fontSize: '14px', fontWeight: 'bold' }}>🏆 1주차 시즌 보상 기금</div>
+          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#fff', margin: '10px 0' }}>
+            {Math.floor(state.jackpot).toLocaleString()} <span style={{fontSize:'14px'}}>GOU</span>
           </div>
           <div style={{ fontSize: '12px', fontWeight: 'bold', color: minLvl >= 30 ? '#06b6d4' : '#ef4444', marginBottom: '15px' }}>
-            {minLvl >= 30 ? "✅ 수령 권한 획득! (매주 월요일 자동 정산)" : `❌ 자격 미달 (필요: ALL 30강 / 현재 최소: +${minLvl})`}
+            {minLvl >= 30 ? "✅ 수령 권한 충족! (매주 월요일 자동 정산)" : `❌ 자격 미달 (필요: ALL 30강 / 현재 최소: +${minLvl}강)`}
           </div>
-          <div style={{ background: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '8px', fontSize: '12px', textAlign: 'left', minHeight: '60px' }}>
+          <div style={{ background: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '8px', fontSize: '11px', textAlign: 'left', minHeight: '50px' }}>
             <b style={{color:'#06b6d4'}}>📜 최근 서버 자동 정산 내역</b><br/>
             {state.settlementLogs.length === 0 ? (
-              <span style={{color:'#aaa', marginTop: '5px', display: 'block'}}>아직 정산된 기록이 없습니다.</span>
+              <span style={{color:'#aaa', marginTop: '4px', display: 'block'}}>기록 없음</span>
             ) : (
               state.settlementLogs.map((log, i) => <div key={i} style={{marginTop: '4px'}}>{log}</div>)
             )}
           </div>
         </div>
-        
-        <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-          <button className="btn-neon" onClick={() => setModals(m => ({...m, rank: true}))}>🏆 랭킹</button>
-          <button className="btn-neon" onClick={() => setModals(m => ({...m, prob: true}))} style={{borderColor:'#06b6d4', color:'#06b6d4'}}>📊 확률/비용</button>
-          <button className="btn-neon" onClick={() => setModals(m => ({...m, token: true}))} style={{borderColor:'#a855f7', color:'#a855f7'}}>🪙 토크노믹스</button>
-        </div>
       </div>
 
       {/* 🔴 특수 사냥터 현황 UI */}
       {currentHuntData.special && (
-        <div className="glass-panel" style={{ width: '100%', maxWidth: '850px', padding: '20px', textAlign: 'center', border: '2px solid #ef4444', marginBottom: '20px', background: 'rgba(239,68,68,0.2)' }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#fff', textShadow: '0 0 10px #ef4444' }}>🔥 {currentHuntData.name} 진행 중 (X{currentHuntData.mult})</h3>
+        <div className="glass-panel" style={{ width: '100%', maxWidth: '850px', padding: '15px', textAlign: 'center', border: '2px solid #ef4444', marginBottom: '15px', background: 'rgba(239,68,68,0.2)' }}>
+          <h3 style={{ margin: '0 0 5px 0', color: '#fff', textShadow: '0 0 10px #ef4444', fontSize: '16px' }}>🔥 {currentHuntData.name} 진행 중 (X{currentHuntData.mult})</h3>
         </div>
       )}
 
@@ -466,11 +471,8 @@ export default function App() {
           const isUnlocked = currentStats.atk >= h.req.atk && currentStats.hp >= h.req.hp && currentStats.def >= h.req.def && currentStats.acc >= h.req.acc && currentStats.sum >= h.req.sum;
           
           return (
-            <div key={h.name} className={`glass-panel hunt-box`} style={{ 
-              border: isActive ? '1px solid #fbbf24' : (isUnlocked ? '1px solid #06b6d4' : '1px solid #555'), 
-              background: isActive ? 'rgba(251,191,36,0.15)' : '' 
-            }}>
-              <b style={{ color: isActive ? '#fbbf24' : (isUnlocked ? '#fff' : '#888'), fontSize: '15px' }}>
+            <div key={h.name} className={`glass-panel hunt-box`} style={{ border: isActive ? '1px solid #fbbf24' : (isUnlocked ? '1px solid #06b6d4' : '1px solid #555'), background: isActive ? 'rgba(251,191,36,0.15)' : '' }}>
+              <b style={{ color: isActive ? '#fbbf24' : (isUnlocked ? '#fff' : '#888'), fontSize: '14px', marginBottom: '5px' }}>
                 {isActive ? '⚔️ ' : (isUnlocked ? '🔓 ' : '🔒 ')}{h.name}
               </b>
               {h.name !== '초원' && (
@@ -478,7 +480,7 @@ export default function App() {
                   공 {h.req.atk} | 체 {h.req.hp} | 방 {h.req.def} | 명 {h.req.acc}
                 </div>
               )}
-              <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold' }}>
                 총합 {h.req.sum} <span style={{color: '#c5a059'}}>(X{h.mult})</span>
               </div>
             </div>
@@ -486,7 +488,7 @@ export default function App() {
         })}
       </div>
 
-      {/* ⚔️ 장비 바둑판 */}
+      {/* ⚔️ 장비 바둑판 (UI 칼각 정렬 완료) */}
       <div className="gears-grid">
         {gears.map((g, index) => {
           const animClass = anims[g.id] ? `anim-${anims[g.id]}` : '';
@@ -495,16 +497,26 @@ export default function App() {
               <div className="img-box img-box-gear">
                 {imageErrors[g.id] ? g.emoji : <img src={`${process.env.PUBLIC_URL}/${g.imgFile}`} alt="" style={{ width: '85%', height: '85%', objectFit: 'contain' }} onError={() => handleImgError(g.id)} />}
               </div>
-              <div style={{ color: '#c5a059', fontSize: '12px', fontWeight: 'bold' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', margin: '6px 0', color: '#fff' }}>
+              
+              {/* 스탯 배지 스타일 적용 */}
+              <div className="stat-badge" style={{ color: '#c5a059' }}>{g.stat} <span style={{color: '#fff'}}>+{(g.lvl * g.base).toFixed(1)}{g.unit}</span></div>
+              
+              <div style={{ fontSize: '15px', fontWeight: 'bold', margin: '6px 0', color: '#fff', minHeight: '20px' }}>
                 {g.name} <span style={{color: '#fbbf24'}}>+{g.lvl}</span>
               </div>
-              <div style={{ fontSize: '12px', color: '#aaa' }}>확률: <span style={{color:'#06b6d4'}}>{(getRate(g.lvl, gears[6].lvl)*100).toFixed(1)}%</span></div>
-              <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '12px' }}>비용: {getCost(g.lvl, gears[5].lvl).toLocaleString()}</div>
               
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => upgrade(g.id)} className="btn-neon" style={{fontSize: '13px', padding: '8px 0'}}>강화</button>
-                <button onClick={() => toggleAuto(g.id)} className={`btn-neon ${state.autoTimers[g.id] ? 'btn-auto-on' : ''}`} style={{fontSize: '13px', padding: '8px 0'}}>
+              <div className="stat-badge" style={{ color: '#aaa', textAlign: 'left' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span>확률</span><span style={{color:'#06b6d4'}}>{(getRate(g.lvl, gears[6].lvl)*100).toFixed(1)}%</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>비용</span><span>{getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '6px', width: '100%', marginTop: '6px' }}>
+                <button onClick={() => upgrade(g.id)} className="btn-neon" style={{fontSize: '12px'}}>강화</button>
+                <button onClick={() => toggleAuto(g.id)} className={`btn-neon ${state.autoTimers[g.id] ? 'btn-auto-on' : ''}`} style={{fontSize: '12px'}}>
                   {state.autoTimers[g.id] ? 'STOP' : 'AUTO'}
                 </button>
               </div>
@@ -515,15 +527,13 @@ export default function App() {
 
       {/* 🐉 엔드게임 (펫 & 성) */}
       <div style={{ width: '100%', maxWidth: '850px', padding: '0 10px', marginTop: '20px' }}>
-        <div className="glass-panel" style={{ padding: '25px 15px', marginBottom: '15px', position: 'relative', textAlign: 'center' }}>
-          {!state.petActive && <div style={{ position: 'absolute', top:0, left:0, right:0, bottom:0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, borderRadius: '12px' }}>🔒 장비 ALL 30강 달성 시 개방</div>}
+        <div className="glass-panel" style={{ padding: '20px 15px', marginBottom: '15px', position: 'relative', textAlign: 'center' }}>
+          {!state.petActive && <div style={{ position: 'absolute', top:0, left:0, right:0, bottom:0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, borderRadius: '12px', fontWeight: 'bold' }}>🔒 장비 ALL 30강 달성 시 개방</div>}
           <div className="img-box img-box-special">
             {imageErrors['pet'] ? '🐉' : <img src={`${process.env.PUBLIC_URL}/pet.png`} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={() => handleImgError('pet')} />}
           </div>
-          <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '22px' }}>
-            {state.petName} <span style={{fontSize: '16px', color: '#fff'}}>Lv.{state.petLevel}</span>
-          </h3>
-          <div style={{ fontSize: '14px', color: '#aaa', marginBottom: '15px' }}>
+          <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '20px' }}>{state.petName} <span style={{fontSize: '14px', color: '#fff'}}>Lv.{state.petLevel}</span></h3>
+          <div style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
             획득량 <span style={{color: '#06b6d4', fontWeight: 'bold'}}>+{getPetBonus(state.petLevel)}%</span><br/>
             비용: {getPetCost(state.petLevel, gears[5].lvl).toLocaleString()} | 확률: {(getPetRate(state.petLevel, gears[6].lvl)*100).toFixed(1)}%
           </div>
@@ -540,15 +550,13 @@ export default function App() {
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '25px 15px', position: 'relative', textAlign: 'center' }}>
-          {!state.castleActive && <div style={{ position: 'absolute', top:0, left:0, right:0, bottom:0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, borderRadius: '12px' }}>🔒 펫 50강 달성 시 개방</div>}
+        <div className="glass-panel" style={{ padding: '20px 15px', position: 'relative', textAlign: 'center' }}>
+          {!state.castleActive && <div style={{ position: 'absolute', top:0, left:0, right:0, bottom:0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, borderRadius: '12px', fontWeight: 'bold' }}>🔒 펫 50강 달성 시 개방</div>}
           <div className="img-box img-box-special">
             {imageErrors['castle'] ? '🏰' : <img src={`${process.env.PUBLIC_URL}/castle.png`} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={() => handleImgError('castle')} />}
           </div>
-          <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '22px' }}>
-            {state.castleName || "위대한 군주의 성"} <span style={{fontSize: '16px', color: '#fff'}}>Lv.{state.castleLevel}</span>
-          </h3>
-          <div style={{ fontSize: '14px', color: '#aaa', marginBottom: '15px' }}>
+          <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '20px' }}>{state.castleName || "위대한 군주의 성"} <span style={{fontSize: '14px', color: '#fff'}}>Lv.{state.castleLevel}</span></h3>
+          <div style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
             획득량 <span style={{color: '#06b6d4', fontWeight: 'bold'}}>+{getCastleBonus(state.castleLevel)}%</span><br/>
             비용: {getCastleCost(state.castleLevel, gears[5].lvl).toLocaleString()} | 확률: {(getPetRate(state.castleLevel, gears[6].lvl)*100).toFixed(1)}%
           </div>
@@ -566,50 +574,77 @@ export default function App() {
         </div>
       </div>
 
-      {/* 모달 팝업들 */}
+      {/* 📱 하단 고정 메뉴 바 (랭킹/확률/토큰 가려짐 원천 해결) */}
+      <div className="bottom-nav">
+        <button onClick={() => setModals(m => ({...m, rank: true}))}>🏆 랭킹</button>
+        <button onClick={() => setModals(m => ({...m, prob: true}))}>📊 확률/비용</button>
+        <button onClick={() => setModals(m => ({...m, token: true}))}>🪙 토크노믹스</button>
+      </div>
+
+      {/* ==========================================
+          🧩 각종 모달창 (Z-Index 최상위 강제 고정 9999)
+          ========================================== */}
       {modals.rank && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="glass-panel" style={{ width: '90%', maxWidth: '400px', padding: '20px' }}>
+        <div className="modal-overlay">
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '25px 20px', background: 'rgba(20,20,25,0.95)' }}>
             <h2 style={{ textAlign: 'center', color: '#fbbf24', marginTop: 0 }}>🏆 실시간 랭킹</h2>
+            <div style={{ fontSize: '11px', color: '#aaa', textAlign: 'center', marginBottom: '20px' }}>정렬 기준: 성 ➔ 펫 ➔ 장비합 (선착순)</div>
             {sortedRankings.map(r => (
-              <div key={r.rank} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #333', background: r.isMe ? 'rgba(251,191,36,0.1)' : '' }}>
-                <div><b>{r.rank}위</b> {r.name}</div><div style={{ color: '#fbbf24', fontWeight: 'bold' }}>{r.power}</div>
+              <div key={r.rank} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 10px', borderBottom: '1px solid #333', background: r.isMe ? 'rgba(251,191,36,0.1)' : '', borderRadius: r.isMe ? '8px' : '0' }}>
+                <div><b style={{marginRight: '8px'}}>{r.rank}위</b> <span style={{color: '#ef4444', fontSize:'12px'}}>[{r.title}]</span> {r.name}</div>
+                <div style={{color: '#fbbf24', fontWeight: 'bold'}}>{r.power}</div>
               </div>
             ))}
-            <button onClick={() => setModals(m => ({...m, rank: false}))} className="btn-neon" style={{ marginTop: '20px' }}>닫기</button>
+            <button onClick={() => setModals(m => ({...m, rank: false}))} className="btn-neon" style={{ marginTop: '25px', borderColor: '#888', color: '#aaa' }}>닫기</button>
           </div>
         </div>
       )}
 
       {modals.prob && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="glass-panel" style={{ width: '90%', maxWidth: '400px', padding: '20px' }}>
-            <h2 style={{ textAlign: 'center', color: '#06b6d4', marginTop: 0 }}>📊 강화 성공 확률 정보</h2>
-            <div style={{ fontSize: '13px', lineHeight: '1.8' }}>
-              - +1 ~ +4 구간 : <b>100% 성공</b><br/>
-              - +5 ~ +9 구간 : <b>70% 성공</b><br/>
-              - +10 ~ +14 구간 : <b>60% 성공</b><br/>
-              - +15 ~ +19 구간 : <b>50% 성공</b><br/>
-              - +20 ~ +29 구간 : <b>47% ~ 20% (레벨당 하락)</b>
-            </div>
-            <button onClick={() => setModals(m => ({...m, prob: false}))} className="btn-neon" style={{ marginTop: '20px' }}>닫기</button>
+        <div className="modal-overlay">
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '25px 20px', background: 'rgba(20,20,25,0.95)' }}>
+            <h2 style={{ textAlign: 'center', color: '#06b6d4', marginTop: 0 }}>📊 강화 성공 확률</h2>
+            <p style={{fontSize:'11px', color:'#aaa', textAlign: 'center', marginBottom: '20px'}}>* 실제 비용은 반감기 및 목걸이 레벨에 따라 감소합니다.</p>
+            <table style={{ width: '100%', fontSize: '13px', textAlign: 'center', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #555', color: '#e6d5b8' }}>
+                  <th style={{paddingBottom: '10px'}}>구간</th><th style={{paddingBottom: '10px'}}>성공률</th><th style={{paddingBottom: '10px'}}>기본 비용</th>
+                </tr>
+              </thead>
+              <tbody style={{ color: '#fff' }}>
+                <tr><td style={{padding: '10px 0'}}>1~4강</td><td>100%</td><td>1,000</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '10px 0'}}>5~9강</td><td>70%</td><td>1,000</td></tr>
+                <tr><td style={{padding: '10px 0'}}>10~14강</td><td>60%</td><td>10,000</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '10px 0'}}>15~19강</td><td>50%</td><td>10,000</td></tr>
+                <tr><td style={{padding: '10px 0'}}>20~29강</td><td style={{color:'#ef4444'}}>47~20%</td><td>100,000</td></tr>
+              </tbody>
+            </table>
+            <button onClick={() => setModals(m => ({...m, prob: false}))} className="btn-neon" style={{ marginTop: '25px', borderColor: '#888', color: '#aaa' }}>닫기</button>
           </div>
         </div>
       )}
 
       {modals.token && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="glass-panel" style={{ width: '90%', maxWidth: '400px', padding: '20px' }}>
+        <div className="modal-overlay">
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '25px 20px', background: 'rgba(20,20,25,0.95)' }}>
             <h2 style={{ textAlign: 'center', color: '#a855f7', marginTop: 0 }}>🪙 토크노믹스 시스템</h2>
-            <div style={{ fontSize: '13px', lineHeight: '1.8' }}>
-              <b>💎 강화 실패 시 자산 분배율:</b><br/>
-              - 마이닝 풀 재귀속: {hState.rates.pool * 100}%<br/>
-              - 영구 소각(Burn): {hState.rates.burn * 100}%<br/>
-              - 시즌 보상 기금: {hState.rates.jackpot * 100}%<br/>
-              - 유동성(LP) 공급: {hState.rates.lp * 100}%<br/>
-              - 운영비: {hState.rates.reserve * 100}%
+            <div style={{ fontSize: '13px', lineHeight: '1.8', color: '#e6d5b8', padding: '10px 0' }}>
+              <b style={{color: '#fff'}}>📌 기본 분배 비율 (현재 단계)</b><br/>
+              - 마이닝 풀 재귀속: <span style={{color: '#06b6d4'}}>{(hState.rates.pool * 100).toFixed(0)}%</span><br/>
+              - 영구 소각(Burn): <span style={{color: '#ef4444'}}>{(hState.rates.burn * 100).toFixed(0)}%</span><br/>
+              - 시즌 보상 기금: <span style={{color: '#fbbf24'}}>{(hState.rates.jackpot * 100).toFixed(0)}%</span><br/>
+              - 유동성(LP) 공급: <span style={{color: '#a855f7'}}>{(hState.rates.lp * 100).toFixed(0)}%</span><br/>
+              - 운영비 보존: {(hState.rates.reserve * 100).toFixed(0)}%<br/><br/>
+              
+              <b style={{color: '#ef4444'}}>🔥 1차 반감기 (총 20% 소각 시)</b><br/>
+              - 일일 획득량 50% 감소 적용<br/>
+              - 분배율: 소각 25%, 풀 40%, LP 15% 조정<br/><br/>
+              
+              <b style={{color: '#ef4444'}}>🔥 2차 반감기 (총 60% 소각 시)</b><br/>
+              - 일일 획득량 추가 50% 감소<br/>
+              - 분배율: 소각 25%, 풀 35%, 보상 20% 조정
             </div>
-            <button onClick={() => setModals(m => ({...m, token: false}))} className="btn-neon" style={{ marginTop: '20px' }}>닫기</button>
+            <button onClick={() => setModals(m => ({...m, token: false}))} className="btn-neon" style={{ marginTop: '25px', borderColor: '#888', color: '#aaa' }}>닫기</button>
           </div>
         </div>
       )}
