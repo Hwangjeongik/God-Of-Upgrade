@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU3: THE KNIGHT'S TALE - TELEGRAM MOBILE FULL EDITION (v7.0.3)
- * Update: Added Mobile Responsive Design without removing ANY core features
- * Principle: No Omissions, Full Code Integration, Telegram Optimized
+ * GOU3: THE KNIGHT'S TALE - TELEGRAM EXTREME MOBILE OPTIMIZED (v7.0.4)
+ * Update: Forced shrinking of all fonts, images, and paddings for Telegram Webview
  */
 
 const MAX_SUPPLY = 10000000000; // 총 발행량 100억 개
@@ -20,7 +19,7 @@ export default function App() {
 
   const [state, setState] = useState({ 
     balance: 50000000000, 
-    burned: 1999000000, // 🔴 반감기 테스트를 위해 20% 소각 직전 세팅 (20억 목표)
+    burned: 1999000000, 
     jackpot: 50000000, 
     lp: 0, 
     pool: 5000000000, 
@@ -34,16 +33,16 @@ export default function App() {
     showTitleInput: false,
     
     petActive: true, 
-    petLevel: 49, // 🔴 테스트를 위해 49강 시작 (1업 시 성 개방 & X30 사냥터 개방)
+    petLevel: 49, 
     petName: "고대 황금 드래곤",
-    petHuntEndTime: 0, // 특수 사냥터 종료 시간
+    petHuntEndTime: 0, 
     
     castleActive: false, 
     castleLevel: 0, 
     castleName: "",
-    castleHuntEndTime: 0, // 특수 사냥터 종료 시간
+    castleHuntEndTime: 0, 
 
-    lastJackpotDate: null // 자동 정산 중복 방지용
+    lastJackpotDate: null 
   });
 
   const [gears, setGears] = useState([
@@ -72,7 +71,6 @@ export default function App() {
     { rank: 4, name: state.userName, title: state.userTitle, power: gears.reduce((a, b) => a + b.lvl, 0), isMe: true }
   ];
 
-  // --- 스탯 및 보너스 계산 ---
   const minLvl = Math.min(...gears.map(g => g.lvl));
   const setBonus = minLvl >= 30 ? 1000 : minLvl >= 20 ? 300 : minLvl >= 10 ? 100 : 0;
   const displaySetLevel = Math.floor(minLvl / 10) * 10; 
@@ -103,29 +101,21 @@ export default function App() {
   const castleBonus = state.castleActive ? getCastleBonus(state.castleLevel) : 0;
   const totalBonusPct = (gears[4].lvl * 5) + setBonus + petBonus + castleBonus;
 
-  // 🌕 반감기 (Halving) 로직
   const isHalving = state.burned >= HALVING_BURN_THRESHOLD;
   const halvingMult = isHalving ? 0.5 : 1.0;
   
   const failRates = useMemo(() => ({
-    pool: 0.40,
-    burn: isHalving ? 0.27 : 0.30,
-    jackpot: isHalving ? 0.15 : 0.10,
-    lp: isHalving ? 0.13 : 0.15, 
-    reserve: 0.05
+    pool: 0.40, burn: isHalving ? 0.27 : 0.30, jackpot: isHalving ? 0.15 : 0.10,
+    lp: isHalving ? 0.13 : 0.15, reserve: 0.05
   }), [isHalving]);
 
   const distributeFailure = useCallback((cost) => {
     return {
-      pool: cost * failRates.pool,
-      burn: cost * failRates.burn,
-      jackpot: cost * failRates.jackpot,
-      lp: cost * failRates.lp,
-      reserve: cost * failRates.reserve
+      pool: cost * failRates.pool, burn: cost * failRates.burn,
+      jackpot: cost * failRates.jackpot, lp: cost * failRates.lp, reserve: cost * failRates.reserve
     };
   }, [failRates]);
 
-  // --- 강화 비용 및 확률 로직 ---
   const getCost = useCallback((lvl, nLvl) => {
     const baseCost = (lvl < 10 ? 1000 : lvl < 20 ? 10000 : 100000) + ((lvl % 10) * 100);
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * halvingMult);
@@ -169,14 +159,9 @@ export default function App() {
     return Math.min(0.99, baseRate + (ringLvl * 0.001));
   }, []);
 
-  // --- 사냥터 및 특수 사냥터 로직 ---
   const checkHunt = useCallback((stats, currentNow) => {
-    if (state.castleHuntEndTime > currentNow) {
-      return { name: '🏰 제국의 심장 (특수)', mult: 50 };
-    }
-    if (state.petHuntEndTime > currentNow) {
-      return { name: '🐉 신수의 둥지 (특수)', mult: 30 };
-    }
+    if (state.castleHuntEndTime > currentNow) return { name: '🏰 제국의 심장', mult: 50 };
+    if (state.petHuntEndTime > currentNow) return { name: '🐉 신수의 둥지', mult: 30 };
     return hunts.slice().reverse().find(h => 
       stats.atk >= h.req.atk && stats.hp >= h.req.hp && stats.def >= h.req.def && stats.acc >= h.req.acc && stats.sum >= h.req.sum
     ) || hunts[0];
@@ -188,14 +173,10 @@ export default function App() {
   const startSpecialHunt = (type) => {
     const duration = 12 * 60 * 60 * 1000; 
     const now = Date.now();
-    if (type === 'pet') {
-      setState(s => ({ ...s, petHuntEndTime: now + duration }));
-    } else if (type === 'castle') {
-      setState(s => ({ ...s, castleHuntEndTime: now + duration }));
-    }
+    if (type === 'pet') setState(s => ({ ...s, petHuntEndTime: now + duration }));
+    else if (type === 'castle') setState(s => ({ ...s, castleHuntEndTime: now + duration }));
   };
 
-  // --- 강화 코어 엔진 ---
   const upgrade = useCallback((id) => {
     setGears(prev => {
       const g = prev.find(x => x.id === id);
@@ -215,12 +196,9 @@ export default function App() {
         nextGears = prev.map(item => item.id === id ? { ...item, lvl: item.lvl - 1 } : item);
         const failDist = distributeFailure(cost);
         setState(s => ({ 
-          ...s, balance: s.balance - cost, 
-          pool: s.pool + failDist.pool,
-          burned: s.burned + failDist.burn, 
-          jackpot: s.jackpot + failDist.jackpot,
-          lp: s.lp + failDist.lp, 
-          reserve: s.reserve + failDist.reserve
+          ...s, balance: s.balance - cost, pool: s.pool + failDist.pool,
+          burned: s.burned + failDist.burn, jackpot: s.jackpot + failDist.jackpot,
+          lp: s.lp + failDist.lp, reserve: s.reserve + failDist.reserve
         }));
       }
       return nextGears;
@@ -229,31 +207,21 @@ export default function App() {
 
   const upgradePet = () => {
     if (!state.petActive) return;
-    const necklaceLvl = gears[5].lvl;
-    const ringLvl = gears[6].lvl;
-
     setState(s => {
-      const cost = getPetCost(s.petLevel, necklaceLvl);
+      const cost = getPetCost(s.petLevel, gears[5].lvl);
       if (s.balance < cost) return s;
       
-      const success = Math.random() < getPetRate(s.petLevel, ringLvl);
+      const success = Math.random() < getPetRate(s.petLevel, gears[6].lvl);
       setTimeout(() => { triggerAnim('pet', success ? 'success' : 'fail'); }, 0);
       
       if (success) {
-        return { 
-          ...s, balance: s.balance - cost, pool: s.pool + cost,
-          petLevel: s.petLevel + 1 
-        };
+        return { ...s, balance: s.balance - cost, pool: s.pool + cost, petLevel: s.petLevel + 1 };
       } else {
         const failDist = distributeFailure(cost);
         return { 
-          ...s, balance: s.balance - cost, 
-          pool: s.pool + failDist.pool,
-          burned: s.burned + failDist.burn, 
-          jackpot: s.jackpot + failDist.jackpot,
-          lp: s.lp + failDist.lp, 
-          reserve: s.reserve + failDist.reserve,
-          petLevel: Math.max(0, s.petLevel - 1) 
+          ...s, balance: s.balance - cost, pool: s.pool + failDist.pool,
+          burned: s.burned + failDist.burn, jackpot: s.jackpot + failDist.jackpot,
+          lp: s.lp + failDist.lp, reserve: s.reserve + failDist.reserve, petLevel: Math.max(0, s.petLevel - 1) 
         };
       }
     });
@@ -261,37 +229,26 @@ export default function App() {
 
   const upgradeCastle = () => {
     if (!state.castleActive) return;
-    const necklaceLvl = gears[5].lvl;
-    const ringLvl = gears[6].lvl;
-
     setState(s => {
-      const cost = getCastleCost(s.castleLevel, necklaceLvl);
+      const cost = getCastleCost(s.castleLevel, gears[5].lvl);
       if (s.balance < cost) return s;
       
-      const success = Math.random() < getPetRate(s.castleLevel, ringLvl); 
+      const success = Math.random() < getPetRate(s.castleLevel, gears[6].lvl); 
       setTimeout(() => { triggerAnim('castle', success ? 'success' : 'fail'); }, 0);
       
       if (success) {
-        return { 
-          ...s, balance: s.balance - cost, pool: s.pool + cost,
-          castleLevel: s.castleLevel + 1 
-        };
+        return { ...s, balance: s.balance - cost, pool: s.pool + cost, castleLevel: s.castleLevel + 1 };
       } else {
         const failDist = distributeFailure(cost);
         return { 
-          ...s, balance: s.balance - cost, 
-          pool: s.pool + failDist.pool,
-          burned: s.burned + failDist.burn, 
-          jackpot: s.jackpot + failDist.jackpot,
-          lp: s.lp + failDist.lp, 
-          reserve: s.reserve + failDist.reserve,
-          castleLevel: Math.max(0, s.castleLevel - 1) 
+          ...s, balance: s.balance - cost, pool: s.pool + failDist.pool,
+          burned: s.burned + failDist.burn, jackpot: s.jackpot + failDist.jackpot,
+          lp: s.lp + failDist.lp, reserve: s.reserve + failDist.reserve, castleLevel: Math.max(0, s.castleLevel - 1) 
         };
       }
     });
   };
 
-  // --- AUTO 강화 버튼 로직 ---
   const toggleAuto = (gId) => {
     if (state.autoTimers[gId]) {
       clearInterval(state.autoTimers[gId]);
@@ -342,8 +299,7 @@ export default function App() {
               return { 
                 ...s, balance: s.balance - cost, pool: s.pool + failDist.pool,
                 burned: s.burned + failDist.burn, jackpot: s.jackpot + failDist.jackpot,
-                lp: s.lp + failDist.lp, reserve: s.reserve + failDist.reserve,
-                petLevel: Math.max(0, s.petLevel - 1) 
+                lp: s.lp + failDist.lp, reserve: s.reserve + failDist.reserve, petLevel: Math.max(0, s.petLevel - 1) 
               };
             }
           });
@@ -380,8 +336,7 @@ export default function App() {
               return { 
                 ...s, balance: s.balance - cost, pool: s.pool + failDist.pool,
                 burned: s.burned + failDist.burn, jackpot: s.jackpot + failDist.jackpot,
-                lp: s.lp + failDist.lp, reserve: s.reserve + failDist.reserve,
-                castleLevel: Math.max(0, s.castleLevel - 1) 
+                lp: s.lp + failDist.lp, reserve: s.reserve + failDist.reserve, castleLevel: Math.max(0, s.castleLevel - 1) 
               };
             }
           });
@@ -391,7 +346,6 @@ export default function App() {
     }
   };
 
-  // 🏰 펫 50강 달성 시 성 개방 이벤트
   useEffect(() => {
     if (state.petLevel >= 50 && !state.castleActive) {
       setTimeout(() => {
@@ -402,30 +356,16 @@ export default function App() {
     }
   }, [state.petLevel, state.castleActive, triggerAnim]);
 
-  // 🏆 잭팟 배분 시스템 
   const processJackpot = useCallback((isAuto = false) => {
     setState(s => {
-      if (s.jackpot <= 0) {
-        if(!isAuto) alert("잭팟 기금이 없습니다.");
-        return s;
-      }
-      
+      if (s.jackpot <= 0) { if(!isAuto) alert("잭팟 기금이 없습니다."); return s; }
       let message = "";
-      let newBalance = s.balance + s.jackpot;
-
-      if (s.castleLevel >= 50) {
-        message = `[${isAuto ? '자동' : '수동'} 정산] 절대 권력(성 50강) 달성!\n잭팟 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
-      } else if (s.petLevel >= 50) {
-        message = `[${isAuto ? '자동' : '수동'} 정산] 신의 경지(펫 50강) 달성!\n잭팟 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
-      } else if (minLvl >= 30) {
-        message = `[${isAuto ? '자동' : '수동'} 정산] 전설의 기사(ALL 30강) 자격 증명!\n잭팟 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
-      } else {
-        if(!isAuto) alert(`[정산 실패] 자격 미달.\n잭팟 기금 수령을 위해서는 ALL 30강 이상의 위업이 필요합니다.`);
-        return s; 
-      }
-
+      if (s.castleLevel >= 50) message = `[정산] 절대 권력(성 50강) 달성!\n잭팟 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
+      else if (s.petLevel >= 50) message = `[정산] 신의 경지(펫 50강) 달성!\n잭팟 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
+      else if (minLvl >= 30) message = `[정산] 전설의 기사(ALL 30강) 자격 증명!\n잭팟 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
+      else { if(!isAuto) alert(`[정산 실패] 자격 미달. ALL 30강 필요.`); return s; }
       alert(message);
-      return { ...s, balance: newBalance, jackpot: 0, lastJackpotDate: new Date().toDateString() };
+      return { ...s, balance: s.balance + s.jackpot, jackpot: 0, lastJackpotDate: new Date().toDateString() };
     });
   }, [minLvl]);
 
@@ -434,15 +374,13 @@ export default function App() {
     if (newTitle) setState(s => ({ ...s, userTitle: newTitle, showTitleInput: false }));
   };
 
-  // 실시간 엔진 루프
   useEffect(() => {
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
       tg.ready();
       tg.expand(); 
-      const tgUser = tg.initDataUnsafe?.user;
-      if (tgUser && tgUser.first_name) {
-        setState(s => ({ ...s, userName: tgUser.first_name }));
+      if (tg.initDataUnsafe?.user?.first_name) {
+        setState(s => ({ ...s, userName: tg.initDataUnsafe.user.first_name }));
       }
     }
 
@@ -465,14 +403,9 @@ export default function App() {
       setState(s => {
         const shouldUnlockPet = minLvl >= 30 && !s.petActive;
         const shouldTriggerGod = minLvl >= 30 && s.userTitle === "견습 기사";
-        
         return { 
-          ...s, 
-          currentHunt: best.name, 
-          balance: s.balance + gain,
-          mintedGOU: s.mintedGOU + gain,
-          petActive: s.petActive || shouldUnlockPet,
-          userTitle: shouldTriggerGod ? "GOD" : s.userTitle,
+          ...s, currentHunt: best.name, balance: s.balance + gain, mintedGOU: s.mintedGOU + gain,
+          petActive: s.petActive || shouldUnlockPet, userTitle: shouldTriggerGod ? "GOD" : s.userTitle,
           showTitleInput: s.showTitleInput || shouldTriggerGod
         };
       });
@@ -481,110 +414,123 @@ export default function App() {
   }, [currentStats, totalBonusPct, checkHunt, minLvl, halvingMult, processJackpot]);
 
   return (
-    <div style={{ 
+    <div className="main-wrap" style={{ 
       backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.4), rgba(26, 15, 20, 0.5)), url("${process.env.PUBLIC_URL}/background.jpg")`,
       backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed',
-      color: '#e6d5b8', padding: '30px 20px', minHeight: '100vh', fontFamily: "'Cinzel', serif", 
-      display: 'flex', flexDirection: 'column', alignItems: 'center'
+      color: '#e6d5b8', padding: '30px 20px', minHeight: '100vh', fontFamily: "'Cinzel', serif", display: 'flex', flexDirection: 'column', alignItems: 'center'
     }}>
       <style>{`
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes breathing { 0% { box-shadow: 0 0 5px #fbbf24; } 50% { box-shadow: 0 0 20px #fbbf24, inset 0 0 10px #fbbf24; } 100% { box-shadow: 0 0 5px #fbbf24; } }
-        @keyframes halvingPulse { 0% { opacity: 0.8; } 50% { opacity: 1; text-shadow: 0 0 15px #ef4444; } 100% { opacity: 0.8; } }
-        @keyframes unlockGlow { 0% { box-shadow: 0 0 0px transparent; } 50% { box-shadow: 0 0 50px #fff; background: rgba(255,255,255,0.3); } 100% { box-shadow: 0 0 0px transparent; } }
-        
         @keyframes flashSuccess { 0% { background: rgba(251, 191, 36, 0.4); } 100% { background: rgba(20, 20, 25, 0.4); } }
         @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.4); } 100% { background: rgba(20, 20, 25, 0.4); } }
         @keyframes pulseLvl { 0% { color: #fbbf24; } 50% { color: #fff; text-shadow: 0 0 10px #fff; } 100% { color: #fbbf24; } }
         
         .animated-entry { animation: slideUp 0.6s ease-out forwards; }
         .hunt-active { animation: breathing 2s infinite ease-in-out; border-color: #fbbf24 !important; background: rgba(251, 191, 36, 0.15) !important; }
-        .hunt-special { animation: breathing 1s infinite ease-in-out; border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.15) !important; color: #ef4444 !important; }
         .anim-success { animation: flashSuccess 0.5s ease-out; }
         .anim-fail { animation: flashFail 0.4s ease-out; }
-        .anim-unlockGlow { animation: unlockGlow 1.5s ease-out; }
         .lvl-up { animation: pulseLvl 0.5s ease-out; display: inline-block; }
-        .halving-active { animation: halvingPulse 2s infinite ease-in-out; color: #ef4444; font-weight: bold; border: 1px solid #ef4444; padding: 6px 12px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); font-size: 16px; }
         
-        .btn-neon { background: transparent; color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.6); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cinzel', serif; font-size: 16px; font-weight: bold; transition: all 0.2s; backdrop-filter: blur(5px); }
-        .btn-neon:hover { background: rgba(251, 191, 36, 0.2); box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); border-color: #fbbf24; }
-        .btn-auto-on { background: rgba(6, 182, 212, 0.2); color: #06b6d4; border: 1px solid #06b6d4; box-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }
-        .btn-special { background: rgba(239, 68, 68, 0.2); color: #fff; border: 1px solid #ef4444; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
-        .btn-special:hover { background: rgba(239, 68, 68, 0.5); box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); }
+        .btn-neon { background: transparent; color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.6); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        .btn-auto-on { background: rgba(6, 182, 212, 0.2); color: #06b6d4; border: 1px solid #06b6d4; }
+        .btn-special { background: rgba(239, 68, 68, 0.2); color: #fff; border: 1px solid #ef4444; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         
-        .glass-panel { background: rgba(20, 20, 25, 0.4) !important; backdrop-filter: blur(15px) !important; border: 1px solid rgba(197, 160, 89, 0.3) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important; }
+        .glass-panel { background: rgba(20, 20, 25, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(197, 160, 89, 0.3); border-radius: 12px; }
         .glass-panel-unlocked { background: rgba(6, 182, 212, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(6, 182, 212, 0.4); }
 
-        /* 📱 반응형 모바일 디자인 (텔레그램 사이즈 최적화) */
-        .grid-hunts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 100%; max-width: 850px; margin-bottom: 30px; }
+        /* 데스크탑 기본 크기 설정 */
+        .dash-panel { padding: 30px; margin-bottom: 25px; }
+        .treasury-title { font-size: 28px; margin: 20px 0 25px 0; }
+        .balance-text { font-size: 52px; margin-bottom: 30px; }
+        .grid-hunts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px; }
+        .hunt-box { padding: 20px 15px; min-height: 160px; }
+        .hunt-name { font-size: 20px; }
+        .gear-card { display: flex; justify-content: space-between; align-items: center; padding: 24px; margin: 16px 0; }
         .gear-card-inner { display: flex; align-items: center; gap: 30px; }
+        .img-box-gear { width: 100px; height: 100px; }
+        .item-name { font-size: 24px; }
+        .item-stat { font-size: 14px; }
         .gear-actions { display: flex; gap: 12px; }
-        .pet-card-inner { display: flex; alignItems: center; gap: 30px; }
+        .pet-card-inner { display: flex; align-items: center; gap: 30px; padding: 35px; }
+        .img-box-special { width: 120px; height: 120px; }
+        .special-name { font-size: 28px; }
         .pet-actions { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-        
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+
+        /* 📱 반응형 모바일 디자인 (텔레그램 사이즈 극강 최적화) */
         @media (max-width: 768px) {
-          .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-          .gear-card { flex-direction: column !important; gap: 20px !important; text-align: center; }
-          .gear-card-inner { flex-direction: column !important; gap: 10px !important; }
-          .gear-actions { width: 100%; justify-content: center; }
-          .pet-card-inner { flex-direction: column !important; text-align: center; gap: 15px !important; }
-          .pet-actions { justify-content: center; }
-          .balance-text { font-size: 38px !important; }
-          .treasury-title { font-size: 22px !important; }
+          .main-wrap { padding: 10px 5px !important; }
+          .dash-panel { padding: 15px 10px !important; margin-bottom: 15px !important; }
+          .treasury-title { font-size: 20px !important; margin: 10px 0 15px 0 !important; letter-spacing: 1px !important; }
+          .balance-text { font-size: 32px !important; margin-bottom: 20px !important; }
+          .balance-text span { font-size: 16px !important; }
+          
+          .grid-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+          .grid-stats > div { padding: 10px !important; }
+          .grid-stats > div:last-child { grid-column: 1 / -1; }
+          .grid-stats .stat-value { font-size: 18px !important; }
+          .grid-stats .stat-label { font-size: 12px !important; }
+
+          .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; margin-bottom: 15px !important; }
+          .hunt-box { padding: 10px !important; min-height: 100px !important; display: flex !important; flex-direction: column !important; justify-content: center !important; }
+          .hunt-name { font-size: 14px !important; margin-bottom: 5px !important; }
+          .hunt-box .hunt-stat-grid { grid-template-columns: 1fr 1fr !important; font-size: 10px !important; padding: 6px !important; gap: 4px !important; margin-bottom: 5px !important; }
+          .hunt-box .hunt-bottom-text { font-size: 12px !important; }
+
+          .gear-card { flex-direction: row !important; padding: 12px !important; margin: 10px 0 !important; border-left-width: 3px !important; flex-wrap: wrap; justify-content: center; }
+          .gear-card-inner { flex-direction: row !important; gap: 12px !important; width: 100%; align-items: flex-start !important; }
+          .img-box-gear { width: 55px !important; height: 55px !important; min-width: 55px; border-radius: 8px !important; }
+          .item-name { font-size: 15px !important; margin: 4px 0 !important; }
+          .item-stat { font-size: 11px !important; }
+          .gear-actions { width: 100%; justify-content: space-between !important; margin-top: 10px !important; gap: 8px !important; }
+          .btn-neon { font-size: 12px !important; padding: 6px 0 !important; flex: 1 !important; text-align: center; border-radius: 6px !important; }
+          
+          .pet-card-inner { flex-direction: row !important; gap: 15px !important; padding: 15px !important; flex-wrap: wrap; }
+          .img-box-special { width: 65px !important; height: 65px !important; min-width: 65px; border-radius: 10px !important; }
+          .special-name { font-size: 18px !important; margin: 0 0 5px 0 !important; }
+          .pet-desc { font-size: 12px !important; margin: 0 0 10px 0 !important; }
+          .pet-actions { width: 100%; justify-content: space-between !important; gap: 8px !important; }
+          .btn-special { font-size: 11px !important; padding: 8px !important; width: 100%; text-align: center; }
         }
       `}</style>
 
       <button onClick={() => setState(s => ({...s, isRankingOpen: true}))}
-        style={{ position: 'fixed', top: '20px', right: '20px', background: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.5)', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', backdropFilter: 'blur(10px)', textShadow: '0 0 5px #fbbf24', zIndex: 100 }}>
-        🏆 R A N K I N G
+        style={{ position: 'fixed', top: '15px', right: '15px', background: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.5)', padding: '8px 16px', borderRadius: '8px', zIndex: 100, fontWeight: 'bold' }}>
+        🏆 RANK
       </button>
 
-      {state.showTitleInput && (
-        <div className="animated-entry" style={{ background: 'rgba(123, 24, 24, 0.7)', backdropFilter: 'blur(15px)', padding: '20px', borderRadius: '15px', border: '1px solid #fbbf24', marginBottom: '20px', textAlign: 'center', width: '100%', maxWidth: '850px', boxShadow: '0 0 20px rgba(251,191,36,0.2)' }}>
-          <h3 style={{ color: '#fff', margin: '0 0 15px 0', textShadow: '0 0 10px #fbbf24', fontSize: '20px' }}>✨ 전설의 탄생: 신의 영역에 도달하셨습니다! ✨</h3>
-          <button onClick={setGodTitle} className="btn-neon">호칭 선포하기</button>
-        </div>
-      )}
-
       {/* 📊 메인 국고 대시보드 */}
-      <div className="animated-entry glass-panel" style={{ padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '850px', marginBottom: '25px', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '25px', left: '25px', display: 'flex', gap: '15px' }}>
-          <div style={{ color: '#fbbf24', fontSize: '18px', letterSpacing: '1px', textShadow: '0 0 5px rgba(251,191,36,0.5)', fontWeight: 'bold' }}>
-            [ {state.userTitle} ] {state.userName}
-          </div>
-          {isHalving && <div className="halving-active">⚠️ 대소각(20%) 도달: 반감기 가동 중</div>}
+      <div className="animated-entry glass-panel dash-panel" style={{ width: '100%', maxWidth: '850px', position: 'relative' }}>
+        <div style={{ color: '#fbbf24', fontSize: '14px', fontWeight: 'bold' }}>
+          [{state.userTitle}] {state.userName}
         </div>
         
-        <h2 className="treasury-title" style={{ margin: '20px 0 25px 0', color: '#e6d5b8', textAlign: 'center', fontSize: '28px', letterSpacing: '3px', marginTop: '40px' }}>T R E A S U R Y</h2>
+        <h2 className="treasury-title" style={{ color: '#e6d5b8', textAlign: 'center', letterSpacing: '2px' }}>TREASURY</h2>
         
-        <div className="balance-text" style={{ textAlign: 'center', fontSize: '52px', fontWeight: 'bold', color: '#fbbf24', textShadow: '0 0 15px rgba(251,191,36,0.6)', marginBottom: '30px' }}>
-          {Math.floor(state.balance).toLocaleString()} <span style={{fontSize: '24px', color: '#c5a059', fontWeight: 'normal'}}>GOU</span>
+        <div className="balance-text" style={{ textAlign: 'center', fontWeight: 'bold', color: '#fbbf24', textShadow: '0 0 10px rgba(251,191,36,0.5)' }}>
+          {Math.floor(state.balance).toLocaleString()} <span style={{color: '#c5a059', fontWeight: 'normal'}}>GOU</span>
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px' }}>
-          <div style={{ background: 'rgba(6, 182, 212, 0.1)', border: '1px solid rgba(6, 182, 212, 0.3)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-            <div style={{ color: '#06b6d4', fontSize: '16px', marginBottom: '8px', fontWeight: 'bold' }}>📈 일일 획득량</div>
-            <div style={{ color: '#fff', fontSize: '26px', fontWeight: 'bold' }}>+{dailyGainDisplay.toLocaleString()}</div>
+        <div className="grid-stats">
+          <div style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '8px', textAlign: 'center' }}>
+            <div className="stat-label" style={{ color: '#06b6d4', fontWeight: 'bold', marginBottom: '4px' }}>📈 일일 획득량</div>
+            <div className="stat-value" style={{ color: '#fff', fontWeight: 'bold' }}>+{dailyGainDisplay.toLocaleString()}</div>
           </div>
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-            <div style={{ color: '#ef4444', fontSize: '16px', marginBottom: '8px', fontWeight: 'bold' }}>🔥 누적 소각</div>
-            <div style={{ color: '#fff', fontSize: '26px', fontWeight: 'bold' }}>{Math.floor(state.burned).toLocaleString()}</div>
+          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', textAlign: 'center' }}>
+            <div className="stat-label" style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '4px' }}>🔥 누적 소각</div>
+            <div className="stat-value" style={{ color: '#fff', fontWeight: 'bold' }}>{Math.floor(state.burned).toLocaleString()}</div>
           </div>
-          <div style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.3)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-            <div style={{ color: '#fbbf24', fontSize: '16px', marginBottom: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+          <div style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '8px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div className="stat-label" style={{ color: '#fbbf24', fontWeight: 'bold', marginBottom: '4px' }}>
               🏆 잭팟 기금 
-              <button onClick={() => processJackpot(false)} style={{background: '#fbbf24', color: '#000', border: 'none', borderRadius: '4px', fontSize: '14px', padding: '4px 10px', cursor: 'pointer', fontWeight: 'bold'}}>정산</button>
+              <button onClick={() => processJackpot(false)} style={{background:'#fbbf24', color:'#000', border:'none', borderRadius:'4px', marginLeft:'5px', padding:'2px 6px', fontSize:'11px'}}>정산</button>
             </div>
-            <div style={{ color: '#fff', fontSize: '26px', fontWeight: 'bold' }}>{Math.floor(state.jackpot).toLocaleString()}</div>
-            <div style={{ color: '#fbbf24', fontSize: '14px', marginTop: '6px' }}>
-              우선권: {state.castleLevel >= 50 ? '성 50강' : (state.petLevel >= 50 ? '펫 50강' : 'ALL 30강')}
-            </div>
+            <div className="stat-value" style={{ color: '#fff', fontWeight: 'bold' }}>{Math.floor(state.jackpot).toLocaleString()}</div>
           </div>
-          <div style={{ background: 'rgba(197, 160, 89, 0.1)', border: '1px solid rgba(197, 160, 89, 0.3)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-            <div style={{ color: '#c5a059', fontSize: '16px', marginBottom: '8px', fontWeight: 'bold' }}>⚔️ 통합 보너스</div>
-            <div style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>장비(ALL {displaySetLevel}강): +{setBonus}% | 펫: +{petBonus}%</div>
-            <div style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>성: +{castleBonus}%</div>
-            <div style={{ color: '#fbbf24', fontSize: '14px', marginTop: '6px', fontWeight: 'bold' }}>총합: +{totalBonusPct}%</div>
+          <div style={{ background: 'rgba(197,160,89,0.1)', border: '1px solid rgba(197,160,89,0.3)', borderRadius: '8px', textAlign: 'center' }}>
+            <div className="stat-label" style={{ color: '#c5a059', fontWeight: 'bold', marginBottom: '4px' }}>⚔️ 통합 보너스 (+{totalBonusPct}%)</div>
+            <div className="stat-value" style={{ color: '#fff', fontSize: '13px' }}>장비 +{setBonus}% | 펫 +{petBonus}% | 성 +{castleBonus}%</div>
           </div>
         </div>
       </div>
@@ -597,38 +543,36 @@ export default function App() {
           const isUnlocked = currentStats.atk >= h.req.atk && currentStats.hp >= h.req.hp && currentStats.def >= h.req.def && currentStats.acc >= h.req.acc && currentStats.sum >= h.req.sum;
           
           return (
-            <div key={h.name} className={isActive ? "hunt-active" : (isUnlocked ? "glass-panel-unlocked" : "glass-panel")} style={{ 
-              padding: '20px 15px', borderRadius: '12px',
-              transition: 'all 0.3s', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-              minHeight: '160px',
+            <div key={h.name} className={`hunt-box ${isActive ? "hunt-active" : (isUnlocked ? "glass-panel-unlocked" : "glass-panel")}`} style={{ 
+              borderRadius: '12px', transition: 'all 0.3s', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
               background: isActive ? 'rgba(251, 191, 36, 0.15)' : 'rgba(15, 15, 20, 0.85)'
             }}>
-              <b style={{ fontSize: '20px', display: 'block', letterSpacing: '1px', color: isActive ? '#fbbf24' : (isUnlocked ? '#fff' : '#888'), textAlign: 'center', marginBottom: '12px' }}>
+              <b className="hunt-name" style={{ display: 'block', color: isActive ? '#fbbf24' : (isUnlocked ? '#fff' : '#888'), textAlign: 'center', marginBottom: '8px' }}>
                 {isActive ? '⚔️ ' : (isUnlocked ? '🔓 ' : '🔒 ')}{h.name}
               </b>
 
               {h.name === '초원' ? (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? '#fbbf24' : '#aaa', fontSize: '16px' }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? '#fbbf24' : '#aaa', fontSize: '12px' }}>
                   기본 개방 영토
                 </div>
               ) : (
-                <div style={{ 
-                  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 10px', fontSize: '14px', color: '#e6d5b8', 
-                  background: 'rgba(0, 0, 0, 0.6)', padding: '12px', borderRadius: '8px', marginBottom: '12px' 
+                <div className="hunt-stat-grid" style={{ 
+                  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', color: '#e6d5b8', 
+                  background: 'rgba(0, 0, 0, 0.6)', padding: '10px', borderRadius: '8px', marginBottom: '8px' 
                 }}>
-                  <div style={{textAlign: 'left'}}>공격 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.atk}</span></div>
-                  <div style={{textAlign: 'right'}}>체력 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.hp}</span></div>
-                  <div style={{textAlign: 'left'}}>방어 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.def}</span></div>
-                  <div style={{textAlign: 'right'}}>명중 <span style={{color: currentStats.acc >= h.req.acc ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.acc}</span></div>
+                  <div style={{textAlign: 'left'}}>공 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.atk}</span></div>
+                  <div style={{textAlign: 'right'}}>체 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.hp}</span></div>
+                  <div style={{textAlign: 'left'}}>방 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.def}</span></div>
+                  <div style={{textAlign: 'right'}}>명 <span style={{color: currentStats.acc >= h.req.acc ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.acc}</span></div>
                 </div>
               )}
 
-              <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
-                <div style={{ fontSize: '15px', color: currentStats.sum >= h.req.sum ? '#06b6d4' : '#ef4444', fontWeight: 'bold' }}>
-                  강화총합 {h.req.sum}
+              <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
+                <div className="hunt-bottom-text" style={{ color: currentStats.sum >= h.req.sum ? '#06b6d4' : '#ef4444', fontWeight: 'bold', fontSize: '13px' }}>
+                  총합 {h.req.sum}
                 </div>
-                <div style={{ fontSize: '17px', marginTop: '8px', color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', letterSpacing: '1px' }}>
-                  수익 : X{h.mult}
+                <div className="hunt-bottom-text" style={{ marginTop: '4px', color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', fontSize: '14px' }}>
+                  수익 X{h.mult}
                 </div>
               </div>
             </div>
@@ -636,45 +580,31 @@ export default function App() {
         })}
       </div>
 
-      {/* 🔴 특수 사냥터 현황판 */}
-      {state.currentHunt.includes('(특수)') && (
-        <div className="animated-entry hunt-special" style={{ width: '100%', maxWidth: '850px', padding: '20px', borderRadius: '12px', marginBottom: '30px', textAlign: 'center' }}>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: 'bold', textShadow: '0 0 10px #ef4444' }}>
-            🔥 진행 중: {state.currentHunt}
-          </h3>
-          <p style={{ margin: 0, color: '#fff', fontSize: '16px' }}>엔드게임 특수 배율이 적용되어 막대한 수익을 창출 중입니다!</p>
-        </div>
-      )}
-
       {/* ⚔️ 장비 무기고 */}
       <div style={{ width: '100%', maxWidth: '850px' }}>
         {gears.map((g, index) => {
           const animClass = anims[g.id] ? `anim-${anims[g.id]}` : '';
           return (
             <div key={g.id} className={`animated-entry glass-panel gear-card ${animClass}`} style={{ 
-              animationDelay: `${index * 0.1}s`,
-              margin: '16px 0', padding: '24px', borderRadius: '12px',
-              borderLeft: `5px solid #555`, 
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'background 0.3s'
+              animationDelay: `${index * 0.1}s`, borderLeft: `4px solid #555`, transition: 'background 0.3s'
             }}>
               <div className="gear-card-inner">
-                <div style={{ 
-                  width: '100px', height: '100px',
-                  background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(197,160,89,0.3)', borderRadius: '15px', 
-                  display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', backdropFilter: 'blur(5px)'
+                <div className="img-box-gear" style={{ 
+                  background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(197,160,89,0.3)', borderRadius: '12px', 
+                  display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden'
                 }}>
-                  <img src={`${process.env.PUBLIC_URL}/${g.imgFile}`} alt={g.name} style={{ width: '90%', height: '90%', objectFit: 'contain' }}
+                  <img src={`${process.env.PUBLIC_URL}/${g.imgFile}`} alt={g.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }}
                        onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '🛡️'; }}/>
                 </div>
                 <div>
-                  <span style={{ color: '#c5a059', fontSize: '14px', letterSpacing: '1px', fontWeight: 'bold' }}>[ {g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit} ]</span>
-                  <div style={{ fontSize: '24px', color: '#e6d5b8', margin: '8px 0', fontWeight: 'bold' }}>
+                  <span className="item-stat" style={{ color: '#c5a059', fontWeight: 'bold' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</span>
+                  <div className="item-name" style={{ color: '#e6d5b8', fontWeight: 'bold' }}>
                     {g.name} <span className={anims[g.id] === 'success' ? 'lvl-up' : ''} style={{ color: '#fbbf24' }}>+{g.lvl}</span>
                   </div>
-                  <div style={{ color: '#aaa', fontSize: '14px' }}>
-                    성공률: <span style={{color: '#06b6d4', fontWeight: 'bold'}}>{(getRate(g.lvl, gears[6].lvl)*100).toFixed(1)}%</span> 
-                    <span style={{ margin: '0 10px' }}>|</span> 
-                    비용: <span style={{fontWeight: 'bold'}}>{getCost(g.lvl, gears[5].lvl).toLocaleString()} GOU</span>
+                  <div className="item-stat" style={{ color: '#aaa' }}>
+                    성공: <span style={{color: '#06b6d4'}}>{(getRate(g.lvl, gears[6].lvl)*100).toFixed(1)}%</span> 
+                    <span style={{ margin: '0 6px' }}>|</span> 
+                    비용: {getCost(g.lvl, gears[5].lvl).toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -690,86 +620,74 @@ export default function App() {
       </div>
 
       {/* 🐉 동료(Pet) */}
-      <div className={`animated-entry glass-panel ${anims['pet'] ? `anim-${anims['pet']}` : ''}`} style={{ animationDelay: '0.8s', position: 'relative', width: '100%', maxWidth: '850px', marginTop: '30px', borderRadius: '15px', overflow: 'hidden' }}>
+      <div className={`animated-entry glass-panel ${anims['pet'] ? `anim-${anims['pet']}` : ''}`} style={{ animationDelay: '0.8s', position: 'relative', width: '100%', maxWidth: '850px', marginBottom: '20px', borderRadius: '15px', overflow: 'hidden' }}>
         {!state.petActive && (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(10px)', background: 'rgba(11, 15, 25, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-            <div style={{ color: '#fbbf24', fontSize: '22px', letterSpacing: '1px', textShadow: '0 0 10px rgba(251,191,36,0.5)', textAlign: 'center', border: '1px solid rgba(251,191,36,0.3)', padding: '25px 50px', borderRadius: '12px', background: 'rgba(0,0,0,0.5)' }}>
-              🔒 모든 장비 30강 달성 시 전설의 동반자가 깨어납니다
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(10px)', background: 'rgba(11, 15, 25, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+            <div style={{ color: '#fbbf24', fontSize: '16px', fontWeight: 'bold', padding: '15px', border: '1px solid #fbbf24', borderRadius: '8px', background: 'rgba(0,0,0,0.6)' }}>
+              🔒 장비 ALL 30강 달성 시 개방
             </div>
           </div>
         )}
 
-        <div className="pet-card-inner" style={{ padding: '35px', opacity: state.petActive ? 1 : 0.4 }}>
-          <div style={{ width: '120px', height: '120px', background: 'linear-gradient(135deg, rgba(26,11,46,0.5) 0%, rgba(59,7,100,0.5) 100%)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid rgba(251,191,36,0.5)', backdropFilter: 'blur(5px)', margin: '0 auto' }}>
-             <img src={`${process.env.PUBLIC_URL}/pet.png`} alt={state.petName} style={{ width: '95%', height: '95%', objectFit: 'contain' }}
-                  onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<span style="font-size: 70px;">🐉</span>'; }}/>
+        <div className="pet-card-inner" style={{ opacity: state.petActive ? 1 : 0.4 }}>
+          <div className="img-box-special" style={{ background: 'linear-gradient(135deg, rgba(26,11,46,0.5) 0%, rgba(59,7,100,0.5) 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid rgba(251,191,36,0.5)' }}>
+             <img src={`${process.env.PUBLIC_URL}/pet.png`} alt={state.petName} style={{ width: '85%', height: '85%', objectFit: 'contain' }}
+                  onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '🐉'; }}/>
           </div>
           
-          <div style={{ flex: 1 }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#fbbf24', fontSize: '28px', letterSpacing: '2px', textShadow: '0 0 8px rgba(251,191,36,0.4)', fontWeight: 'bold' }}>
-              {state.petName} <span className={anims['pet'] === 'success' ? 'lvl-up' : ''} style={{ color: '#e6d5b8', fontSize: '20px', fontWeight: 'normal' }}>Lv.{state.petLevel}</span>
+          <div style={{ flex: 1, width: '100%' }}>
+            <h3 className="special-name" style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+              {state.petName} <span className={anims['pet'] === 'success' ? 'lvl-up' : ''} style={{ color: '#e6d5b8', fontSize: '70%', fontWeight: 'normal' }}>Lv.{state.petLevel}</span>
             </h3>
-            <p style={{ margin: '0 0 18px 0', color: '#e6d5b8', fontSize: '16px' }}>
-              왕국의 영광을 위해 <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>GOU 획득량 +{getPetBonus(state.petLevel)}%</span> 축복을 내립니다.
+            <p className="pet-desc" style={{ color: '#e6d5b8' }}>
+              GOU 획득량 <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>+{getPetBonus(state.petLevel)}%</span>
             </p>
             <div className="pet-actions">
-              <button onClick={upgradePet} disabled={!state.petActive} className="btn-neon" style={{ background: 'rgba(123, 24, 24, 0.5)', color: '#fff', cursor: state.petActive ? 'pointer' : 'not-allowed' }}>강화</button>
-              <button onClick={toggleAutoPet} disabled={!state.petActive} className={`btn-neon ${state.autoTimers['pet'] ? 'btn-auto-on' : ''}`} style={{ cursor: state.petActive ? 'pointer' : 'not-allowed' }}>{state.autoTimers['pet'] ? 'STOP' : 'AUTO'}</button>
+              <button onClick={upgradePet} disabled={!state.petActive} className="btn-neon" style={{ background: 'rgba(123, 24, 24, 0.5)', color: '#fff', flex: 1 }}>강화</button>
+              <button onClick={toggleAutoPet} disabled={!state.petActive} className={`btn-neon ${state.autoTimers['pet'] ? 'btn-auto-on' : ''}`} style={{ flex: 1 }}>{state.autoTimers['pet'] ? 'STOP' : 'AUTO'}</button>
               
               {state.petLevel >= 50 && (
-                 <button onClick={() => startSpecialHunt('pet')} disabled={state.petHuntEndTime > Date.now()} className="btn-special">
+                 <button onClick={() => startSpecialHunt('pet')} disabled={state.petHuntEndTime > Date.now()} className="btn-special" style={{ width: '100%', marginTop: '5px' }}>
                    {state.petHuntEndTime > Date.now() ? '특수 사냥 진행 중' : '🐉 둥지 사냥 (12h / X30)'}
                  </button>
               )}
-
-              <span style={{ color: '#aaa', fontSize: '14px', marginLeft: '10px' }}>
-                비용: <span style={{fontWeight:'bold'}}>{getPetCost(state.petLevel, gears[5].lvl).toLocaleString()} GOU</span> 
-                <span style={{margin: '0 8px'}}>|</span> 
-                확률: <span style={{color: '#06b6d4', fontWeight:'bold'}}>{(getPetRate(state.petLevel, gears[6].lvl)*100).toFixed(1)}%</span>
-              </span>
             </div>
           </div>
         </div>
       </div>
 
       {/* 🏰 위대한 성(Castle) */}
-      <div className={`animated-entry glass-panel ${anims['castleBox'] ? `anim-${anims['castleBox']}` : ''} ${anims['castle'] ? `anim-${anims['castle']}` : ''}`} style={{ animationDelay: '1.0s', position: 'relative', width: '100%', maxWidth: '850px', marginTop: '30px', borderRadius: '15px', overflow: 'hidden' }}>
+      <div className={`animated-entry glass-panel ${anims['castleBox'] ? `anim-${anims['castleBox']}` : ''} ${anims['castle'] ? `anim-${anims['castle']}` : ''}`} style={{ animationDelay: '1.0s', position: 'relative', width: '100%', maxWidth: '850px', borderRadius: '15px', overflow: 'hidden' }}>
         {!state.castleActive && (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(10px)', background: 'rgba(11, 15, 25, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-            <div style={{ color: '#fbbf24', fontSize: '22px', letterSpacing: '1px', textShadow: '0 0 10px rgba(251,191,36,0.5)', textAlign: 'center', border: '1px solid rgba(251,191,36,0.3)', padding: '25px 50px', borderRadius: '12px', background: 'rgba(0,0,0,0.5)' }}>
-              🔒 펫(성수) 50강 달성 시 위대한 성(Castle)이 개방됩니다
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(10px)', background: 'rgba(11, 15, 25, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+            <div style={{ color: '#fbbf24', fontSize: '16px', fontWeight: 'bold', padding: '15px', border: '1px solid #fbbf24', borderRadius: '8px', background: 'rgba(0,0,0,0.6)' }}>
+              🔒 펫(성수) 50강 달성 시 개방
             </div>
           </div>
         )}
 
-        <div className="pet-card-inner" style={{ padding: '35px', opacity: state.castleActive ? 1 : 0.4 }}>
-          <div style={{ width: '120px', height: '120px', background: 'linear-gradient(135deg, rgba(46,26,11,0.5) 0%, rgba(100,20,7,0.5) 100%)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid rgba(251,191,36,0.8)', backdropFilter: 'blur(5px)', margin: '0 auto' }}>
-             <img src={`${process.env.PUBLIC_URL}/castle.png`} alt={state.castleName} style={{ width: '95%', height: '95%', objectFit: 'contain' }}
-                  onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<span style="font-size: 70px;">🏰</span>'; }}/>
+        <div className="pet-card-inner" style={{ opacity: state.castleActive ? 1 : 0.4 }}>
+          <div className="img-box-special" style={{ background: 'linear-gradient(135deg, rgba(46,26,11,0.5) 0%, rgba(100,20,7,0.5) 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid rgba(251,191,36,0.8)' }}>
+             <img src={`${process.env.PUBLIC_URL}/castle.png`} alt={state.castleName} style={{ width: '85%', height: '85%', objectFit: 'contain' }}
+                  onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '🏰'; }}/>
           </div>
           
-          <div style={{ flex: 1 }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#fbbf24', fontSize: '28px', letterSpacing: '2px', textShadow: '0 0 8px rgba(251,191,36,0.4)', fontWeight: 'bold' }}>
-              {state.castleName || "위대한 군주의 성"} <span className={anims['castle'] === 'success' ? 'lvl-up' : ''} style={{ color: '#e6d5b8', fontSize: '20px', fontWeight: 'normal' }}>Lv.{state.castleLevel}</span>
+          <div style={{ flex: 1, width: '100%' }}>
+            <h3 className="special-name" style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+              {state.castleName || "위대한 군주의 성"} <span className={anims['castle'] === 'success' ? 'lvl-up' : ''} style={{ color: '#e6d5b8', fontSize: '70%', fontWeight: 'normal' }}>Lv.{state.castleLevel}</span>
             </h3>
-            <p style={{ margin: '0 0 18px 0', color: '#e6d5b8', fontSize: '16px' }}>
-              영지의 발전을 위해 <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>GOU 획득량 +{getCastleBonus(state.castleLevel)}%</span> 축복을 내립니다.
+            <p className="pet-desc" style={{ color: '#e6d5b8' }}>
+              GOU 획득량 <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>+{getCastleBonus(state.castleLevel)}%</span>
             </p>
             <div className="pet-actions">
-              <button onClick={upgradeCastle} disabled={!state.castleActive} className="btn-neon" style={{ background: 'rgba(123, 24, 24, 0.5)', color: '#fff', cursor: state.castleActive ? 'pointer' : 'not-allowed' }}>강화</button>
-              <button onClick={toggleAutoCastle} disabled={!state.castleActive} className={`btn-neon ${state.autoTimers['castle'] ? 'btn-auto-on' : ''}`} style={{ cursor: state.castleActive ? 'pointer' : 'not-allowed' }}>{state.autoTimers['castle'] ? 'STOP' : 'AUTO'}</button>
+              <button onClick={upgradeCastle} disabled={!state.castleActive} className="btn-neon" style={{ background: 'rgba(123, 24, 24, 0.5)', color: '#fff', flex: 1 }}>강화</button>
+              <button onClick={toggleAutoCastle} disabled={!state.castleActive} className={`btn-neon ${state.autoTimers['castle'] ? 'btn-auto-on' : ''}`} style={{ flex: 1 }}>{state.autoTimers['castle'] ? 'STOP' : 'AUTO'}</button>
               
               {state.castleLevel >= 50 && (
-                 <button onClick={() => startSpecialHunt('castle')} disabled={state.castleHuntEndTime > Date.now()} className="btn-special">
+                 <button onClick={() => startSpecialHunt('castle')} disabled={state.castleHuntEndTime > Date.now()} className="btn-special" style={{ width: '100%', marginTop: '5px' }}>
                    {state.castleHuntEndTime > Date.now() ? '특수 사냥 진행 중' : '🏰 천공 사냥 (12h / X50)'}
                  </button>
               )}
-
-              <span style={{ color: '#aaa', fontSize: '14px', marginLeft: '10px' }}>
-                비용: <span style={{fontWeight:'bold'}}>{getCastleCost(state.castleLevel, gears[5].lvl).toLocaleString()} GOU</span> 
-                <span style={{margin: '0 8px'}}>|</span> 
-                확률: <span style={{color: '#06b6d4', fontWeight:'bold'}}>{(getPetRate(state.castleLevel, gears[6].lvl)*100).toFixed(1)}%</span>
-              </span>
             </div>
           </div>
         </div>
@@ -777,21 +695,21 @@ export default function App() {
 
       {state.isRankingOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="animated-entry" style={{ background: 'rgba(20,20,25,0.9)', border: '1px solid #fbbf24', padding: '40px', borderRadius: '20px', width: '90%', maxWidth: '600px', boxShadow: '0 0 30px rgba(251,191,36,0.2)' }}>
-            <h2 style={{ textAlign: 'center', color: '#fbbf24', letterSpacing: '2px', marginBottom: '30px', fontSize: '28px' }}>R A N K I N G</h2>
-            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e6d5b8', fontSize: '18px' }}>
+          <div className="animated-entry" style={{ background: 'rgba(20,20,25,0.9)', border: '1px solid #fbbf24', padding: '30px 20px', borderRadius: '15px', width: '90%', maxWidth: '400px' }}>
+            <h2 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '20px', fontSize: '24px' }}>RANKING</h2>
+            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e6d5b8', fontSize: '14px' }}>
               <tbody>
                 {mockRankings.map(r => (
                   <tr key={r.rank} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: r.isMe ? 'rgba(251,191,36,0.1)' : 'transparent' }}>
-                    <td style={{ padding: '18px 12px' }}>{r.rank}</td>
-                    <td style={{ padding: '18px 12px', color: '#7b1818', fontSize: '14px' }}>[{r.title}]</td>
-                    <td style={{ padding: '18px 12px', fontWeight: 'bold' }}>{r.name}</td>
-                    <td style={{ padding: '18px 12px', textAlign: 'right', color: '#fbbf24' }}>{r.power}</td>
+                    <td style={{ padding: '12px 8px' }}>{r.rank}</td>
+                    <td style={{ padding: '12px 8px', color: '#7b1818', fontSize: '12px' }}>[{r.title}]</td>
+                    <td style={{ padding: '12px 8px', fontWeight: 'bold' }}>{r.name}</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', color: '#fbbf24' }}>{r.power}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <button onClick={() => setState(s => ({...s, isRankingOpen: false}))} className="btn-neon" style={{ width: '100%', marginTop: '30px', color: '#888', borderColor: '#555', fontSize: '18px' }}>닫기</button>
+            <button onClick={() => setState(s => ({...s, isRankingOpen: false}))} className="btn-neon" style={{ width: '100%', marginTop: '20px', color: '#888', borderColor: '#555' }}>닫기</button>
           </div>
         </div>
       )}
