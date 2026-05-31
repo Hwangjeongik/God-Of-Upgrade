@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU3: THE KNIGHT'S TALE - CLEAN TERMINAL EDITION (v7.0.1)
- * Update: Fixed 'displaySetLevel' unused variable warning, Refined Integrated Bonus UI
- * Principle: No Omissions, Full Code Integration
+ * GOU3: THE KNIGHT'S TALE - TELEGRAM MOBILE FULL EDITION (v7.0.3)
+ * Update: Added Mobile Responsive Design without removing ANY core features
+ * Principle: No Omissions, Full Code Integration, Telegram Optimized
  */
 
 const MAX_SUPPLY = 10000000000; // 총 발행량 100억 개
@@ -75,8 +75,6 @@ export default function App() {
   // --- 스탯 및 보너스 계산 ---
   const minLvl = Math.min(...gears.map(g => g.lvl));
   const setBonus = minLvl >= 30 ? 1000 : minLvl >= 20 ? 300 : minLvl >= 10 ? 100 : 0;
-  
-  // 🟢 (수정) UI에서 사용할 수 있도록 남겨둠
   const displaySetLevel = Math.floor(minLvl / 10) * 10; 
 
   const currentStats = useMemo(() => ({
@@ -105,7 +103,7 @@ export default function App() {
   const castleBonus = state.castleActive ? getCastleBonus(state.castleLevel) : 0;
   const totalBonusPct = (gears[4].lvl * 5) + setBonus + petBonus + castleBonus;
 
-  // 🌕 반감기 (Halving) 로직: 총 20% 소각 시 발동
+  // 🌕 반감기 (Halving) 로직
   const isHalving = state.burned >= HALVING_BURN_THRESHOLD;
   const halvingMult = isHalving ? 0.5 : 1.0;
   
@@ -516,6 +514,24 @@ export default function App() {
         
         .glass-panel { background: rgba(20, 20, 25, 0.4) !important; backdrop-filter: blur(15px) !important; border: 1px solid rgba(197, 160, 89, 0.3) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important; }
         .glass-panel-unlocked { background: rgba(6, 182, 212, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(6, 182, 212, 0.4); }
+
+        /* 📱 반응형 모바일 디자인 (텔레그램 사이즈 최적화) */
+        .grid-hunts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 100%; max-width: 850px; margin-bottom: 30px; }
+        .gear-card-inner { display: flex; align-items: center; gap: 30px; }
+        .gear-actions { display: flex; gap: 12px; }
+        .pet-card-inner { display: flex; alignItems: center; gap: 30px; }
+        .pet-actions { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        
+        @media (max-width: 768px) {
+          .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+          .gear-card { flex-direction: column !important; gap: 20px !important; text-align: center; }
+          .gear-card-inner { flex-direction: column !important; gap: 10px !important; }
+          .gear-actions { width: 100%; justify-content: center; }
+          .pet-card-inner { flex-direction: column !important; text-align: center; gap: 15px !important; }
+          .pet-actions { justify-content: center; }
+          .balance-text { font-size: 38px !important; }
+          .treasury-title { font-size: 22px !important; }
+        }
       `}</style>
 
       <button onClick={() => setState(s => ({...s, isRankingOpen: true}))}
@@ -539,9 +555,9 @@ export default function App() {
           {isHalving && <div className="halving-active">⚠️ 대소각(20%) 도달: 반감기 가동 중</div>}
         </div>
         
-        <h2 style={{ margin: '20px 0 25px 0', color: '#e6d5b8', textAlign: 'center', fontSize: '28px', letterSpacing: '3px', marginTop: '40px' }}>T R E A S U R Y</h2>
+        <h2 className="treasury-title" style={{ margin: '20px 0 25px 0', color: '#e6d5b8', textAlign: 'center', fontSize: '28px', letterSpacing: '3px', marginTop: '40px' }}>T R E A S U R Y</h2>
         
-        <div style={{ textAlign: 'center', fontSize: '52px', fontWeight: 'bold', color: '#fbbf24', textShadow: '0 0 15px rgba(251,191,36,0.6)', marginBottom: '30px' }}>
+        <div className="balance-text" style={{ textAlign: 'center', fontSize: '52px', fontWeight: 'bold', color: '#fbbf24', textShadow: '0 0 15px rgba(251,191,36,0.6)', marginBottom: '30px' }}>
           {Math.floor(state.balance).toLocaleString()} <span style={{fontSize: '24px', color: '#c5a059', fontWeight: 'normal'}}>GOU</span>
         </div>
         
@@ -564,7 +580,6 @@ export default function App() {
               우선권: {state.castleLevel >= 50 ? '성 50강' : (state.petLevel >= 50 ? '펫 50강' : 'ALL 30강')}
             </div>
           </div>
-          {/* 🟢 수정된 통합 보너스 UI 패널 (경고 완벽 해결) */}
           <div style={{ background: 'rgba(197, 160, 89, 0.1)', border: '1px solid rgba(197, 160, 89, 0.3)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
             <div style={{ color: '#c5a059', fontSize: '16px', marginBottom: '8px', fontWeight: 'bold' }}>⚔️ 통합 보너스</div>
             <div style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>장비(ALL {displaySetLevel}강): +{setBonus}% | 펫: +{petBonus}%</div>
@@ -575,7 +590,7 @@ export default function App() {
       </div>
 
       {/* 🗺️ 사냥터 */}
-      <div className="animated-entry" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '15px', width: '100%', maxWidth: '850px', marginBottom: '30px' }}>
+      <div className="animated-entry grid-hunts">
         {hunts.map(h => {
           const isSpecialActive = state.currentHunt.includes('(특수)');
           const isActive = state.currentHunt === h.name && !isSpecialActive;
@@ -636,13 +651,13 @@ export default function App() {
         {gears.map((g, index) => {
           const animClass = anims[g.id] ? `anim-${anims[g.id]}` : '';
           return (
-            <div key={g.id} className={`animated-entry glass-panel ${animClass}`} style={{ 
+            <div key={g.id} className={`animated-entry glass-panel gear-card ${animClass}`} style={{ 
               animationDelay: `${index * 0.1}s`,
               margin: '16px 0', padding: '24px', borderRadius: '12px',
               borderLeft: `5px solid #555`, 
               display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'background 0.3s'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
+              <div className="gear-card-inner">
                 <div style={{ 
                   width: '100px', height: '100px',
                   background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(197,160,89,0.3)', borderRadius: '15px', 
@@ -663,7 +678,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div className="gear-actions">
                 <button onClick={() => upgrade(g.id)} className="btn-neon">강화</button>
                 <button onClick={() => toggleAuto(g.id)} className={`btn-neon ${state.autoTimers[g.id] ? 'btn-auto-on' : ''}`}>
                   {state.autoTimers[g.id] ? 'STOP' : 'AUTO'}
@@ -684,8 +699,8 @@ export default function App() {
           </div>
         )}
 
-        <div style={{ padding: '35px', display: 'flex', alignItems: 'center', gap: '30px', opacity: state.petActive ? 1 : 0.4 }}>
-          <div style={{ width: '120px', height: '120px', background: 'linear-gradient(135deg, rgba(26,11,46,0.5) 0%, rgba(59,7,100,0.5) 100%)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid rgba(251,191,36,0.5)', backdropFilter: 'blur(5px)' }}>
+        <div className="pet-card-inner" style={{ padding: '35px', opacity: state.petActive ? 1 : 0.4 }}>
+          <div style={{ width: '120px', height: '120px', background: 'linear-gradient(135deg, rgba(26,11,46,0.5) 0%, rgba(59,7,100,0.5) 100%)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid rgba(251,191,36,0.5)', backdropFilter: 'blur(5px)', margin: '0 auto' }}>
              <img src={`${process.env.PUBLIC_URL}/pet.png`} alt={state.petName} style={{ width: '95%', height: '95%', objectFit: 'contain' }}
                   onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<span style="font-size: 70px;">🐉</span>'; }}/>
           </div>
@@ -697,7 +712,7 @@ export default function App() {
             <p style={{ margin: '0 0 18px 0', color: '#e6d5b8', fontSize: '16px' }}>
               왕국의 영광을 위해 <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>GOU 획득량 +{getPetBonus(state.petLevel)}%</span> 축복을 내립니다.
             </p>
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="pet-actions">
               <button onClick={upgradePet} disabled={!state.petActive} className="btn-neon" style={{ background: 'rgba(123, 24, 24, 0.5)', color: '#fff', cursor: state.petActive ? 'pointer' : 'not-allowed' }}>강화</button>
               <button onClick={toggleAutoPet} disabled={!state.petActive} className={`btn-neon ${state.autoTimers['pet'] ? 'btn-auto-on' : ''}`} style={{ cursor: state.petActive ? 'pointer' : 'not-allowed' }}>{state.autoTimers['pet'] ? 'STOP' : 'AUTO'}</button>
               
@@ -727,8 +742,8 @@ export default function App() {
           </div>
         )}
 
-        <div style={{ padding: '35px', display: 'flex', alignItems: 'center', gap: '30px', opacity: state.castleActive ? 1 : 0.4 }}>
-          <div style={{ width: '120px', height: '120px', background: 'linear-gradient(135deg, rgba(46,26,11,0.5) 0%, rgba(100,20,7,0.5) 100%)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid rgba(251,191,36,0.8)', backdropFilter: 'blur(5px)' }}>
+        <div className="pet-card-inner" style={{ padding: '35px', opacity: state.castleActive ? 1 : 0.4 }}>
+          <div style={{ width: '120px', height: '120px', background: 'linear-gradient(135deg, rgba(46,26,11,0.5) 0%, rgba(100,20,7,0.5) 100%)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid rgba(251,191,36,0.8)', backdropFilter: 'blur(5px)', margin: '0 auto' }}>
              <img src={`${process.env.PUBLIC_URL}/castle.png`} alt={state.castleName} style={{ width: '95%', height: '95%', objectFit: 'contain' }}
                   onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<span style="font-size: 70px;">🏰</span>'; }}/>
           </div>
@@ -740,7 +755,7 @@ export default function App() {
             <p style={{ margin: '0 0 18px 0', color: '#e6d5b8', fontSize: '16px' }}>
               영지의 발전을 위해 <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>GOU 획득량 +{getCastleBonus(state.castleLevel)}%</span> 축복을 내립니다.
             </p>
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="pet-actions">
               <button onClick={upgradeCastle} disabled={!state.castleActive} className="btn-neon" style={{ background: 'rgba(123, 24, 24, 0.5)', color: '#fff', cursor: state.castleActive ? 'pointer' : 'not-allowed' }}>강화</button>
               <button onClick={toggleAutoCastle} disabled={!state.castleActive} className={`btn-neon ${state.autoTimers['castle'] ? 'btn-auto-on' : ''}`} style={{ cursor: state.castleActive ? 'pointer' : 'not-allowed' }}>{state.autoTimers['castle'] ? 'STOP' : 'AUTO'}</button>
               
