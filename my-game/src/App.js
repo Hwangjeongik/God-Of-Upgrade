@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU: THE KNIGHT'S TALE - COST FIX & CASTLE UNLOCK EDITION (v8.4.0)
- * Update: Fixed Cost Fluctuation (Strictly increasing), Fixed Castle Unlock Bug, Added Pet/Castle Probabilities
+ * GOU: THE KNIGHT'S TALE - PERFECT WALLET & COST SCALING EDITION (v8.5.0)
+ * Update: Removed Splash Screen, Fixed Wallet Modal, Smoothed Cost Curve, Added Discount Info
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -16,8 +16,9 @@ export default function App() {
     { name: '화산', mult: 12, req: { atk: 230, hp: 2300, def: 115, acc: 46, sum: 125 } }
   ], []);
 
+  // 🔴 화면 시작을 'loading'이 아닌 'wallet'으로 강제 고정 (로딩창 삭제)
   const [state, setState] = useState({
-    screen: 'loading', 
+    screen: 'wallet', 
     walletAddress: "",
     balance: 50000000000,
     burned: 1990000000, 
@@ -48,6 +49,7 @@ export default function App() {
   const [imageErrors, setImageErrors] = useState({});
   const handleImgError = (id) => setImageErrors(prev => ({ ...prev, [id]: true }));
 
+  // 🔴 모달 객체에 wallet 상태 정상 복구
   const [modals, setModals] = useState({ rank: false, prob: false, token: false, wallet: false });
   const [anims, setAnims] = useState({});
 
@@ -101,32 +103,32 @@ export default function App() {
     return { pool: cost * r.pool, burn: cost * r.burn, jackpot: cost * r.jackpot, lp: cost * r.lp, reserve: cost * r.reserve };
   }, [hState.rates]);
 
-  // 🔥 비용 들쑥날쑥 버그 완벽 해결 (절대 떨어지지 않고 정직하게 증가하는 스케일 방식)
+  // 🔥 비용 들쑥날쑥 완벽 수정 (절대 오르락내리락 하지 않는 스무스한 증가 곡선 적용)
   const getCost = useCallback((lvl, nLvl) => {
     let baseCost = 0;
-    if (lvl < 10) baseCost = 1000 + (lvl * 100);
-    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
-    else baseCost = 100000 + ((lvl - 20) * 10000);
+    if (lvl < 10) baseCost = 1000 + (lvl * 150);
+    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1500);
+    else baseCost = 100000 + ((lvl - 20) * 15000);
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
   }, [hState.mult]);
 
   const getPetCost = useCallback((lvl, nLvl) => {
     let baseCost = 0;
-    if (lvl < 10) baseCost = 100 + (lvl * 10);
-    else if (lvl < 20) baseCost = 1000 + ((lvl - 10) * 100);
-    else if (lvl < 30) baseCost = 10000 + ((lvl - 20) * 1000);
-    else if (lvl < 40) baseCost = 100000 + ((lvl - 30) * 10000);
-    else baseCost = 1000000 + ((lvl - 40) * 100000);
+    if (lvl < 10) baseCost = 100 + (lvl * 20);
+    else if (lvl < 20) baseCost = 1000 + ((lvl - 10) * 200);
+    else if (lvl < 30) baseCost = 10000 + ((lvl - 20) * 2000);
+    else if (lvl < 40) baseCost = 100000 + ((lvl - 30) * 20000);
+    else baseCost = 1000000 + ((lvl - 40) * 200000);
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
   }, [hState.mult]);
 
   const getCastleCost = useCallback((lvl, nLvl) => {
     let baseCost = 0;
-    if (lvl < 10) baseCost = 1000 + (lvl * 100);
-    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
-    else if (lvl < 30) baseCost = 100000 + ((lvl - 20) * 10000);
-    else if (lvl < 40) baseCost = 1000000 + ((lvl - 30) * 100000);
-    else baseCost = 10000000 + ((lvl - 40) * 1000000);
+    if (lvl < 10) baseCost = 1000 + (lvl * 200);
+    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 2000);
+    else if (lvl < 30) baseCost = 100000 + ((lvl - 20) * 20000);
+    else if (lvl < 40) baseCost = 1000000 + ((lvl - 30) * 200000);
+    else baseCost = 10000000 + ((lvl - 40) * 2000000);
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
   }, [hState.mult]);
   
@@ -271,7 +273,7 @@ export default function App() {
     }
   };
 
-  // 🔥 펫 & 성 개방 이벤트 (버그 차단 및 이름 변경 기능 분리)
+  // 펫/성 개방 및 이름 변경
   useEffect(() => {
     if (minLvl >= 30 && !state.petActive) {
       setState(s => ({ ...s, petActive: true }));
@@ -293,6 +295,7 @@ export default function App() {
     if (newName) setState(s => ({ ...s, castleName: newName }));
   };
 
+  // 텔레그램 SDK
   useEffect(() => {
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -302,14 +305,6 @@ export default function App() {
       }
     }
   }, []);
-
-  // ⏱️ 로딩 화면 2초 타이머
-  useEffect(() => {
-    if (state.screen === 'loading') {
-      const timer = setTimeout(() => { setState(s => ({ ...s, screen: 'wallet' })); }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [state.screen]);
 
   // ⚙️ 메인 엔진 루프
   useEffect(() => {
@@ -349,6 +344,7 @@ export default function App() {
     alert("💱 GOU/TON DEX 스왑 거래소\n\n시즌 종료 직후 유동성 풀이 활성화됩니다!");
   };
 
+  // 🔴 다중 지갑 선택 완료 핸들러
   const selectWallet = (walletName) => {
     setModals(m => ({ ...m, wallet: false }));
     setState(s => ({ ...s, screen: 'game', walletAddress: `EQD...${Math.floor(Math.random()*999)}` }));
@@ -361,24 +357,7 @@ export default function App() {
   }, [state.userName, state.userTitle, state.castleLevel, state.petLevel, currentStats.sum, mockRankings]);
 
   // ==========================================
-  // 🟢 1. 꽉 찬 전체화면 로딩 (Splash)
-  // ==========================================
-  if (state.screen === 'loading') {
-    return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fbbf24', fontFamily: "'Cinzel', serif", zIndex: 9999 }}>
-        <img src={`${process.env.PUBLIC_URL}/splash.png`} alt="Splash" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} 
-             onError={(e) => { e.target.style.display = 'none'; }} />
-        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: '60px', marginBottom: '20px' }}>⚔️</div>
-          <h1 style={{ letterSpacing: '3px', textShadow: '0 0 20px #000', margin: '0 0 10px 0', fontSize: '24px' }}>GOD OF UPGRADE</h1>
-          <p style={{ color: '#aaa', textShadow: '0 0 10px #000', fontWeight: 'bold', fontSize: '13px' }}>엔진을 예열하는 중입니다...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ==========================================
-  // 🟢 2. 지갑 연동 화면
+  // 🟢 1. 지갑 연동 화면 (사각 로딩창 삭제, 앱 켜자마자 바로 꽉 차게 진입)
   // ==========================================
   if (state.screen === 'wallet') {
     return (
@@ -396,22 +375,25 @@ export default function App() {
         <p style={{ margin: '10px 0 30px 0', color: '#aaa', textAlign: 'center', fontSize: '13px', padding: '0 20px', lineHeight: '1.5', wordBreak: 'keep-all' }}>
           시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.<br/>TON 생태계 지갑을 연결하여 영지를 활성화하십시오.
         </p>
+        
+        {/* 지갑 모달창을 띄우는 메인 버튼 */}
         <button onClick={() => setModals(m => ({ ...m, wallet: true }))} 
                 style={{ background: '#0098EA', color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '10px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 0 15px rgba(0,152,234,0.5)', zIndex: 10 }}>
           TON 지갑 연결하기
         </button>
 
+        {/* 텔레그램 화면 강제 압축형 다중 지갑 선택 모달 */}
         {modals.wallet && (
           <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', background: 'rgba(20,20,25,0.98)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', padding: '15px 15px calc(15px + env(safe-area-inset-bottom))', zIndex: 9999, boxShadow: '0 -5px 20px rgba(0,0,0,0.8)', borderTop: '1px solid #0098EA', boxSizing: 'border-box' }}>
             <h3 style={{ margin: '0 0 12px 0', color: '#fff', textAlign: 'center', fontSize: '15px' }}>지갑 선택</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <button onClick={() => selectWallet('Telegram Wallet')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(0,152,234,0.1)', border: '1px solid #0098EA', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+              <button onClick={() => selectWallet('Telegram Wallet')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(0,152,234,0.1)', border: '1px solid #0098EA', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxSizing: 'border-box', cursor: 'pointer' }}>
                 <span>Telegram Wallet</span> <span style={{fontSize: '16px'}}>🔷</span>
               </button>
-              <button onClick={() => selectWallet('Tonkeeper')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+              <button onClick={() => selectWallet('Tonkeeper')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxSizing: 'border-box', cursor: 'pointer' }}>
                 <span>Tonkeeper</span> <span style={{fontSize: '16px'}}>🛡️</span>
               </button>
-              <button onClick={() => selectWallet('MyTonWallet')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+              <button onClick={() => selectWallet('MyTonWallet')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxSizing: 'border-box', cursor: 'pointer' }}>
                 <span>MyTonWallet</span> <span style={{fontSize: '16px'}}>💼</span>
               </button>
             </div>
@@ -423,7 +405,7 @@ export default function App() {
   }
 
   // ==========================================
-  // 🟢 3. 메인 게임 화면
+  // 🟢 2. 메인 게임 화면
   // ==========================================
   return (
     <div className="main-wrap" style={{ 
@@ -584,6 +566,10 @@ export default function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>비용</span><span>{getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
                 </div>
+                {/* 🔴 명확한 할인 안내 텍스트 */}
+                <div style={{ fontSize: '9px', color: '#06b6d4', marginTop: '2px', textAlign: 'center' }}>
+                  목걸이 -{(gears[5].lvl * 0.5).toFixed(1)}% 적용
+                </div>
               </div>
               
               <div style={{ display: 'flex', gap: '6px', width: '100%', marginTop: '6px' }}>
@@ -610,6 +596,7 @@ export default function App() {
           <div style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
             획득량 <span style={{color: '#06b6d4', fontWeight: 'bold'}}>+{getPetBonus(state.petLevel)}%</span><br/>
             비용: {getPetCost(state.petLevel, gears[5].lvl).toLocaleString()} | 확률: {(getPetRate(state.petLevel, gears[6].lvl)*100).toFixed(1)}%
+            <div style={{ fontSize: '9px', color: '#06b6d4', marginTop: '2px' }}>목걸이 -{(gears[5].lvl * 0.5).toFixed(1)}% 적용됨</div>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -635,6 +622,7 @@ export default function App() {
           <div style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
             획득량 <span style={{color: '#06b6d4', fontWeight: 'bold'}}>+{getCastleBonus(state.castleLevel)}%</span><br/>
             비용: {getCastleCost(state.castleLevel, gears[5].lvl).toLocaleString()} | 확률: {(getPetRate(state.castleLevel, gears[6].lvl)*100).toFixed(1)}%
+            <div style={{ fontSize: '9px', color: '#06b6d4', marginTop: '2px' }}>목걸이 -{(gears[5].lvl * 0.5).toFixed(1)}% 적용됨</div>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
             <div style={{ display: 'flex', gap: '10px' }}>
