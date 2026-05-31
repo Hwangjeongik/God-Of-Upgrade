@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU3: THE KNIGHT'S TALE - FULLSCREEN SPLASH & BOTTOM NAV EDITION (v8.2.0)
- * Update: Fullscreen Splash Image, Bottom Navigation Bar, Modal Z-Index fix, UI Alignment
+ * GOU3: THE KNIGHT'S TALE - MULTI-WALLET & 1:1 RATIO EDITION (v8.3.0)
+ * Update: Multi-Wallet Connect UI, Seamless Fullscreen Splash, 1:1 Image Aspect Ratio
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -48,7 +48,8 @@ export default function App() {
   const [imageErrors, setImageErrors] = useState({});
   const handleImgError = (id) => setImageErrors(prev => ({ ...prev, [id]: true }));
 
-  const [modals, setModals] = useState({ rank: false, prob: false, token: false });
+  // 모달 제어에 wallet(지갑선택창) 추가
+  const [modals, setModals] = useState({ rank: false, prob: false, token: false, wallet: false });
   const [anims, setAnims] = useState({});
 
   const triggerAnim = useCallback((id, type) => {
@@ -299,7 +300,12 @@ export default function App() {
   }, [state.screen, currentStats, totalBonusPct, checkHunt, minLvl, hState.mult, state.adBuffEndTime, state.lastJackpotDate, state.jackpot]);
 
   const handleDEXClick = () => {
-    alert("💱 GOU/TON DEX 스왑 거래소\n\n사령관님이 획득하신 GOU 코인을 TON 코인으로 즉시 스왑할 수 있는 유동성 풀이 시즌 종료 직후 활성화됩니다!");
+    alert("💱 GOU/TON DEX 스왑 거래소\n\n시즌 종료 직후 유동성 풀이 활성화됩니다!");
+  };
+
+  const selectWallet = (walletName) => {
+    setModals(m => ({ ...m, wallet: false }));
+    setState(s => ({ ...s, screen: 'game', walletAddress: `EQD...${Math.floor(Math.random()*999)}` }));
   };
 
   const sortedRankings = useMemo(() => {
@@ -313,33 +319,51 @@ export default function App() {
   // ==========================================
   if (state.screen === 'loading') {
     return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fbbf24', fontFamily: "'Cinzel', serif", zIndex: 9999 }}>
-        <img src={`${process.env.PUBLIC_URL}/splash.png`} alt="Splash" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} 
-             onError={(e) => { e.target.style.display = 'none'; }} />
-        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: '60px', marginBottom: '20px' }}>⚔️</div>
-          <h1 style={{ letterSpacing: '3px', textShadow: '0 0 20px #000', margin: '0 0 10px 0' }}>GOD OF UPGRADE 3</h1>
-          <p style={{ color: '#aaa', textShadow: '0 0 10px #000', fontWeight: 'bold' }}>엔진을 예열하는 중입니다...</p>
-        </div>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000', zIndex: 9999 }}>
+        <img src={`${process.env.PUBLIC_URL}/splash.png`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+             onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<div style="color:#fbbf24; display:flex; height:100%; align-items:center; justify-content:center; font-size:20px; font-family:\'Cinzel\', serif;">LOADING...</div>'; }} />
       </div>
     );
   }
 
   // ==========================================
-  // 🟢 2. 지갑 연동 화면
+  // 🟢 2. 지갑 연동 화면 (사각 테두리 제거 및 배경 통합)
   // ==========================================
   if (state.screen === 'wallet') {
     return (
-      <div style={{ background: '#111', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8', fontFamily: "'Cinzel', serif" }}>
+      <div style={{ 
+        backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.7), rgba(26, 15, 20, 0.9)), url("${process.env.PUBLIC_URL}/background.jpg")`,
+        backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed',
+        height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8', fontFamily: "'Cinzel', serif" 
+      }}>
         {imageErrors['ton'] ? <div style={{ fontSize: '80px', marginBottom: '20px' }}>💎</div> : <img src={`${process.env.PUBLIC_URL}/ton_logo.png`} alt="TON" style={{ width: '100px', marginBottom: '30px' }} onError={() => handleImgError('ton')} />}
-        <h1 style={{ color: '#fbbf24', textAlign: 'center', letterSpacing: '2px' }}>GOD OF UPGRADE 3</h1>
-        <p style={{ margin: '20px 0 40px 0', color: '#aaa', textAlign: 'center', fontSize: '14px', padding: '0 20px' }}>
-          시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.<br/>TON 지갑을 연결하여 영지를 활성화하십시오.
+        <h1 style={{ color: '#fbbf24', textAlign: 'center', letterSpacing: '2px', textShadow: '0 0 10px #fbbf24' }}>GOD OF UPGRADE 3</h1>
+        <p style={{ margin: '20px 0 40px 0', color: '#aaa', textAlign: 'center', fontSize: '14px', padding: '0 20px', lineHeight: '1.6' }}>
+          시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.<br/>TON 생태계 지갑을 연결하여 영지를 활성화하십시오.
         </p>
-        <button onClick={() => setState(s => ({...s, screen: 'game', walletAddress: "EQD...a1b2"}))} 
-                style={{ background: '#0098EA', color: '#fff', border: 'none', padding: '15px 40px', borderRadius: '12px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 0 20px rgba(0,152,234,0.5)' }}>
+        <button onClick={() => setModals(m => ({ ...m, wallet: true }))} 
+                style={{ background: '#0098EA', color: '#fff', border: 'none', padding: '15px 40px', borderRadius: '12px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 0 20px rgba(0,152,234,0.5)', zIndex: 10 }}>
           TON 지갑 연결하기
         </button>
+
+        {/* 다중 지갑 선택 모달 (Bottom Sheet Style) */}
+        {modals.wallet && (
+          <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', background: 'rgba(20,20,25,0.95)', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '20px', zIndex: 9999, boxShadow: '0 -10px 30px rgba(0,0,0,0.8)', borderTop: '1px solid #0098EA' }}>
+            <h3 style={{ margin: '0 0 20px 0', color: '#fff', textAlign: 'center' }}>지갑 선택</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button onClick={() => selectWallet('Telegram Wallet')} style={{ padding: '15px', background: 'rgba(0,152,234,0.1)', border: '1px solid #0098EA', borderRadius: '10px', color: '#fff', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                Telegram Wallet <span>🔷</span>
+              </button>
+              <button onClick={() => selectWallet('Tonkeeper')} style={{ padding: '15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '10px', color: '#fff', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                Tonkeeper <span>🛡️</span>
+              </button>
+              <button onClick={() => selectWallet('MyTonWallet')} style={{ padding: '15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '10px', color: '#fff', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                MyTonWallet <span>💼</span>
+              </button>
+            </div>
+            <button onClick={() => setModals(m => ({ ...m, wallet: false }))} style={{ width: '100%', padding: '15px', background: 'transparent', border: 'none', color: '#aaa', marginTop: '10px', fontSize: '16px' }}>취소</button>
+          </div>
+        )}
       </div>
     );
   }
@@ -366,7 +390,7 @@ export default function App() {
         .sticky-header { position: sticky; top: 0; z-index: 100; width: 100%; background: rgba(15,15,20,0.95); border-bottom: 2px solid #fbbf24; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); margin-bottom: 20px; }
         .balance-sticky { font-size: 24px; font-weight: bold; color: #fbbf24; }
         
-        /* 하단 고정 네비게이션 바 (랭킹/확률/토큰) */
+        /* 하단 고정 네비게이션 바 */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15,15,20,0.95); border-top: 1px solid #fbbf24; display: flex; justify-content: space-around; padding: 10px 5px; z-index: 900; backdrop-filter: blur(10px); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         .bottom-nav button { flex: 1; background: transparent; border: none; color: #e6d5b8; font-weight: bold; font-size: 15px; padding: 10px 0; border-right: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
         .bottom-nav button:last-child { border-right: none; }
@@ -384,10 +408,11 @@ export default function App() {
         .gears-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 850px; padding: 0 10px; }
         .gear-card { padding: 15px; border-top: 4px solid #555; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
         
-        /* 이미지 기본 크기 (PC) */
-        .img-box { width: 80px; height: 80px; font-size: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; }
+        /* 🔥 1:1 완벽 고정 비율 이미지 박스 (Aspect Ratio) */
+        .img-box { width: 100%; aspect-ratio: 1 / 1; font-size: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; overflow: hidden; }
+        .img-box img { width: 85%; height: 85%; object-fit: contain; }
         .img-box-gear { background: rgba(0,0,0,0.5); border: 1px solid rgba(197,160,89,0.3); }
-        .img-box-special { width: 100px; height: 100px; font-size: 60px; background: linear-gradient(135deg, rgba(26,11,46,0.5), rgba(59,7,100,0.5)); border: 2px solid rgba(251,191,36,0.5); }
+        .img-box-special { width: 40%; background: linear-gradient(135deg, rgba(26,11,46,0.5), rgba(59,7,100,0.5)); border: 2px solid rgba(251,191,36,0.5); font-size: 60px; }
         
         /* 깔끔한 정렬용 배지 */
         .stat-badge { background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 6px; width: 100%; }
@@ -396,11 +421,11 @@ export default function App() {
           .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
           .hunt-box:nth-child(5) { grid-column: 1 / -1; }
           .gears-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-          .img-box { width: 70px !important; height: 70px !important; font-size: 40px !important; }
+          .img-box-special { width: 35%; }
         }
       `}</style>
 
-      {/* 🔴 STICKY 상단 헤더 (항상 보유량 표시 - 모달 아래로 배치됨) */}
+      {/* 🔴 STICKY 상단 헤더 */}
       <div className="sticky-header">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <div style={{ fontSize: '11px', color: '#06b6d4' }}>{state.walletAddress}</div>
@@ -488,17 +513,16 @@ export default function App() {
         })}
       </div>
 
-      {/* ⚔️ 장비 바둑판 (UI 칼각 정렬 완료) */}
+      {/* ⚔️ 장비 바둑판 (1:1 비율 이미지 박스 완벽 적용) */}
       <div className="gears-grid">
         {gears.map((g, index) => {
           const animClass = anims[g.id] ? `anim-${anims[g.id]}` : '';
           return (
             <div key={g.id} className={`glass-panel gear-card ${animClass}`} style={{ animationDelay: `${index * 0.1}s` }}>
               <div className="img-box img-box-gear">
-                {imageErrors[g.id] ? g.emoji : <img src={`${process.env.PUBLIC_URL}/${g.imgFile}`} alt="" style={{ width: '85%', height: '85%', objectFit: 'contain' }} onError={() => handleImgError(g.id)} />}
+                {imageErrors[g.id] ? g.emoji : <img src={`${process.env.PUBLIC_URL}/${g.imgFile}`} alt="" onError={() => handleImgError(g.id)} />}
               </div>
               
-              {/* 스탯 배지 스타일 적용 */}
               <div className="stat-badge" style={{ color: '#c5a059' }}>{g.stat} <span style={{color: '#fff'}}>+{(g.lvl * g.base).toFixed(1)}{g.unit}</span></div>
               
               <div style={{ fontSize: '15px', fontWeight: 'bold', margin: '6px 0', color: '#fff', minHeight: '20px' }}>
@@ -530,7 +554,7 @@ export default function App() {
         <div className="glass-panel" style={{ padding: '20px 15px', marginBottom: '15px', position: 'relative', textAlign: 'center' }}>
           {!state.petActive && <div style={{ position: 'absolute', top:0, left:0, right:0, bottom:0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, borderRadius: '12px', fontWeight: 'bold' }}>🔒 장비 ALL 30강 달성 시 개방</div>}
           <div className="img-box img-box-special">
-            {imageErrors['pet'] ? '🐉' : <img src={`${process.env.PUBLIC_URL}/pet.png`} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={() => handleImgError('pet')} />}
+            {imageErrors['pet'] ? '🐉' : <img src={`${process.env.PUBLIC_URL}/pet.png`} alt="" onError={() => handleImgError('pet')} />}
           </div>
           <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '20px' }}>{state.petName} <span style={{fontSize: '14px', color: '#fff'}}>Lv.{state.petLevel}</span></h3>
           <div style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
@@ -553,7 +577,7 @@ export default function App() {
         <div className="glass-panel" style={{ padding: '20px 15px', position: 'relative', textAlign: 'center' }}>
           {!state.castleActive && <div style={{ position: 'absolute', top:0, left:0, right:0, bottom:0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, borderRadius: '12px', fontWeight: 'bold' }}>🔒 펫 50강 달성 시 개방</div>}
           <div className="img-box img-box-special">
-            {imageErrors['castle'] ? '🏰' : <img src={`${process.env.PUBLIC_URL}/castle.png`} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={() => handleImgError('castle')} />}
+            {imageErrors['castle'] ? '🏰' : <img src={`${process.env.PUBLIC_URL}/castle.png`} alt="" onError={() => handleImgError('castle')} />}
           </div>
           <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '20px' }}>{state.castleName || "위대한 군주의 성"} <span style={{fontSize: '14px', color: '#fff'}}>Lv.{state.castleLevel}</span></h3>
           <div style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
@@ -574,7 +598,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* 📱 하단 고정 메뉴 바 (랭킹/확률/토큰 가려짐 원천 해결) */}
+      {/* 📱 하단 고정 메뉴 바 */}
       <div className="bottom-nav">
         <button onClick={() => setModals(m => ({...m, rank: true}))}>🏆 랭킹</button>
         <button onClick={() => setModals(m => ({...m, prob: true}))}>📊 확률/비용</button>
