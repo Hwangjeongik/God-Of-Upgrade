@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU: THE KNIGHT'S TALE - WALLET UI MICRO-COMPACT EDITION (v8.3.2)
- * Update: Ultra-compact Wallet Selection Modal, Word-break fix, Strict Border-box
+ * GOU: THE KNIGHT'S TALE - COST FIX & CASTLE UNLOCK EDITION (v8.4.0)
+ * Update: Fixed Cost Fluctuation (Strictly increasing), Fixed Castle Unlock Bug, Added Pet/Castle Probabilities
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -30,7 +30,7 @@ export default function App() {
     showTitleInput: false,
 
     petActive: true, petLevel: 49, petName: "고대 황금 드래곤", petHuntEndTime: 0,
-    castleActive: false, castleLevel: 0, castleName: "", castleHuntEndTime: 0,
+    castleActive: false, castleLevel: 0, castleName: "위대한 군주의 성", castleHuntEndTime: 0,
 
     adBuffEndTime: 0, settlementLogs: [], lastJackpotDate: null 
   });
@@ -101,9 +101,34 @@ export default function App() {
     return { pool: cost * r.pool, burn: cost * r.burn, jackpot: cost * r.jackpot, lp: cost * r.lp, reserve: cost * r.reserve };
   }, [hState.rates]);
 
-  const getCost = useCallback((lvl, nLvl) => Math.floor(((lvl < 10 ? 1000 : lvl < 20 ? 10000 : 100000) + ((lvl % 10) * 100)) * (1 - (nLvl * 0.005)) * hState.mult), [hState.mult]);
-  const getPetCost = useCallback((lvl, nLvl) => Math.floor(((lvl < 9 ? 100+(lvl*10) : lvl < 19 ? 1000+((lvl%10)*100) : lvl < 29 ? 10000+((lvl%10)*1000) : lvl < 39 ? 100000+((lvl%10)*10000) : 1000000+((lvl%10)*100000))) * (1 - (nLvl * 0.005)) * hState.mult), [hState.mult]);
-  const getCastleCost = useCallback((lvl, nLvl) => Math.floor(((lvl < 9 ? 1000+(lvl*100) : lvl < 19 ? 10000+((lvl%10)*1000) : lvl < 29 ? 100000+((lvl%10)*10000) : lvl < 39 ? 1000000+((lvl%10)*100000) : 10000000+((lvl%10)*1000000))) * (1 - (nLvl * 0.005)) * hState.mult), [hState.mult]);
+  // 🔥 비용 들쑥날쑥 버그 완벽 해결 (절대 떨어지지 않고 정직하게 증가하는 스케일 방식)
+  const getCost = useCallback((lvl, nLvl) => {
+    let baseCost = 0;
+    if (lvl < 10) baseCost = 1000 + (lvl * 100);
+    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
+    else baseCost = 100000 + ((lvl - 20) * 10000);
+    return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
+  }, [hState.mult]);
+
+  const getPetCost = useCallback((lvl, nLvl) => {
+    let baseCost = 0;
+    if (lvl < 10) baseCost = 100 + (lvl * 10);
+    else if (lvl < 20) baseCost = 1000 + ((lvl - 10) * 100);
+    else if (lvl < 30) baseCost = 10000 + ((lvl - 20) * 1000);
+    else if (lvl < 40) baseCost = 100000 + ((lvl - 30) * 10000);
+    else baseCost = 1000000 + ((lvl - 40) * 100000);
+    return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
+  }, [hState.mult]);
+
+  const getCastleCost = useCallback((lvl, nLvl) => {
+    let baseCost = 0;
+    if (lvl < 10) baseCost = 1000 + (lvl * 100);
+    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
+    else if (lvl < 30) baseCost = 100000 + ((lvl - 20) * 10000);
+    else if (lvl < 40) baseCost = 1000000 + ((lvl - 30) * 100000);
+    else baseCost = 10000000 + ((lvl - 40) * 1000000);
+    return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
+  }, [hState.mult]);
   
   const getRate = useCallback((lvl, rLvl) => Math.min(0.99, ((lvl < 5 ? 1.0 : lvl < 10 ? 0.7 : lvl < 15 ? 0.6 : lvl < 20 ? 0.5 : [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][lvl - 20]) + (rLvl * 0.001))), []);
   const getPetRate = useCallback((lvl, ringLvl) => Math.min(0.99, (lvl < 5 ? 1.0 : lvl < 10 ? 0.7 : lvl < 15 ? 0.65 : lvl < 20 ? 0.6 : lvl < 25 ? 0.55 : lvl < 30 ? 0.5 : lvl < 35 ? 0.45 : lvl < 40 ? 0.4 : ([0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 41] || 0.1)) + (ringLvl * 0.001)), []);
@@ -246,6 +271,28 @@ export default function App() {
     }
   };
 
+  // 🔥 펫 & 성 개방 이벤트 (버그 차단 및 이름 변경 기능 분리)
+  useEffect(() => {
+    if (minLvl >= 30 && !state.petActive) {
+      setState(s => ({ ...s, petActive: true }));
+      alert("🐉 전설의 동반자(Pet)가 깨어났습니다! 연필 아이콘을 눌러 이름을 변경해보세요.");
+    }
+    if (state.petLevel >= 50 && !state.castleActive) {
+      setState(s => ({ ...s, castleActive: true }));
+      alert("🎉 신의 경지(펫 50강) 도달!\n위대한 성(Castle)이 개방되었습니다!");
+    }
+  }, [minLvl, state.petLevel, state.petActive, state.castleActive]);
+
+  const renamePet = () => {
+    const newName = prompt("펫의 이름을 지어주세요:", state.petName);
+    if (newName) setState(s => ({ ...s, petName: newName }));
+  };
+
+  const renameCastle = () => {
+    const newName = prompt("성의 이름을 지어주세요:", state.castleName);
+    if (newName) setState(s => ({ ...s, castleName: newName }));
+  };
+
   useEffect(() => {
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -354,18 +401,17 @@ export default function App() {
           TON 지갑 연결하기
         </button>
 
-        {/* 텔레그램 화면 강제 압축형 지갑 선택 모달 */}
         {modals.wallet && (
           <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', background: 'rgba(20,20,25,0.98)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', padding: '15px 15px calc(15px + env(safe-area-inset-bottom))', zIndex: 9999, boxShadow: '0 -5px 20px rgba(0,0,0,0.8)', borderTop: '1px solid #0098EA', boxSizing: 'border-box' }}>
             <h3 style={{ margin: '0 0 12px 0', color: '#fff', textAlign: 'center', fontSize: '15px' }}>지갑 선택</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <button onClick={() => selectWallet('Telegram Wallet')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(0,152,234,0.1)', border: '1px solid #0098EA', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxSizing: 'border-box', cursor: 'pointer' }}>
+              <button onClick={() => selectWallet('Telegram Wallet')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(0,152,234,0.1)', border: '1px solid #0098EA', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                 <span>Telegram Wallet</span> <span style={{fontSize: '16px'}}>🔷</span>
               </button>
-              <button onClick={() => selectWallet('Tonkeeper')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxSizing: 'border-box', cursor: 'pointer' }}>
+              <button onClick={() => selectWallet('Tonkeeper')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                 <span>Tonkeeper</span> <span style={{fontSize: '16px'}}>🛡️</span>
               </button>
-              <button onClick={() => selectWallet('MyTonWallet')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxSizing: 'border-box', cursor: 'pointer' }}>
+              <button onClick={() => selectWallet('MyTonWallet')} style={{ width: '100%', padding: '10px 15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '8px', color: '#fff', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                 <span>MyTonWallet</span> <span style={{fontSize: '16px'}}>💼</span>
               </button>
             </div>
@@ -402,7 +448,7 @@ export default function App() {
         .bottom-nav button:last-child { border-right: none; }
         .bottom-nav button:active { color: #fbbf24; }
         
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; alignItems: center; justifyContent: center; padding: 20px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; alignItems: center; justify-content: center; padding: 20px; }
         
         .grid-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 850px; padding: 0 10px; margin-bottom: 15px; }
         .stat-box { padding: 15px; text-align: center; border-radius: 8px; }
@@ -558,7 +604,9 @@ export default function App() {
           <div className="img-box img-box-special">
             {imageErrors['pet'] ? '🐉' : <img src={`${process.env.PUBLIC_URL}/pet.png`} alt="" onError={() => handleImgError('pet')} />}
           </div>
-          <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '20px' }}>{state.petName} <span style={{fontSize: '14px', color: '#fff'}}>Lv.{state.petLevel}</span></h3>
+          <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '20px', cursor: 'pointer' }} onClick={renamePet}>
+            {state.petName} ✏️ <span style={{fontSize: '14px', color: '#fff'}}>Lv.{state.petLevel}</span>
+          </h3>
           <div style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
             획득량 <span style={{color: '#06b6d4', fontWeight: 'bold'}}>+{getPetBonus(state.petLevel)}%</span><br/>
             비용: {getPetCost(state.petLevel, gears[5].lvl).toLocaleString()} | 확률: {(getPetRate(state.petLevel, gears[6].lvl)*100).toFixed(1)}%
@@ -581,7 +629,9 @@ export default function App() {
           <div className="img-box img-box-special">
             {imageErrors['castle'] ? '🏰' : <img src={`${process.env.PUBLIC_URL}/castle.png`} alt="" onError={() => handleImgError('castle')} />}
           </div>
-          <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '20px' }}>{state.castleName || "위대한 군주의 성"} <span style={{fontSize: '14px', color: '#fff'}}>Lv.{state.castleLevel}</span></h3>
+          <h3 style={{ margin: '10px 0', color: '#fbbf24', fontSize: '20px', cursor: 'pointer' }} onClick={renameCastle}>
+            {state.castleName} ✏️ <span style={{fontSize: '14px', color: '#fff'}}>Lv.{state.castleLevel}</span>
+          </h3>
           <div style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
             획득량 <span style={{color: '#06b6d4', fontWeight: 'bold'}}>+{getCastleBonus(state.castleLevel)}%</span><br/>
             비용: {getCastleCost(state.castleLevel, gears[5].lvl).toLocaleString()} | 확률: {(getPetRate(state.castleLevel, gears[6].lvl)*100).toFixed(1)}%
@@ -628,23 +678,43 @@ export default function App() {
 
       {modals.prob && (
         <div className="modal-overlay">
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '25px 20px', background: 'rgba(20,20,25,0.95)' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '25px 20px', background: 'rgba(20,20,25,0.95)', maxHeight: '80vh', overflowY: 'auto' }}>
             <h2 style={{ textAlign: 'center', color: '#06b6d4', marginTop: 0 }}>📊 강화 성공 확률</h2>
             <p style={{fontSize:'11px', color:'#aaa', textAlign: 'center', marginBottom: '20px'}}>* 실제 비용은 반감기 및 목걸이 레벨에 따라 감소합니다.</p>
-            <table style={{ width: '100%', fontSize: '13px', textAlign: 'center', borderCollapse: 'collapse' }}>
+            
+            <h3 style={{color: '#e6d5b8', fontSize: '15px'}}>⚔️ 일반 장비 강화</h3>
+            <table style={{ width: '100%', fontSize: '13px', textAlign: 'center', borderCollapse: 'collapse', marginBottom: '20px' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid #555', color: '#e6d5b8' }}>
-                  <th style={{paddingBottom: '10px'}}>구간</th><th style={{paddingBottom: '10px'}}>성공률</th><th style={{paddingBottom: '10px'}}>기본 비용</th>
+                <tr style={{ borderBottom: '1px solid #555', color: '#fbbf24' }}>
+                  <th style={{paddingBottom: '8px'}}>구간</th><th style={{paddingBottom: '8px'}}>성공률</th><th style={{paddingBottom: '8px'}}>기본 비용</th>
                 </tr>
               </thead>
               <tbody style={{ color: '#fff' }}>
-                <tr><td style={{padding: '10px 0'}}>1~4강</td><td>100%</td><td>1,000</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '10px 0'}}>5~9강</td><td>70%</td><td>1,000</td></tr>
-                <tr><td style={{padding: '10px 0'}}>10~14강</td><td>60%</td><td>10,000</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '10px 0'}}>15~19강</td><td>50%</td><td>10,000</td></tr>
-                <tr><td style={{padding: '10px 0'}}>20~29강</td><td style={{color:'#ef4444'}}>47~20%</td><td>100,000</td></tr>
+                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>1,000</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>1,000</td></tr>
+                <tr><td style={{padding: '8px 0'}}>10~14강</td><td>60%</td><td>10,000</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>15~19강</td><td>50%</td><td>10,000</td></tr>
+                <tr><td style={{padding: '8px 0'}}>20~29강</td><td style={{color:'#ef4444'}}>47~20%</td><td>100,000</td></tr>
               </tbody>
             </table>
+
+            <h3 style={{color: '#e6d5b8', fontSize: '15px'}}>🐉 펫 & 🏰 성 강화</h3>
+            <table style={{ width: '100%', fontSize: '13px', textAlign: 'center', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #555', color: '#fbbf24' }}>
+                  <th style={{paddingBottom: '8px'}}>구간</th><th style={{paddingBottom: '8px'}}>성공률</th><th style={{paddingBottom: '8px'}}>비용 척도</th>
+                </tr>
+              </thead>
+              <tbody style={{ color: '#fff' }}>
+                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>기본</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>기본</td></tr>
+                <tr><td style={{padding: '8px 0'}}>10~19강</td><td>65~60%</td><td>x10 배</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>20~29강</td><td>55~50%</td><td>x100 배</td></tr>
+                <tr><td style={{padding: '8px 0'}}>30~39강</td><td>45~40%</td><td>x1,000 배</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>40~50강</td><td style={{color:'#ef4444'}}>38~20%</td><td>x10,000 배</td></tr>
+              </tbody>
+            </table>
+
             <button onClick={() => setModals(m => ({...m, prob: false}))} className="btn-neon" style={{ marginTop: '25px', borderColor: '#888', color: '#aaa' }}>닫기</button>
           </div>
         </div>
