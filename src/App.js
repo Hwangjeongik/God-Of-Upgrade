@@ -307,30 +307,48 @@ export default function App() {
     return (<div style={{ background: '#111', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><div style={{ fontSize: '50px', marginBottom: '20px' }}>🔗</div><h2>지갑 연결 중...</h2></div>);
   }
 
-  if (state.screen === 'wallet') {
+if (state.screen === 'wallet') {
     return (
-      <div style={{ background: '#111', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8' }}>
-        <h1 style={{ color: '#fbbf24', fontSize: '24px' }}>GOD OF UPGRADE</h1>
-        <button onClick={() => selectWallet('Telegram Wallet')} style={{ background: '#0098EA', color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '10px', marginTop: '20px' }}>지갑 연결하기</button>
+      <div style={{ backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.7), rgba(26, 15, 20, 0.9)), url("/background.jpg")`, backgroundSize: 'cover', backgroundPosition: 'center', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8' }}>
+        <img src="/ton_logo.png" alt="TON" style={{ width: '80px', marginBottom: '20px' }} onError={(e) => {e.target.style.display='none'}} />
+        <h1 style={{ color: '#fbbf24', fontSize: '28px', textShadow: '0 0 10px rgba(251,191,36,0.5)' }}>GOD OF UPGRADE</h1>
+        <p style={{ margin: '10px 0 30px 0', color: '#aaa', textAlign: 'center', fontSize: '13px', padding: '0 20px', lineHeight: '1.6' }}>
+          {IS_PRE_REGISTRATION ? "현재 사전예약 기간입니다.\n지갑을 연결하고 초기 자본을 확보하세요." : "시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.\nTON 지갑을 연결하여 영지를 활성화하십시오."}
+        </p>
+        <button onClick={() => selectWallet('Telegram Wallet')} style={{ background: '#0098EA', color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '10px', fontSize: '16px', fontWeight: 'bold' }}>지갑 연결하기</button>
       </div>
     );
   }
 
-  // 🔥 사전등록 대기실 UI
+  // 🔥 사전등록 대기실 UI (배경화면 및 텍스트 완벽 수정)
   if (state.screen === 'pre_reg') {
     return (
-      <div style={{ background: '#111', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', color: '#e6d5b8' }}>
-        <h2 style={{ color: '#fbbf24' }}>사전등록 완료!</h2><p style={{ color: '#06b6d4', marginBottom: '30px' }}>정식 오픈 대기 중입니다.</p>
-        <div style={{ background: 'rgba(255,255,255,0.1)', padding: '25px', borderRadius: '12px', textAlign: 'center', width: '100%', maxWidth: '400px', marginBottom: '20px' }}>
-          <div style={{ color: '#aaa' }}>보유 자산 (사전예약 보상)</div>
-          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#fbbf24', margin: '10px 0' }}>{Math.floor(state.balance).toLocaleString()} GOU</div>
-          <div style={{ fontSize: '13px' }}>현재 내 초대로 가입한 인원: <span style={{color: '#06b6d4'}}>{state.inviteCount}명</span></div>
+      <div style={{ backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.8), rgba(26, 15, 20, 0.95)), url("/background.jpg")`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '50px 20px', color: '#e6d5b8' }}>
+        <h2 style={{ color: '#fbbf24', fontSize: '26px', textShadow: '0 0 10px rgba(251,191,36,0.5)', margin: '0 0 10px 0' }}>사전등록 완료!</h2>
+        <p style={{ color: '#06b6d4', marginBottom: '30px', fontWeight: 'bold' }}>정식 오픈 대기 중입니다.</p>
+        
+        <div style={{ background: 'rgba(20, 20, 25, 0.6)', backdropFilter: 'blur(10px)', padding: '25px', borderRadius: '12px', textAlign: 'center', width: '100%', maxWidth: '400px', marginBottom: '20px', border: '1px solid rgba(197, 160, 89, 0.3)' }}>
+          <div style={{ color: '#aaa', fontSize: '14px', fontWeight: 'bold' }}>🎁 누적 사전예약 보상</div>
+          <div style={{ fontSize: '38px', fontWeight: 'bold', color: '#fbbf24', margin: '15px 0' }}>
+            {Math.floor(state.balance).toLocaleString()} <span style={{fontSize: '18px', color: '#fff'}}>GOU</span>
+          </div>
+          
+          <div style={{ background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '8px', fontSize: '13px', color: '#aaa', textAlign: 'left', lineHeight: '1.8' }}>
+            ✔️ 가입 기본 보상 : <span style={{color: '#fff', fontWeight: 'bold'}}>100,000 GOU</span><br/>
+            ✔️ 친구 초대 보상 : <span style={{color: '#fff', fontWeight: 'bold'}}>1명당 100,000 GOU</span>
+          </div>
+
+          <div style={{ fontSize: '15px', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
+            현재 내 초대로 가입한 인원 : <span style={{color: '#06b6d4', fontWeight: 'bold', fontSize: '18px'}}>{state.inviteCount}명</span>
+          </div>
         </div>
-        <button onClick={copyReferralLink} style={{ background: 'transparent', border: '1px solid #10b981', color: '#10b981', padding: '12px', width: '100%', maxWidth: '400px', borderRadius: '8px' }}>내 초대 링크 복사하기 🔗</button>
+        
+        <button onClick={copyReferralLink} style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '15px', width: '100%', maxWidth: '400px', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+          내 초대 링크 복사하기 🔗
+        </button>
       </div>
     );
   }
-
   // ---------------- 본 게임 화면 ----------------
   return (
     <div style={{ background: '#111', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '80px' }}>
