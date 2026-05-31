@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU3: THE KNIGHT'S TALE - MULTI-WALLET & 1:1 RATIO EDITION (v8.3.0)
- * Update: Multi-Wallet Connect UI, Seamless Fullscreen Splash, 1:1 Image Aspect Ratio
+ * GOU: THE KNIGHT'S TALE - WALLET UI RESIZE & TITLE FIX (v8.3.1)
+ * Update: Changed Title to "GOD OF UPGRADE", Compacted Wallet Selection Modal
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -48,7 +48,6 @@ export default function App() {
   const [imageErrors, setImageErrors] = useState({});
   const handleImgError = (id) => setImageErrors(prev => ({ ...prev, [id]: true }));
 
-  // 모달 제어에 wallet(지갑선택창) 추가
   const [modals, setModals] = useState({ rank: false, prob: false, token: false, wallet: false });
   const [anims, setAnims] = useState({});
 
@@ -319,15 +318,20 @@ export default function App() {
   // ==========================================
   if (state.screen === 'loading') {
     return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000', zIndex: 9999 }}>
-        <img src={`${process.env.PUBLIC_URL}/splash.png`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-             onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<div style="color:#fbbf24; display:flex; height:100%; align-items:center; justify-content:center; font-size:20px; font-family:\'Cinzel\', serif;">LOADING...</div>'; }} />
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fbbf24', fontFamily: "'Cinzel', serif", zIndex: 9999 }}>
+        <img src={`${process.env.PUBLIC_URL}/splash.png`} alt="Splash" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} 
+             onError={(e) => { e.target.style.display = 'none'; }} />
+        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center' }}>
+          <div style={{ fontSize: '60px', marginBottom: '20px' }}>⚔️</div>
+          <h1 style={{ letterSpacing: '3px', textShadow: '0 0 20px #000', margin: '0 0 10px 0' }}>GOD OF UPGRADE</h1>
+          <p style={{ color: '#aaa', textShadow: '0 0 10px #000', fontWeight: 'bold' }}>엔진을 예열하는 중입니다...</p>
+        </div>
       </div>
     );
   }
 
   // ==========================================
-  // 🟢 2. 지갑 연동 화면 (사각 테두리 제거 및 배경 통합)
+  // 🟢 2. 지갑 연동 화면
   // ==========================================
   if (state.screen === 'wallet') {
     return (
@@ -337,7 +341,12 @@ export default function App() {
         height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8', fontFamily: "'Cinzel', serif" 
       }}>
         {imageErrors['ton'] ? <div style={{ fontSize: '80px', marginBottom: '20px' }}>💎</div> : <img src={`${process.env.PUBLIC_URL}/ton_logo.png`} alt="TON" style={{ width: '100px', marginBottom: '30px' }} onError={() => handleImgError('ton')} />}
-        <h1 style={{ color: '#fbbf24', textAlign: 'center', letterSpacing: '2px', textShadow: '0 0 10px #fbbf24' }}>GOD OF UPGRADE 3</h1>
+        
+        {/* 타이틀 변경 완료 */}
+        <h1 style={{ color: '#fbbf24', textAlign: 'center', letterSpacing: '2px', textShadow: '0 0 10px #fbbf24', padding: '0 10px' }}>
+          GOD OF UPGRADE
+        </h1>
+        
         <p style={{ margin: '20px 0 40px 0', color: '#aaa', textAlign: 'center', fontSize: '14px', padding: '0 20px', lineHeight: '1.6' }}>
           시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.<br/>TON 생태계 지갑을 연결하여 영지를 활성화하십시오.
         </p>
@@ -346,22 +355,22 @@ export default function App() {
           TON 지갑 연결하기
         </button>
 
-        {/* 다중 지갑 선택 모달 (Bottom Sheet Style) */}
+        {/* 콤팩트하게 다이어트한 다중 지갑 선택 모달 */}
         {modals.wallet && (
-          <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', background: 'rgba(20,20,25,0.95)', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '20px', zIndex: 9999, boxShadow: '0 -10px 30px rgba(0,0,0,0.8)', borderTop: '1px solid #0098EA' }}>
-            <h3 style={{ margin: '0 0 20px 0', color: '#fff', textAlign: 'center' }}>지갑 선택</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button onClick={() => selectWallet('Telegram Wallet')} style={{ padding: '15px', background: 'rgba(0,152,234,0.1)', border: '1px solid #0098EA', borderRadius: '10px', color: '#fff', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                Telegram Wallet <span>🔷</span>
+          <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', background: 'rgba(20,20,25,0.95)', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '15px 20px', zIndex: 9999, boxShadow: '0 -10px 30px rgba(0,0,0,0.8)', borderTop: '1px solid #0098EA' }}>
+            <h3 style={{ margin: '0 0 15px 0', color: '#fff', textAlign: 'center', fontSize: '18px' }}>지갑 선택</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button onClick={() => selectWallet('Telegram Wallet')} style={{ padding: '12px', background: 'rgba(0,152,234,0.1)', border: '1px solid #0098EA', borderRadius: '10px', color: '#fff', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                Telegram Wallet <span style={{fontSize: '18px'}}>🔷</span>
               </button>
-              <button onClick={() => selectWallet('Tonkeeper')} style={{ padding: '15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '10px', color: '#fff', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                Tonkeeper <span>🛡️</span>
+              <button onClick={() => selectWallet('Tonkeeper')} style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '10px', color: '#fff', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                Tonkeeper <span style={{fontSize: '18px'}}>🛡️</span>
               </button>
-              <button onClick={() => selectWallet('MyTonWallet')} style={{ padding: '15px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '10px', color: '#fff', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                MyTonWallet <span>💼</span>
+              <button onClick={() => selectWallet('MyTonWallet')} style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #555', borderRadius: '10px', color: '#fff', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                MyTonWallet <span style={{fontSize: '18px'}}>💼</span>
               </button>
             </div>
-            <button onClick={() => setModals(m => ({ ...m, wallet: false }))} style={{ width: '100%', padding: '15px', background: 'transparent', border: 'none', color: '#aaa', marginTop: '10px', fontSize: '16px' }}>취소</button>
+            <button onClick={() => setModals(m => ({ ...m, wallet: false }))} style={{ width: '100%', padding: '12px', background: 'transparent', border: 'none', color: '#aaa', marginTop: '5px', fontSize: '14px' }}>취소</button>
           </div>
         )}
       </div>
@@ -408,7 +417,7 @@ export default function App() {
         .gears-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 850px; padding: 0 10px; }
         .gear-card { padding: 15px; border-top: 4px solid #555; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
         
-        /* 🔥 1:1 완벽 고정 비율 이미지 박스 (Aspect Ratio) */
+        /* 🔥 1:1 완벽 고정 비율 이미지 박스 */
         .img-box { width: 100%; aspect-ratio: 1 / 1; font-size: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; overflow: hidden; }
         .img-box img { width: 85%; height: 85%; object-fit: contain; }
         .img-box-gear { background: rgba(0,0,0,0.5); border: 1px solid rgba(197,160,89,0.3); }
@@ -513,7 +522,7 @@ export default function App() {
         })}
       </div>
 
-      {/* ⚔️ 장비 바둑판 (1:1 비율 이미지 박스 완벽 적용) */}
+      {/* ⚔️ 장비 바둑판 (1:1 비율) */}
       <div className="gears-grid">
         {gears.map((g, index) => {
           const animClass = anims[g.id] ? `anim-${anims[g.id]}` : '';
@@ -606,7 +615,7 @@ export default function App() {
       </div>
 
       {/* ==========================================
-          🧩 각종 모달창 (Z-Index 최상위 강제 고정 9999)
+          🧩 각종 모달창
           ========================================== */}
       {modals.rank && (
         <div className="modal-overlay">
