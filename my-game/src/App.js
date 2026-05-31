@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU3: THE KNIGHT'S TALE - TELEGRAM EXTREME MOBILE OPTIMIZED (v7.0.4)
- * Update: Forced shrinking of all fonts, images, and paddings for Telegram Webview
+ * GOU3: THE KNIGHT'S TALE - GRID INVENTORY & SEASON REWARD EDITION (v7.0.5)
+ * Update: Gear UI compressed to Grid, Jackpot renamed to Season Reward with detailed eligibility UI
  */
 
-const MAX_SUPPLY = 10000000000; // 총 발행량 100억 개
-const HALVING_BURN_THRESHOLD = MAX_SUPPLY * 0.2; // 전체 코인의 20% 소각 시 반감기 발동
+const MAX_SUPPLY = 10000000000; 
+const HALVING_BURN_THRESHOLD = MAX_SUPPLY * 0.2; 
 
 export default function App() {
   const hunts = useMemo(() => [
@@ -356,14 +356,28 @@ export default function App() {
     }
   }, [state.petLevel, state.castleActive, triggerAnim]);
 
+  // 🏆 잭팟 -> 시즌보상으로 완벽 교체 및 실패 사유 구체화
   const processJackpot = useCallback((isAuto = false) => {
     setState(s => {
-      if (s.jackpot <= 0) { if(!isAuto) alert("잭팟 기금이 없습니다."); return s; }
+      if (s.jackpot <= 0) { 
+        if(!isAuto) alert("시즌보상 기금이 비어있습니다."); 
+        return s; 
+      }
+      
       let message = "";
-      if (s.castleLevel >= 50) message = `[정산] 절대 권력(성 50강) 달성!\n잭팟 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
-      else if (s.petLevel >= 50) message = `[정산] 신의 경지(펫 50강) 달성!\n잭팟 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
-      else if (minLvl >= 30) message = `[정산] 전설의 기사(ALL 30강) 자격 증명!\n잭팟 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
-      else { if(!isAuto) alert(`[정산 실패] 자격 미달. ALL 30강 필요.`); return s; }
+      if (s.castleLevel >= 50) {
+        message = `[정산 완료] 절대 권력(성 50강) 달성!\n시즌보상 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
+      } else if (s.petLevel >= 50) {
+        message = `[정산 완료] 신의 경지(펫 50강) 달성!\n시즌보상 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
+      } else if (minLvl >= 30) {
+        message = `[정산 완료] 전설의 기사(ALL 30강) 자격 증명!\n시즌보상 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
+      } else { 
+        if(!isAuto) {
+          alert(`[정산 실패] 수령 조건 미달입니다.\n\n- 필요 조건: 모든 장비 최소 30강 이상\n- 사령관님의 현재 최소 레벨: +${minLvl}`); 
+        }
+        return s; 
+      }
+      
       alert(message);
       return { ...s, balance: s.balance + s.jackpot, jackpot: 0, lastJackpotDate: new Date().toDateString() };
     });
@@ -439,55 +453,57 @@ export default function App() {
         .glass-panel { background: rgba(20, 20, 25, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(197, 160, 89, 0.3); border-radius: 12px; }
         .glass-panel-unlocked { background: rgba(6, 182, 212, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(6, 182, 212, 0.4); }
 
-        /* 데스크탑 기본 크기 설정 */
+        /* 데스크탑 기본 크기 */
         .dash-panel { padding: 30px; margin-bottom: 25px; }
         .treasury-title { font-size: 28px; margin: 20px 0 25px 0; }
         .balance-text { font-size: 52px; margin-bottom: 30px; }
         .grid-hunts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px; }
         .hunt-box { padding: 20px 15px; min-height: 160px; }
-        .hunt-name { font-size: 20px; }
-        .gear-card { display: flex; justify-content: space-between; align-items: center; padding: 24px; margin: 16px 0; }
-        .gear-card-inner { display: flex; align-items: center; gap: 30px; }
-        .img-box-gear { width: 100px; height: 100px; }
-        .item-name { font-size: 24px; }
-        .item-stat { font-size: 14px; }
-        .gear-actions { display: flex; gap: 12px; }
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+
+        /* ⚔️ 장비창 그리드화 (바둑판 배열) */
+        .gears-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 850px; }
+        .gear-card { padding: 15px; border-top: 4px solid #555; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; }
+        .gear-card-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+        .img-box-gear { width: 65px; height: 65px; background: rgba(0,0,0,0.3); border: 1px solid rgba(197,160,89,0.3); border-radius: 12px; display: flex; justify-content: center; align-items: center; }
+        .item-name { font-size: 18px; font-weight: bold; margin: 5px 0; color: #e6d5b8; }
+        .item-stat { font-size: 13px; color: #c5a059; font-weight: bold; }
+        .gear-actions { display: flex; width: 100%; gap: 8px; margin-top: 15px; }
+        .gear-actions .btn-neon { flex: 1; padding: 10px 0; font-size: 14px; }
+        
         .pet-card-inner { display: flex; align-items: center; gap: 30px; padding: 35px; }
         .img-box-special { width: 120px; height: 120px; }
         .special-name { font-size: 28px; }
         .pet-actions { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
 
         /* 📱 반응형 모바일 디자인 (텔레그램 사이즈 극강 최적화) */
         @media (max-width: 768px) {
           .main-wrap { padding: 10px 5px !important; }
           .dash-panel { padding: 15px 10px !important; margin-bottom: 15px !important; }
-          .treasury-title { font-size: 20px !important; margin: 10px 0 15px 0 !important; letter-spacing: 1px !important; }
+          .treasury-title { font-size: 20px !important; margin: 10px 0 15px 0 !important; }
           .balance-text { font-size: 32px !important; margin-bottom: 20px !important; }
           .balance-text span { font-size: 16px !important; }
           
           .grid-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-          .grid-stats > div { padding: 10px !important; }
+          .grid-stats > div { padding: 12px !important; }
+          .grid-stats > div:nth-child(3) { grid-column: 1 / -1; } /* 시즌보상 박스 넓게 */
           .grid-stats > div:last-child { grid-column: 1 / -1; }
-          .grid-stats .stat-value { font-size: 18px !important; }
-          .grid-stats .stat-label { font-size: 12px !important; }
-
+          
           .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; margin-bottom: 15px !important; }
           .hunt-box { padding: 10px !important; min-height: 100px !important; display: flex !important; flex-direction: column !important; justify-content: center !important; }
           .hunt-name { font-size: 14px !important; margin-bottom: 5px !important; }
-          .hunt-box .hunt-stat-grid { grid-template-columns: 1fr 1fr !important; font-size: 10px !important; padding: 6px !important; gap: 4px !important; margin-bottom: 5px !important; }
-          .hunt-box .hunt-bottom-text { font-size: 12px !important; }
-
-          .gear-card { flex-direction: row !important; padding: 12px !important; margin: 10px 0 !important; border-left-width: 3px !important; flex-wrap: wrap; justify-content: center; }
-          .gear-card-inner { flex-direction: row !important; gap: 12px !important; width: 100%; align-items: flex-start !important; }
-          .img-box-gear { width: 55px !important; height: 55px !important; min-width: 55px; border-radius: 8px !important; }
-          .item-name { font-size: 15px !important; margin: 4px 0 !important; }
-          .item-stat { font-size: 11px !important; }
-          .gear-actions { width: 100%; justify-content: space-between !important; margin-top: 10px !important; gap: 8px !important; }
-          .btn-neon { font-size: 12px !important; padding: 6px 0 !important; flex: 1 !important; text-align: center; border-radius: 6px !important; }
           
+          /* 장비창 모바일 그리드 (2열 바둑판) */
+          .gears-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+          .gear-card { padding: 12px 8px !important; border-top: 3px solid #555 !important; }
+          .img-box-gear { width: 55px !important; height: 55px !important; border-radius: 8px !important; }
+          .item-name { font-size: 15px !important; }
+          .item-stat { font-size: 11px !important; }
+          .gear-actions { margin-top: 10px !important; gap: 6px !important; }
+          .gear-actions .btn-neon { font-size: 12px !important; padding: 8px 0 !important; }
+
           .pet-card-inner { flex-direction: row !important; gap: 15px !important; padding: 15px !important; flex-wrap: wrap; }
-          .img-box-special { width: 65px !important; height: 65px !important; min-width: 65px; border-radius: 10px !important; }
+          .img-box-special { width: 65px !important; height: 65px !important; border-radius: 10px !important; }
           .special-name { font-size: 18px !important; margin: 0 0 5px 0 !important; }
           .pet-desc { font-size: 12px !important; margin: 0 0 10px 0 !important; }
           .pet-actions { width: 100%; justify-content: space-between !important; gap: 8px !important; }
@@ -514,23 +530,38 @@ export default function App() {
         
         <div className="grid-stats">
           <div style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '8px', textAlign: 'center' }}>
-            <div className="stat-label" style={{ color: '#06b6d4', fontWeight: 'bold', marginBottom: '4px' }}>📈 일일 획득량</div>
-            <div className="stat-value" style={{ color: '#fff', fontWeight: 'bold' }}>+{dailyGainDisplay.toLocaleString()}</div>
+            <div style={{ color: '#06b6d4', fontWeight: 'bold', marginBottom: '4px', fontSize: '14px' }}>📈 일일 획득량</div>
+            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>+{dailyGainDisplay.toLocaleString()}</div>
           </div>
           <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', textAlign: 'center' }}>
-            <div className="stat-label" style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '4px' }}>🔥 누적 소각</div>
-            <div className="stat-value" style={{ color: '#fff', fontWeight: 'bold' }}>{Math.floor(state.burned).toLocaleString()}</div>
+            <div style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '4px', fontSize: '14px' }}>🔥 누적 소각</div>
+            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>{Math.floor(state.burned).toLocaleString()}</div>
           </div>
-          <div style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '8px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div className="stat-label" style={{ color: '#fbbf24', fontWeight: 'bold', marginBottom: '4px' }}>
-              🏆 잭팟 기금 
-              <button onClick={() => processJackpot(false)} style={{background:'#fbbf24', color:'#000', border:'none', borderRadius:'4px', marginLeft:'5px', padding:'2px 6px', fontSize:'11px'}}>정산</button>
+          
+          {/* 🏆 시즌보상 구역 (확대 및 사유 명시) */}
+          <div style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.5)', borderRadius: '8px', textAlign: 'center', padding: '15px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ color: '#fbbf24', fontWeight: 'bold', marginBottom: '8px', fontSize: '18px', textShadow: '0 0 5px rgba(251,191,36,0.5)' }}>
+              🏆 시즌 보상
             </div>
-            <div className="stat-value" style={{ color: '#fff', fontWeight: 'bold' }}>{Math.floor(state.jackpot).toLocaleString()}</div>
+            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '26px', marginBottom: '12px' }}>
+              {Math.floor(state.jackpot).toLocaleString()}
+            </div>
+            
+            <button onClick={() => processJackpot(false)} 
+                    style={{ background: '#fbbf24', color: '#000', border: 'none', borderRadius: '6px', padding: '12px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 0 10px rgba(251,191,36,0.4)', transition: 'all 0.2s' }}>
+              보상 정산 받기
+            </button>
+            
+            <div style={{ marginTop: '10px', fontSize: '13px', fontWeight: 'bold', color: minLvl >= 30 ? '#06b6d4' : '#ef4444' }}>
+              {minLvl >= 30 
+                ? "✅ 현재 정산 수령이 가능합니다!" 
+                : `❌ 수령 불가 (필요: ALL 30강 / 현재: +${minLvl})`}
+            </div>
           </div>
+
           <div style={{ background: 'rgba(197,160,89,0.1)', border: '1px solid rgba(197,160,89,0.3)', borderRadius: '8px', textAlign: 'center' }}>
-            <div className="stat-label" style={{ color: '#c5a059', fontWeight: 'bold', marginBottom: '4px' }}>⚔️ 통합 보너스 (+{totalBonusPct}%)</div>
-            <div className="stat-value" style={{ color: '#fff', fontSize: '13px' }}>장비 +{setBonus}% | 펫 +{petBonus}% | 성 +{castleBonus}%</div>
+            <div style={{ color: '#c5a059', fontWeight: 'bold', marginBottom: '4px', fontSize: '14px' }}>⚔️ 통합 보너스 (+{totalBonusPct}%)</div>
+            <div style={{ color: '#fff', fontSize: '13px' }}>장비 +{setBonus}% | 펫 +{petBonus}% | 성 +{castleBonus}%</div>
           </div>
         </div>
       </div>
@@ -550,60 +581,45 @@ export default function App() {
               <b className="hunt-name" style={{ display: 'block', color: isActive ? '#fbbf24' : (isUnlocked ? '#fff' : '#888'), textAlign: 'center', marginBottom: '8px' }}>
                 {isActive ? '⚔️ ' : (isUnlocked ? '🔓 ' : '🔒 ')}{h.name}
               </b>
-
               {h.name === '초원' ? (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? '#fbbf24' : '#aaa', fontSize: '12px' }}>
-                  기본 개방 영토
-                </div>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? '#fbbf24' : '#aaa', fontSize: '12px' }}>기본 개방 영토</div>
               ) : (
-                <div className="hunt-stat-grid" style={{ 
-                  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', color: '#e6d5b8', 
-                  background: 'rgba(0, 0, 0, 0.6)', padding: '10px', borderRadius: '8px', marginBottom: '8px' 
-                }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', color: '#e6d5b8', background: 'rgba(0, 0, 0, 0.6)', padding: '10px', borderRadius: '8px', marginBottom: '8px', fontSize: '11px' }}>
                   <div style={{textAlign: 'left'}}>공 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.atk}</span></div>
                   <div style={{textAlign: 'right'}}>체 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.hp}</span></div>
                   <div style={{textAlign: 'left'}}>방 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.def}</span></div>
                   <div style={{textAlign: 'right'}}>명 <span style={{color: currentStats.acc >= h.req.acc ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.acc}</span></div>
                 </div>
               )}
-
               <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
-                <div className="hunt-bottom-text" style={{ color: currentStats.sum >= h.req.sum ? '#06b6d4' : '#ef4444', fontWeight: 'bold', fontSize: '13px' }}>
-                  총합 {h.req.sum}
-                </div>
-                <div className="hunt-bottom-text" style={{ marginTop: '4px', color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', fontSize: '14px' }}>
-                  수익 X{h.mult}
-                </div>
+                <div style={{ color: currentStats.sum >= h.req.sum ? '#06b6d4' : '#ef4444', fontWeight: 'bold', fontSize: '13px' }}>총합 {h.req.sum}</div>
+                <div style={{ marginTop: '4px', color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', fontSize: '14px' }}>수익 X{h.mult}</div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* ⚔️ 장비 무기고 */}
-      <div style={{ width: '100%', maxWidth: '850px' }}>
+      {/* ⚔️ 장비 무기고 (그리드 바둑판) */}
+      <div className="gears-grid">
         {gears.map((g, index) => {
           const animClass = anims[g.id] ? `anim-${anims[g.id]}` : '';
           return (
-            <div key={g.id} className={`animated-entry glass-panel gear-card ${animClass}`} style={{ 
-              animationDelay: `${index * 0.1}s`, borderLeft: `4px solid #555`, transition: 'background 0.3s'
-            }}>
+            <div key={g.id} className={`animated-entry glass-panel gear-card ${animClass}`} style={{ animationDelay: `${index * 0.1}s`, transition: 'background 0.3s' }}>
               <div className="gear-card-inner">
-                <div className="img-box-gear" style={{ 
-                  background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(197,160,89,0.3)', borderRadius: '12px', 
-                  display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden'
-                }}>
+                <div className="img-box-gear">
                   <img src={`${process.env.PUBLIC_URL}/${g.imgFile}`} alt={g.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }}
                        onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = '🛡️'; }}/>
                 </div>
                 <div>
-                  <span className="item-stat" style={{ color: '#c5a059', fontWeight: 'bold' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</span>
-                  <div className="item-name" style={{ color: '#e6d5b8', fontWeight: 'bold' }}>
+                  <div className="item-stat">[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
+                  <div className="item-name">
                     {g.name} <span className={anims[g.id] === 'success' ? 'lvl-up' : ''} style={{ color: '#fbbf24' }}>+{g.lvl}</span>
                   </div>
-                  <div className="item-stat" style={{ color: '#aaa' }}>
-                    성공: <span style={{color: '#06b6d4'}}>{(getRate(g.lvl, gears[6].lvl)*100).toFixed(1)}%</span> 
-                    <span style={{ margin: '0 6px' }}>|</span> 
+                  <div style={{ color: '#aaa', fontSize: '12px' }}>
+                    성공: <span style={{color: '#06b6d4'}}>{(getRate(g.lvl, gears[6].lvl)*100).toFixed(1)}%</span>
+                  </div>
+                  <div style={{ color: '#aaa', fontSize: '12px', marginTop: '2px' }}>
                     비용: {getCost(g.lvl, gears[5].lvl).toLocaleString()}
                   </div>
                 </div>
@@ -620,7 +636,7 @@ export default function App() {
       </div>
 
       {/* 🐉 동료(Pet) */}
-      <div className={`animated-entry glass-panel ${anims['pet'] ? `anim-${anims['pet']}` : ''}`} style={{ animationDelay: '0.8s', position: 'relative', width: '100%', maxWidth: '850px', marginBottom: '20px', borderRadius: '15px', overflow: 'hidden' }}>
+      <div className={`animated-entry glass-panel ${anims['pet'] ? `anim-${anims['pet']}` : ''}`} style={{ animationDelay: '0.8s', position: 'relative', width: '100%', maxWidth: '850px', margin: '20px 0', borderRadius: '15px', overflow: 'hidden' }}>
         {!state.petActive && (
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(10px)', background: 'rgba(11, 15, 25, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
             <div style={{ color: '#fbbf24', fontSize: '16px', fontWeight: 'bold', padding: '15px', border: '1px solid #fbbf24', borderRadius: '8px', background: 'rgba(0,0,0,0.6)' }}>
@@ -636,10 +652,10 @@ export default function App() {
           </div>
           
           <div style={{ flex: 1, width: '100%' }}>
-            <h3 className="special-name" style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+            <h3 className="special-name" style={{ color: '#fbbf24', fontWeight: 'bold', margin: '0 0 10px 0' }}>
               {state.petName} <span className={anims['pet'] === 'success' ? 'lvl-up' : ''} style={{ color: '#e6d5b8', fontSize: '70%', fontWeight: 'normal' }}>Lv.{state.petLevel}</span>
             </h3>
-            <p className="pet-desc" style={{ color: '#e6d5b8' }}>
+            <p className="pet-desc" style={{ color: '#e6d5b8', margin: '0 0 15px 0' }}>
               GOU 획득량 <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>+{getPetBonus(state.petLevel)}%</span>
             </p>
             <div className="pet-actions">
@@ -673,10 +689,10 @@ export default function App() {
           </div>
           
           <div style={{ flex: 1, width: '100%' }}>
-            <h3 className="special-name" style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+            <h3 className="special-name" style={{ color: '#fbbf24', fontWeight: 'bold', margin: '0 0 10px 0' }}>
               {state.castleName || "위대한 군주의 성"} <span className={anims['castle'] === 'success' ? 'lvl-up' : ''} style={{ color: '#e6d5b8', fontSize: '70%', fontWeight: 'normal' }}>Lv.{state.castleLevel}</span>
             </h3>
-            <p className="pet-desc" style={{ color: '#e6d5b8' }}>
+            <p className="pet-desc" style={{ color: '#e6d5b8', margin: '0 0 15px 0' }}>
               GOU 획득량 <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>+{getCastleBonus(state.castleLevel)}%</span>
             </p>
             <div className="pet-actions">
