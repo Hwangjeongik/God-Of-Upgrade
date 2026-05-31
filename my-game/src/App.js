@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 /**
- * GOU: THE KNIGHT'S TALE - BULLETPROOF ENGINE & WALLET FLOW (v8.7.0)
- * Update: Fixed Stale Closure Bug with useRef, 100% Prob Bypass Fix, Wallet Connect Simulation
+ * GOU: THE KNIGHT'S TALE - PERFECT MATH & WALLET UI (v8.8.0)
+ * Update: Mathematical 10-base scaling (100,200..1000,2000), Clean Prob Modal
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -17,7 +17,7 @@ export default function App() {
   ], []);
 
   const [state, setState] = useState({
-    screen: 'wallet', // wallet -> connecting -> game
+    screen: 'wallet', 
     walletAddress: "",
     balance: 50000000000,
     burned: 1990000000, 
@@ -45,7 +45,6 @@ export default function App() {
     { id: 'ring', name: '행운의 반지', lvl: 30, stat: '강화성공확률', base: 0.1, unit: '%', imgFile: 'ring.png', emoji: '💍' }
   ]);
 
-  // 🔥 [중요] 최신 상태를 실시간으로 참조하기 위한 Refs (버그 원천 차단)
   const stateRef = useRef(state);
   const gearsRef = useRef(gears);
   useEffect(() => { stateRef.current = state; }, [state]);
@@ -94,7 +93,6 @@ export default function App() {
   const castleBonus = state.castleActive ? getCastleBonus(state.castleLevel) : 0;
   const totalBonusPct = (gears[4].lvl * 5) + setBonus + petBonus + castleBonus;
 
-  // 공통 반감기 로직
   const getHalvingStateInternal = (burnedAmount) => {
     if (burnedAmount >= MAX_SUPPLY * 0.6) return { mult: 0.25, rates: { pool: 0.35, burn: 0.25, jackpot: 0.20, lp: 0.15, reserve: 0.05 }, step: 2 };
     if (burnedAmount >= MAX_SUPPLY * 0.2) return { mult: 0.50, rates: { pool: 0.40, burn: 0.25, jackpot: 0.15, lp: 0.15, reserve: 0.05 }, step: 1 };
@@ -109,38 +107,30 @@ export default function App() {
     return { pool: cost * r.pool, burn: cost * r.burn, jackpot: cost * r.jackpot, lp: cost * r.lp, reserve: cost * r.reserve };
   }, [hState]);
 
-  // 비용 산정 공식
+  // 🔥 사령관님 지시사항: 100 200.. 1000 2000 완벽 십진수 스케일 엔진!
+  const calculateBaseCost = (lvl, startBase) => {
+    const tier = Math.floor(lvl / 9);
+    const step = (lvl % 9) + 1;
+    return step * Math.pow(10, tier) * startBase;
+  };
+
   const getCost = useCallback((lvl, nLvl, mult = hState.mult) => {
-    let baseCost = 0;
-    if (lvl < 10) baseCost = 1000 + (lvl * 100);
-    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
-    else baseCost = 100000 + ((lvl - 20) * 10000);
+    const baseCost = calculateBaseCost(lvl, 1000); // 장비는 1,000부터 시작
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * mult);
   }, [hState.mult]);
 
   const getPetCost = useCallback((lvl, nLvl, mult = hState.mult) => {
-    let baseCost = 0;
-    if (lvl < 10) baseCost = 100 + (lvl * 10);
-    else if (lvl < 20) baseCost = 1000 + ((lvl - 10) * 100);
-    else if (lvl < 30) baseCost = 10000 + ((lvl - 20) * 1000);
-    else if (lvl < 40) baseCost = 100000 + ((lvl - 30) * 10000);
-    else baseCost = 1000000 + ((lvl - 40) * 100000);
+    const baseCost = calculateBaseCost(lvl, 100); // 펫은 100부터 시작
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * mult);
   }, [hState.mult]);
 
   const getCastleCost = useCallback((lvl, nLvl, mult = hState.mult) => {
-    let baseCost = 0;
-    if (lvl < 10) baseCost = 1000 + (lvl * 100);
-    else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
-    else if (lvl < 30) baseCost = 100000 + ((lvl - 20) * 10000);
-    else if (lvl < 40) baseCost = 1000000 + ((lvl - 30) * 100000);
-    else baseCost = 10000000 + ((lvl - 40) * 1000000);
+    const baseCost = calculateBaseCost(lvl, 1000); // 성은 1,000부터 시작
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * mult);
   }, [hState.mult]);
   
-  // 🔥 확률 100% 완벽 보장 시스템 (0.99 Cap 절대 방어)
   const getRate = useCallback((lvl, rLvl) => {
-    if (lvl < 5) return 1.0; // 0~4 구간 무조건 성공 보장!
+    if (lvl < 5) return 1.0; 
     let baseRate = 0;
     if (lvl < 10) baseRate = 0.7;
     else if (lvl < 15) baseRate = 0.6;
@@ -150,7 +140,7 @@ export default function App() {
   }, []);
 
   const getPetRate = useCallback((lvl, ringLvl) => {
-    if (lvl < 5) return 1.0; // 0~4 구간 무조건 성공 보장!
+    if (lvl < 5) return 1.0; 
     let baseRate = 0;
     if (lvl < 10) baseRate = 0.7;
     else if (lvl < 15) baseRate = 0.65;
@@ -185,7 +175,6 @@ export default function App() {
     else if (type === 'castle') setState(s => ({ ...s, castleHuntEndTime: Date.now() + duration }));
   };
 
-  // 🔥 1. 장비 자동 강화 엔진 (Refs 사용으로 로직 꼬임 원천 차단)
   const toggleAuto = (gId) => {
     if (state.autoTimers[gId]) {
       clearInterval(state.autoTimers[gId]);
@@ -218,17 +207,12 @@ export default function App() {
           triggerAnim(gId, success ? 'success' : 'fail');
           
           setGears(prevG => prevG.map(item => item.id === gId ? { ...item, lvl: success ? item.lvl + 1 : item.lvl - 1 } : item));
-          
           setState(prevS => {
             const dist = distributeFailure(cost, curH);
             return {
-              ...prevS,
-              balance: prevS.balance - cost,
-              pool: prevS.pool + (success ? cost : dist.pool),
-              burned: prevS.burned + (success ? 0 : dist.burn),
-              jackpot: prevS.jackpot + (success ? 0 : dist.jackpot),
-              lp: prevS.lp + (success ? 0 : dist.lp),
-              reserve: prevS.reserve + (success ? 0 : dist.reserve)
+              ...prevS, balance: prevS.balance - cost, pool: prevS.pool + (success ? cost : dist.pool),
+              burned: prevS.burned + (success ? 0 : dist.burn), jackpot: prevS.jackpot + (success ? 0 : dist.jackpot),
+              lp: prevS.lp + (success ? 0 : dist.lp), reserve: prevS.reserve + (success ? 0 : dist.reserve)
             };
           });
         }, 350);
@@ -237,7 +221,6 @@ export default function App() {
     }
   };
 
-  // 🔥 2. 펫 자동 강화 엔진 (Refs 사용)
   const toggleAutoPet = () => {
     if (state.autoTimers['pet']) {
       clearInterval(state.autoTimers['pet']);
@@ -272,13 +255,9 @@ export default function App() {
           setState(prevS => {
             const dist = distributeFailure(cost, curH);
             return {
-              ...prevS,
-              balance: prevS.balance - cost,
-              pool: prevS.pool + (success ? cost : dist.pool),
-              burned: prevS.burned + (success ? 0 : dist.burn),
-              jackpot: prevS.jackpot + (success ? 0 : dist.jackpot),
-              lp: prevS.lp + (success ? 0 : dist.lp),
-              reserve: prevS.reserve + (success ? 0 : dist.reserve),
+              ...prevS, balance: prevS.balance - cost, pool: prevS.pool + (success ? cost : dist.pool),
+              burned: prevS.burned + (success ? 0 : dist.burn), jackpot: prevS.jackpot + (success ? 0 : dist.jackpot),
+              lp: prevS.lp + (success ? 0 : dist.lp), reserve: prevS.reserve + (success ? 0 : dist.reserve),
               petLevel: success ? prevS.petLevel + 1 : Math.max(0, prevS.petLevel - 1)
             };
           });
@@ -288,7 +267,6 @@ export default function App() {
     }
   };
 
-  // 🔥 3. 성 자동 강화 엔진 (Refs 사용)
   const toggleAutoCastle = () => {
     if (state.autoTimers['castle']) {
       clearInterval(state.autoTimers['castle']);
@@ -323,13 +301,9 @@ export default function App() {
           setState(prevS => {
             const dist = distributeFailure(cost, curH);
             return {
-              ...prevS,
-              balance: prevS.balance - cost,
-              pool: prevS.pool + (success ? cost : dist.pool),
-              burned: prevS.burned + (success ? 0 : dist.burn),
-              jackpot: prevS.jackpot + (success ? 0 : dist.jackpot),
-              lp: prevS.lp + (success ? 0 : dist.lp),
-              reserve: prevS.reserve + (success ? 0 : dist.reserve),
+              ...prevS, balance: prevS.balance - cost, pool: prevS.pool + (success ? cost : dist.pool),
+              burned: prevS.burned + (success ? 0 : dist.burn), jackpot: prevS.jackpot + (success ? 0 : dist.jackpot),
+              lp: prevS.lp + (success ? 0 : dist.lp), reserve: prevS.reserve + (success ? 0 : dist.reserve),
               castleLevel: success ? prevS.castleLevel + 1 : Math.max(0, prevS.castleLevel - 1)
             };
           });
@@ -339,7 +313,6 @@ export default function App() {
     }
   };
 
-  // 수동 강화 핸들러
   const upgrade = (id) => {
     const s = stateRef.current;
     const gAll = gearsRef.current;
@@ -424,7 +397,6 @@ export default function App() {
     }
   }, []);
 
-  // ⚙️ 메인 채굴 엔진 (Refs로 안정성 확보)
   useEffect(() => {
     if (state.screen !== 'game') return;
 
@@ -470,13 +442,9 @@ export default function App() {
         let nextJackpot = prev.jackpot;
         let nextLastDate = prev.lastJackpotDate;
         let nextLogs = prev.settlementLogs;
-        
         if (payout > 0) {
-          nextJackpot = 0;
-          nextLastDate = dateString;
-          nextLogs = [newLog, ...prev.settlementLogs].slice(0, 5);
+          nextJackpot = 0; nextLastDate = dateString; nextLogs = [newLog, ...prev.settlementLogs].slice(0, 5);
         }
-
         return {
           ...prev, currentHunt: best.name, balance: prev.balance + gain + payout,
           mintedGOU: prev.mintedGOU + gain, jackpot: nextJackpot,
@@ -491,12 +459,10 @@ export default function App() {
     alert("💱 GOU/TON DEX 스왑 거래소\n\n시즌 종료 직후 유동성 풀이 활성화됩니다!");
   };
 
-  // 🔥 3. 지갑 선택 리얼리티 효과 적용
   const selectWallet = (walletName) => {
     setModals(m => ({ ...m, wallet: false }));
-    setState(s => ({ ...s, screen: 'connecting' })); // 연결중 화면으로 이동
+    setState(s => ({ ...s, screen: 'connecting' }));
     setTimeout(() => {
-      // 1.5초 후 진짜 게임화면으로 이동!
       setState(s => ({ ...s, screen: 'game', walletAddress: `EQD...${Math.floor(1000 + Math.random() * 9000)}` }));
     }, 1500);
   };
@@ -508,14 +474,14 @@ export default function App() {
   }, [state.userName, state.userTitle, state.castleLevel, state.petLevel, currentStats.sum, mockRankings]);
 
   // ==========================================
-  // 🟢 1. 지갑 연동 중 (Connecting) 화면
+  // 🟢 1. 지갑 연결 중 시뮬레이션
   // ==========================================
   if (state.screen === 'connecting') {
     return (
-      <div style={{ background: '#111', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#06b6d4', fontFamily: "'Cinzel', serif" }}>
+      <div style={{ background: '#111', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#0098EA', fontFamily: "'Cinzel', serif" }}>
         <div style={{ fontSize: '50px', marginBottom: '20px', animation: 'pulseLvl 1s infinite' }}>🔗</div>
-        <h2 style={{ letterSpacing: '2px' }}>지갑 연결 중...</h2>
-        <p style={{ color: '#aaa', fontSize: '13px' }}>블록체인 네트워크와 동기화하고 있습니다</p>
+        <h2 style={{ letterSpacing: '2px', color: '#fff' }}>지갑 연결 중...</h2>
+        <p style={{ color: '#aaa', fontSize: '13px' }}>블록체인 네트워크와 안전하게 동기화하고 있습니다.</p>
         <style>{`@keyframes pulseLvl { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }`}</style>
       </div>
     );
@@ -532,11 +498,7 @@ export default function App() {
         height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8', fontFamily: "'Cinzel', serif", boxSizing: 'border-box'
       }}>
         {imageErrors['ton'] ? <div style={{ fontSize: '70px', marginBottom: '15px' }}>💎</div> : <img src={`${process.env.PUBLIC_URL}/ton_logo.png`} alt="TON" style={{ width: '80px', marginBottom: '20px' }} onError={() => handleImgError('ton')} />}
-        
-        <h1 style={{ color: '#fbbf24', textAlign: 'center', letterSpacing: '1px', textShadow: '0 0 10px #fbbf24', padding: '0 10px', fontSize: '24px', margin: '0 0 10px 0' }}>
-          GOD OF UPGRADE
-        </h1>
-        
+        <h1 style={{ color: '#fbbf24', textAlign: 'center', letterSpacing: '1px', textShadow: '0 0 10px #fbbf24', padding: '0 10px', fontSize: '24px', margin: '0 0 10px 0' }}>GOD OF UPGRADE</h1>
         <p style={{ margin: '10px 0 30px 0', color: '#aaa', textAlign: 'center', fontSize: '13px', padding: '0 20px', lineHeight: '1.5', wordBreak: 'keep-all' }}>
           시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.<br/>TON 생태계 지갑을 연결하여 영지를 활성화하십시오.
         </p>
@@ -608,8 +570,6 @@ export default function App() {
         .img-box-special { width: 40%; background: linear-gradient(135deg, rgba(26,11,46,0.5), rgba(59,7,100,0.5)); border: 2px solid rgba(251,191,36,0.5); font-size: 60px; }
         
         .stat-badge { background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 6px; width: 100%; }
-        
-        @keyframes pulseLvl { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         
         @media (max-width: 768px) {
           .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
@@ -827,7 +787,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 🔥 가독성 극대화된 직관적인 확률/비용 모달 */}
+      {/* 🔥 가독성 극대화 & 리얼 스케일 반영 확률/비용 표 */}
       {modals.prob && (
         <div className="modal-overlay">
           <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '25px 20px', background: 'rgba(20,20,25,0.95)', maxHeight: '80vh', overflowY: 'auto' }}>
@@ -843,7 +803,7 @@ export default function App() {
               </thead>
               <tbody style={{ color: '#fff' }}>
                 <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>1,000~</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>1,500~</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>5,000~</td></tr>
                 <tr><td style={{padding: '8px 0'}}>10~19강</td><td>60~50%</td><td>10,000~</td></tr>
                 <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>20~29강</td><td style={{color:'#ef4444'}}>47~20%</td><td>100,000~</td></tr>
               </tbody>
@@ -857,12 +817,12 @@ export default function App() {
                 </tr>
               </thead>
               <tbody style={{ color: '#fff' }}>
-                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>100 / 1,000</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>150 / 1,500</td></tr>
-                <tr><td style={{padding: '8px 0'}}>10~19강</td><td>65~60%</td><td>1,000 / 10,000</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>20~29강</td><td>55~50%</td><td>10,000 / 100,000</td></tr>
-                <tr><td style={{padding: '8px 0'}}>30~39강</td><td>45~40%</td><td>100,000 / 1,000,000</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>40~50강</td><td style={{color:'#ef4444'}}>38~20%</td><td>1,000,000 / 10,000,000</td></tr>
+                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>100~ / 1,000~</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>500~ / 5,000~</td></tr>
+                <tr><td style={{padding: '8px 0'}}>10~19강</td><td>65~60%</td><td>1,000~ / 10,000~</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>20~29강</td><td>55~50%</td><td>10,000~ / 100,000~</td></tr>
+                <tr><td style={{padding: '8px 0'}}>30~39강</td><td>45~40%</td><td>100,000~ / 1,000,000~</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>40~50강</td><td style={{color:'#ef4444'}}>38~20%</td><td>1,000,000~ / 10,000,000~</td></tr>
               </tbody>
             </table>
 
