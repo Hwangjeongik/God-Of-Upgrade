@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 /**
- * GOU: THE KNIGHT'S TALE - 100% PROBABILITY FIX & CLEAN MODAL (v8.6.0)
- * Update: Fixed 0~4 Level Fail Bug (Escaped Math.min 0.99 trap), Clearer Pet/Castle Table
+ * GOU: THE KNIGHT'S TALE - BULLETPROOF ENGINE & WALLET FLOW (v8.7.0)
+ * Update: Fixed Stale Closure Bug with useRef, 100% Prob Bypass Fix, Wallet Connect Simulation
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -17,7 +17,7 @@ export default function App() {
   ], []);
 
   const [state, setState] = useState({
-    screen: 'wallet', 
+    screen: 'wallet', // wallet -> connecting -> game
     walletAddress: "",
     balance: 50000000000,
     burned: 1990000000, 
@@ -44,6 +44,12 @@ export default function App() {
     { id: 'necklace', name: '현자의 목걸이', lvl: 30, stat: '강화비용감소', base: 0.5, unit: '%', imgFile: 'necklace.png', emoji: '📿' },
     { id: 'ring', name: '행운의 반지', lvl: 30, stat: '강화성공확률', base: 0.1, unit: '%', imgFile: 'ring.png', emoji: '💍' }
   ]);
+
+  // 🔥 [중요] 최신 상태를 실시간으로 참조하기 위한 Refs (버그 원천 차단)
+  const stateRef = useRef(state);
+  const gearsRef = useRef(gears);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => { gearsRef.current = gears; }, [gears]);
 
   const [imageErrors, setImageErrors] = useState({});
   const handleImgError = (id) => setImageErrors(prev => ({ ...prev, [id]: true }));
@@ -88,65 +94,63 @@ export default function App() {
   const castleBonus = state.castleActive ? getCastleBonus(state.castleLevel) : 0;
   const totalBonusPct = (gears[4].lvl * 5) + setBonus + petBonus + castleBonus;
 
-  const getHalvingState = useCallback(() => {
-    if (state.burned >= MAX_SUPPLY * 0.6) return { mult: 0.25, rates: { pool: 0.35, burn: 0.25, jackpot: 0.20, lp: 0.15, reserve: 0.05 }, step: 2 };
-    if (state.burned >= MAX_SUPPLY * 0.2) return { mult: 0.50, rates: { pool: 0.40, burn: 0.25, jackpot: 0.15, lp: 0.15, reserve: 0.05 }, step: 1 };
+  // 공통 반감기 로직
+  const getHalvingStateInternal = (burnedAmount) => {
+    if (burnedAmount >= MAX_SUPPLY * 0.6) return { mult: 0.25, rates: { pool: 0.35, burn: 0.25, jackpot: 0.20, lp: 0.15, reserve: 0.05 }, step: 2 };
+    if (burnedAmount >= MAX_SUPPLY * 0.2) return { mult: 0.50, rates: { pool: 0.40, burn: 0.25, jackpot: 0.15, lp: 0.15, reserve: 0.05 }, step: 1 };
     return { mult: 1.0, rates: { pool: 0.40, burn: 0.27, jackpot: 0.15, lp: 0.13, reserve: 0.05 }, step: 0 };
-  }, [state.burned]);
+  };
 
+  const getHalvingState = useCallback(() => getHalvingStateInternal(state.burned), [state.burned]);
   const hState = getHalvingState();
 
-  const distributeFailure = useCallback((cost) => {
-    const r = hState.rates;
+  const distributeFailure = useCallback((cost, currentHState) => {
+    const r = currentHState ? currentHState.rates : hState.rates;
     return { pool: cost * r.pool, burn: cost * r.burn, jackpot: cost * r.jackpot, lp: cost * r.lp, reserve: cost * r.reserve };
-  }, [hState.rates]);
+  }, [hState]);
 
-  const getCost = useCallback((lvl, nLvl) => {
+  // 비용 산정 공식
+  const getCost = useCallback((lvl, nLvl, mult = hState.mult) => {
     let baseCost = 0;
     if (lvl < 10) baseCost = 1000 + (lvl * 100);
     else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
     else baseCost = 100000 + ((lvl - 20) * 10000);
-    return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
+    return Math.floor(baseCost * (1 - (nLvl * 0.005)) * mult);
   }, [hState.mult]);
 
-  const getPetCost = useCallback((lvl, nLvl) => {
+  const getPetCost = useCallback((lvl, nLvl, mult = hState.mult) => {
     let baseCost = 0;
     if (lvl < 10) baseCost = 100 + (lvl * 10);
     else if (lvl < 20) baseCost = 1000 + ((lvl - 10) * 100);
     else if (lvl < 30) baseCost = 10000 + ((lvl - 20) * 1000);
     else if (lvl < 40) baseCost = 100000 + ((lvl - 30) * 10000);
     else baseCost = 1000000 + ((lvl - 40) * 100000);
-    return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
+    return Math.floor(baseCost * (1 - (nLvl * 0.005)) * mult);
   }, [hState.mult]);
 
-  const getCastleCost = useCallback((lvl, nLvl) => {
+  const getCastleCost = useCallback((lvl, nLvl, mult = hState.mult) => {
     let baseCost = 0;
     if (lvl < 10) baseCost = 1000 + (lvl * 100);
     else if (lvl < 20) baseCost = 10000 + ((lvl - 10) * 1000);
     else if (lvl < 30) baseCost = 100000 + ((lvl - 20) * 10000);
     else if (lvl < 40) baseCost = 1000000 + ((lvl - 30) * 100000);
     else baseCost = 10000000 + ((lvl - 40) * 1000000);
-    return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
+    return Math.floor(baseCost * (1 - (nLvl * 0.005)) * mult);
   }, [hState.mult]);
   
-  // 🔥 100% 버그 완벽 방어식 (0~4강은 Math.min 을 아예 거치지 않음!)
+  // 🔥 확률 100% 완벽 보장 시스템 (0.99 Cap 절대 방어)
   const getRate = useCallback((lvl, rLvl) => {
-    if (lvl < 5) return 1.0; // 0~4강 절대 실패 불가
-    
+    if (lvl < 5) return 1.0; // 0~4 구간 무조건 성공 보장!
     let baseRate = 0;
     if (lvl < 10) baseRate = 0.7;
     else if (lvl < 15) baseRate = 0.6;
     else if (lvl < 20) baseRate = 0.5;
-    else {
-      const rates = [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20];
-      baseRate = rates[lvl - 20] || 0.1;
-    }
+    else baseRate = [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][lvl - 20] || 0.1;
     return Math.min(0.99, baseRate + (rLvl * 0.001));
   }, []);
 
   const getPetRate = useCallback((lvl, ringLvl) => {
-    if (lvl < 5) return 1.0; // 0~4강 절대 실패 불가
-
+    if (lvl < 5) return 1.0; // 0~4 구간 무조건 성공 보장!
     let baseRate = 0;
     if (lvl < 10) baseRate = 0.7;
     else if (lvl < 15) baseRate = 0.65;
@@ -155,21 +159,18 @@ export default function App() {
     else if (lvl < 30) baseRate = 0.5;
     else if (lvl < 35) baseRate = 0.45;
     else if (lvl < 40) baseRate = 0.4;
-    else {
-      const rates = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20];
-      baseRate = rates[lvl - 40] || 0.1;
-    }
+    else baseRate = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 40] || 0.1;
     return Math.min(0.99, baseRate + (ringLvl * 0.001));
   }, []);
 
-  const checkHunt = useCallback((stats, currentNow) => {
-    if (state.castleHuntEndTime > currentNow) return { name: '🏰 제국의 심장', mult: 50, special: true };
-    if (state.petHuntEndTime > currentNow) return { name: '🐉 신수의 둥지', mult: 30, special: true };
+  const checkHunt = useCallback((stats, currentNow, sObj) => {
+    if (sObj.castleHuntEndTime > currentNow) return { name: '🏰 제국의 심장', mult: 50, special: true };
+    if (sObj.petHuntEndTime > currentNow) return { name: '🐉 신수의 둥지', mult: 30, special: true };
     const found = hunts.slice().reverse().find(h => stats.atk >= h.req.atk && stats.hp >= h.req.hp && stats.def >= h.req.def && stats.acc >= h.req.acc && stats.sum >= h.req.sum);
     return { ...(found || hunts[0]), special: false };
-  }, [hunts, state.castleHuntEndTime, state.petHuntEndTime]);
+  }, [hunts]);
 
-  const currentHuntData = checkHunt(currentStats, Date.now());
+  const currentHuntData = checkHunt(currentStats, Date.now(), state);
   const adMultiplier = state.adBuffEndTime > Date.now() ? 2 : 1;
   const dailyGainDisplay = Math.floor(300000 * currentHuntData.mult * (1 + totalBonusPct / 100) * hState.mult * adMultiplier);
 
@@ -184,66 +185,7 @@ export default function App() {
     else if (type === 'castle') setState(s => ({ ...s, castleHuntEndTime: Date.now() + duration }));
   };
 
-  const upgrade = (id) => {
-    setGears(prev => {
-      const g = prev.find(x => x.id === id);
-      if (g.lvl >= 30) return prev;
-      const cost = getCost(g.lvl, prev[5].lvl);
-      if (state.balance < cost) return prev;
-      
-      const success = Math.random() < getRate(g.lvl, prev[6].lvl);
-      triggerAnim(id, success ? 'success' : 'fail');
-      
-      setState(s => {
-        const dist = distributeFailure(cost);
-        return {
-          ...s, balance: s.balance - cost, pool: s.pool + (success ? cost : dist.pool),
-          burned: s.burned + (success ? 0 : dist.burn), jackpot: s.jackpot + (success ? 0 : dist.jackpot),
-          lp: s.lp + (success ? 0 : dist.lp), reserve: s.reserve + (success ? 0 : dist.reserve)
-        };
-      });
-      return prev.map(item => item.id === id ? { ...item, lvl: success ? item.lvl + 1 : item.lvl - 1 } : item);
-    });
-  };
-
-  const upgradePet = () => {
-    if (!state.petActive || state.petLevel >= 50) return;
-    const cost = getPetCost(state.petLevel, gears[5].lvl);
-    if (state.balance < cost) return;
-    
-    const success = Math.random() < getPetRate(state.petLevel, gears[6].lvl);
-    triggerAnim('pet', success ? 'success' : 'fail');
-    
-    setState(s => {
-      const dist = distributeFailure(cost);
-      return {
-        ...s, balance: s.balance - cost, pool: s.pool + (success ? cost : dist.pool),
-        burned: s.burned + (success ? 0 : dist.burn), jackpot: s.jackpot + (success ? 0 : dist.jackpot),
-        lp: s.lp + (success ? 0 : dist.lp), reserve: s.reserve + (success ? 0 : dist.reserve),
-        petLevel: success ? s.petLevel + 1 : Math.max(0, s.petLevel - 1)
-      };
-    });
-  };
-
-  const upgradeCastle = () => {
-    if (!state.castleActive || state.castleLevel >= 50) return;
-    const cost = getCastleCost(state.castleLevel, gears[5].lvl);
-    if (state.balance < cost) return;
-    
-    const success = Math.random() < getPetRate(state.castleLevel, gears[6].lvl);
-    triggerAnim('castle', success ? 'success' : 'fail');
-    
-    setState(s => {
-      const dist = distributeFailure(cost);
-      return {
-        ...s, balance: s.balance - cost, pool: s.pool + (success ? cost : dist.pool),
-        burned: s.burned + (success ? 0 : dist.burn), jackpot: s.jackpot + (success ? 0 : dist.jackpot),
-        lp: s.lp + (success ? 0 : dist.lp), reserve: s.reserve + (success ? 0 : dist.reserve),
-        castleLevel: success ? s.castleLevel + 1 : Math.max(0, s.castleLevel - 1)
-      };
-    });
-  };
-
+  // 🔥 1. 장비 자동 강화 엔진 (Refs 사용으로 로직 꼬임 원천 차단)
   const toggleAuto = (gId) => {
     if (state.autoTimers[gId]) {
       clearInterval(state.autoTimers[gId]);
@@ -251,14 +193,43 @@ export default function App() {
     } else {
       const target = prompt("목표 레벨을 입력하라 (최대 30):", "30");
       if (target) {
+        const targetLvl = parseInt(target);
         const timer = setInterval(() => {
-          setGears(p => {
-            const currentG = p.find(x => x.id === gId);
-            if (currentG.lvl >= parseInt(target) || currentG.lvl >= 30) { 
-              setState(s => { clearInterval(s.autoTimers[gId]); return { ...s, autoTimers: { ...s.autoTimers, [gId]: null } }; });
-              return p; 
-            }
-            upgrade(gId); return p;
+          const s = stateRef.current;
+          const gAll = gearsRef.current;
+          const currentG = gAll.find(x => x.id === gId);
+          
+          if (currentG.lvl >= targetLvl || currentG.lvl >= 30) { 
+            clearInterval(timer); 
+            setState(prev => ({ ...prev, autoTimers: { ...prev.autoTimers, [gId]: null } })); 
+            return; 
+          }
+          
+          const curH = getHalvingStateInternal(s.burned);
+          const cost = getCost(currentG.lvl, gAll[5].lvl, curH.mult);
+          
+          if (s.balance < cost) { 
+            clearInterval(timer); 
+            setState(prev => ({ ...prev, autoTimers: { ...prev.autoTimers, [gId]: null } })); 
+            return; 
+          }
+
+          const success = Math.random() < getRate(currentG.lvl, gAll[6].lvl);
+          triggerAnim(gId, success ? 'success' : 'fail');
+          
+          setGears(prevG => prevG.map(item => item.id === gId ? { ...item, lvl: success ? item.lvl + 1 : item.lvl - 1 } : item));
+          
+          setState(prevS => {
+            const dist = distributeFailure(cost, curH);
+            return {
+              ...prevS,
+              balance: prevS.balance - cost,
+              pool: prevS.pool + (success ? cost : dist.pool),
+              burned: prevS.burned + (success ? 0 : dist.burn),
+              jackpot: prevS.jackpot + (success ? 0 : dist.jackpot),
+              lp: prevS.lp + (success ? 0 : dist.lp),
+              reserve: prevS.reserve + (success ? 0 : dist.reserve)
+            };
           });
         }, 350);
         setState(s => ({ ...s, autoTimers: { ...s.autoTimers, [gId]: timer } }));
@@ -266,6 +237,7 @@ export default function App() {
     }
   };
 
+  // 🔥 2. 펫 자동 강화 엔진 (Refs 사용)
   const toggleAutoPet = () => {
     if (state.autoTimers['pet']) {
       clearInterval(state.autoTimers['pet']);
@@ -273,10 +245,42 @@ export default function App() {
     } else {
       const target = prompt("목표 펫 레벨을 입력하라 (최대 50):", "50");
       if (target) {
+        const targetLvl = parseInt(target);
         const timer = setInterval(() => {
-          setState(s => {
-            if (s.petLevel >= parseInt(target) || s.petLevel >= 50) { clearInterval(timer); return { ...s, autoTimers: { ...s.autoTimers, pet: null } }; }
-            upgradePet(); return s;
+          const s = stateRef.current;
+          const gAll = gearsRef.current;
+          const currentLvl = s.petLevel;
+          
+          if (currentLvl >= targetLvl || currentLvl >= 50) { 
+            clearInterval(timer); 
+            setState(prev => ({ ...prev, autoTimers: { ...prev.autoTimers, pet: null } })); 
+            return; 
+          }
+          
+          const curH = getHalvingStateInternal(s.burned);
+          const cost = getPetCost(currentLvl, gAll[5].lvl, curH.mult);
+          
+          if (s.balance < cost) { 
+            clearInterval(timer); 
+            setState(prev => ({ ...prev, autoTimers: { ...prev.autoTimers, pet: null } })); 
+            return; 
+          }
+
+          const success = Math.random() < getPetRate(currentLvl, gAll[6].lvl);
+          triggerAnim('pet', success ? 'success' : 'fail');
+          
+          setState(prevS => {
+            const dist = distributeFailure(cost, curH);
+            return {
+              ...prevS,
+              balance: prevS.balance - cost,
+              pool: prevS.pool + (success ? cost : dist.pool),
+              burned: prevS.burned + (success ? 0 : dist.burn),
+              jackpot: prevS.jackpot + (success ? 0 : dist.jackpot),
+              lp: prevS.lp + (success ? 0 : dist.lp),
+              reserve: prevS.reserve + (success ? 0 : dist.reserve),
+              petLevel: success ? prevS.petLevel + 1 : Math.max(0, prevS.petLevel - 1)
+            };
           });
         }, 350);
         setState(s => ({ ...s, autoTimers: { ...s.autoTimers, pet: timer } }));
@@ -284,6 +288,7 @@ export default function App() {
     }
   };
 
+  // 🔥 3. 성 자동 강화 엔진 (Refs 사용)
   const toggleAutoCastle = () => {
     if (state.autoTimers['castle']) {
       clearInterval(state.autoTimers['castle']);
@@ -291,15 +296,101 @@ export default function App() {
     } else {
       const target = prompt("목표 성 레벨을 입력하라 (최대 50):", "50");
       if (target) {
+        const targetLvl = parseInt(target);
         const timer = setInterval(() => {
-          setState(s => {
-            if (s.castleLevel >= parseInt(target) || s.castleLevel >= 50) { clearInterval(timer); return { ...s, autoTimers: { ...s.autoTimers, castle: null } }; }
-            upgradeCastle(); return s;
+          const s = stateRef.current;
+          const gAll = gearsRef.current;
+          const currentLvl = s.castleLevel;
+          
+          if (currentLvl >= targetLvl || currentLvl >= 50) { 
+            clearInterval(timer); 
+            setState(prev => ({ ...prev, autoTimers: { ...prev.autoTimers, castle: null } })); 
+            return; 
+          }
+          
+          const curH = getHalvingStateInternal(s.burned);
+          const cost = getCastleCost(currentLvl, gAll[5].lvl, curH.mult);
+          
+          if (s.balance < cost) { 
+            clearInterval(timer); 
+            setState(prev => ({ ...prev, autoTimers: { ...prev.autoTimers, castle: null } })); 
+            return; 
+          }
+
+          const success = Math.random() < getPetRate(currentLvl, gAll[6].lvl);
+          triggerAnim('castle', success ? 'success' : 'fail');
+          
+          setState(prevS => {
+            const dist = distributeFailure(cost, curH);
+            return {
+              ...prevS,
+              balance: prevS.balance - cost,
+              pool: prevS.pool + (success ? cost : dist.pool),
+              burned: prevS.burned + (success ? 0 : dist.burn),
+              jackpot: prevS.jackpot + (success ? 0 : dist.jackpot),
+              lp: prevS.lp + (success ? 0 : dist.lp),
+              reserve: prevS.reserve + (success ? 0 : dist.reserve),
+              castleLevel: success ? prevS.castleLevel + 1 : Math.max(0, prevS.castleLevel - 1)
+            };
           });
         }, 350);
         setState(s => ({ ...s, autoTimers: { ...s.autoTimers, castle: timer } }));
       }
     }
+  };
+
+  // 수동 강화 핸들러
+  const upgrade = (id) => {
+    const s = stateRef.current;
+    const gAll = gearsRef.current;
+    const currentG = gAll.find(x => x.id === id);
+    if (currentG.lvl >= 30) return;
+    const curH = getHalvingStateInternal(s.burned);
+    const cost = getCost(currentG.lvl, gAll[5].lvl, curH.mult);
+    if (s.balance < cost) return;
+
+    const success = Math.random() < getRate(currentG.lvl, gAll[6].lvl);
+    triggerAnim(id, success ? 'success' : 'fail');
+    
+    setGears(prevG => prevG.map(item => item.id === id ? { ...item, lvl: success ? item.lvl + 1 : item.lvl - 1 } : item));
+    setState(prevS => {
+      const dist = distributeFailure(cost, curH);
+      return { ...prevS, balance: prevS.balance - cost, pool: prevS.pool + (success ? cost : dist.pool), burned: prevS.burned + (success ? 0 : dist.burn), jackpot: prevS.jackpot + (success ? 0 : dist.jackpot), lp: prevS.lp + (success ? 0 : dist.lp), reserve: prevS.reserve + (success ? 0 : dist.reserve) };
+    });
+  };
+
+  const upgradePet = () => {
+    const s = stateRef.current;
+    const gAll = gearsRef.current;
+    if (!s.petActive || s.petLevel >= 50) return;
+    const curH = getHalvingStateInternal(s.burned);
+    const cost = getPetCost(s.petLevel, gAll[5].lvl, curH.mult);
+    if (s.balance < cost) return;
+    
+    const success = Math.random() < getPetRate(s.petLevel, gAll[6].lvl);
+    triggerAnim('pet', success ? 'success' : 'fail');
+    
+    setState(prevS => {
+      const dist = distributeFailure(cost, curH);
+      return { ...prevS, balance: prevS.balance - cost, pool: prevS.pool + (success ? cost : dist.pool), burned: prevS.burned + (success ? 0 : dist.burn), jackpot: prevS.jackpot + (success ? 0 : dist.jackpot), lp: prevS.lp + (success ? 0 : dist.lp), reserve: prevS.reserve + (success ? 0 : dist.reserve), petLevel: success ? prevS.petLevel + 1 : Math.max(0, prevS.petLevel - 1) };
+    });
+  };
+
+  const upgradeCastle = () => {
+    const s = stateRef.current;
+    const gAll = gearsRef.current;
+    if (!s.castleActive || s.castleLevel >= 50) return;
+    const curH = getHalvingStateInternal(s.burned);
+    const cost = getCastleCost(s.castleLevel, gAll[5].lvl, curH.mult);
+    if (s.balance < cost) return;
+    
+    const success = Math.random() < getPetRate(s.castleLevel, gAll[6].lvl);
+    triggerAnim('castle', success ? 'success' : 'fail');
+    
+    setState(prevS => {
+      const dist = distributeFailure(cost, curH);
+      return { ...prevS, balance: prevS.balance - cost, pool: prevS.pool + (success ? cost : dist.pool), burned: prevS.burned + (success ? 0 : dist.burn), jackpot: prevS.jackpot + (success ? 0 : dist.jackpot), lp: prevS.lp + (success ? 0 : dist.lp), reserve: prevS.reserve + (success ? 0 : dist.reserve), castleLevel: success ? prevS.castleLevel + 1 : Math.max(0, prevS.castleLevel - 1) };
+    });
   };
 
   useEffect(() => {
@@ -333,46 +424,81 @@ export default function App() {
     }
   }, []);
 
+  // ⚙️ 메인 채굴 엔진 (Refs로 안정성 확보)
   useEffect(() => {
     if (state.screen !== 'game') return;
 
     const timer = setInterval(() => {
+      const s = stateRef.current;
+      const g = gearsRef.current;
+      
+      const minL = Math.min(...g.map(x => x.lvl));
+      const sBonus = minL >= 30 ? 1000 : minL >= 20 ? 300 : minL >= 10 ? 100 : 0;
+      const pBonus = s.petActive ? getPetBonus(s.petLevel) : 0;
+      const cBonus = s.castleActive ? getCastleBonus(s.castleLevel) : 0;
+      const tBonusPct = (g[4].lvl * 5) + sBonus + pBonus + cBonus;
+
+      const stats = {
+        atk: g[0].lvl * g[0].base, hp: g[1].lvl * g[1].base,
+        def: g[2].lvl * g[2].base, acc: g[3].lvl * g[3].base,
+        sum: g.reduce((a, b) => a + b.lvl, 0)
+      };
+
       const nowTime = Date.now();
-      const best = checkHunt(currentStats, nowTime);
-      const adM = state.adBuffEndTime > nowTime ? 2 : 1;
-      const gain = (300000 * best.mult * (1 + totalBonusPct / 100)) / 86400 * hState.mult * adM;
+      const best = checkHunt(stats, nowTime, s);
+      const curH = getHalvingStateInternal(s.burned);
+      const adM = s.adBuffEndTime > nowTime ? 2 : 1;
+      const gain = (300000 * best.mult * (1 + tBonusPct / 100)) / 86400 * curH.mult * adM;
       
       const today = new Date();
-      if (today.getDay() === 1) { 
-        const dateString = today.toDateString();
-        setState(s => {
-          if (s.lastJackpotDate !== dateString && s.jackpot > 0) {
-            let tier = "미달", amount = 0;
-            if (s.castleLevel >= 50) { tier = "성 50강"; amount = s.jackpot; }
-            else if (s.petLevel >= 50) { tier = "펫 50강"; amount = s.jackpot; }
-            else if (minLvl >= 30) { tier = "ALL 30강"; amount = s.jackpot; }
-            
-            if (amount > 0) {
-              const newLog = `[${today.toLocaleDateString()}] ${s.userName}(${tier}) - ${Math.floor(amount).toLocaleString()} GOU 정산 완료`;
-              return { ...s, balance: s.balance + amount, jackpot: 0, lastJackpotDate: dateString, settlementLogs: [newLog, ...s.settlementLogs].slice(0, 5) };
-            }
-          }
-          return s;
-        });
+      let payout = 0;
+      let newLog = null;
+      const dateString = today.toDateString();
+
+      if (today.getDay() === 1 && s.lastJackpotDate !== dateString && s.jackpot > 0) {
+        let tier = "미달";
+        if (s.castleLevel >= 50) { tier = "성 50강"; payout = s.jackpot; }
+        else if (s.petLevel >= 50) { tier = "펫 50강"; payout = s.jackpot; }
+        else if (minL >= 30) { tier = "ALL 30강"; payout = s.jackpot; }
+        
+        if (payout > 0) {
+          newLog = `[${today.toLocaleDateString()}] ${s.userName}(${tier}) - ${Math.floor(payout).toLocaleString()} GOU 정산 완료`;
+        }
       }
 
-      setState(s => ({ ...s, currentHunt: best.name, balance: s.balance + gain, mintedGOU: s.mintedGOU + gain }));
+      setState(prev => {
+        let nextJackpot = prev.jackpot;
+        let nextLastDate = prev.lastJackpotDate;
+        let nextLogs = prev.settlementLogs;
+        
+        if (payout > 0) {
+          nextJackpot = 0;
+          nextLastDate = dateString;
+          nextLogs = [newLog, ...prev.settlementLogs].slice(0, 5);
+        }
+
+        return {
+          ...prev, currentHunt: best.name, balance: prev.balance + gain + payout,
+          mintedGOU: prev.mintedGOU + gain, jackpot: nextJackpot,
+          lastJackpotDate: nextLastDate, settlementLogs: nextLogs
+        };
+      });
     }, 1000);
     return () => clearInterval(timer);
-  }, [state.screen, currentStats, totalBonusPct, checkHunt, minLvl, hState.mult, state.adBuffEndTime, state.lastJackpotDate, state.jackpot]);
+  }, [state.screen, getPetBonus, getCastleBonus, checkHunt]);
 
   const handleDEXClick = () => {
     alert("💱 GOU/TON DEX 스왑 거래소\n\n시즌 종료 직후 유동성 풀이 활성화됩니다!");
   };
 
+  // 🔥 3. 지갑 선택 리얼리티 효과 적용
   const selectWallet = (walletName) => {
     setModals(m => ({ ...m, wallet: false }));
-    setState(s => ({ ...s, screen: 'game', walletAddress: `EQD...${Math.floor(Math.random()*999)}` }));
+    setState(s => ({ ...s, screen: 'connecting' })); // 연결중 화면으로 이동
+    setTimeout(() => {
+      // 1.5초 후 진짜 게임화면으로 이동!
+      setState(s => ({ ...s, screen: 'game', walletAddress: `EQD...${Math.floor(1000 + Math.random() * 9000)}` }));
+    }, 1500);
   };
 
   const sortedRankings = useMemo(() => {
@@ -381,9 +507,22 @@ export default function App() {
     return [...others, { ...me, powerVal: me.power, power: me.power.toLocaleString() }].sort((a,b) => b.powerVal - a.powerVal).map((r, i) => ({ ...r, rank: i + 1 }));
   }, [state.userName, state.userTitle, state.castleLevel, state.petLevel, currentStats.sum, mockRankings]);
 
+  // ==========================================
+  // 🟢 1. 지갑 연동 중 (Connecting) 화면
+  // ==========================================
+  if (state.screen === 'connecting') {
+    return (
+      <div style={{ background: '#111', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#06b6d4', fontFamily: "'Cinzel', serif" }}>
+        <div style={{ fontSize: '50px', marginBottom: '20px', animation: 'pulseLvl 1s infinite' }}>🔗</div>
+        <h2 style={{ letterSpacing: '2px' }}>지갑 연결 중...</h2>
+        <p style={{ color: '#aaa', fontSize: '13px' }}>블록체인 네트워크와 동기화하고 있습니다</p>
+        <style>{`@keyframes pulseLvl { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }`}</style>
+      </div>
+    );
+  }
 
   // ==========================================
-  // 🟢 1. 지갑 연동 화면 (사각 로딩창 없이 켜자마자 바로 표시)
+  // 🟢 2. 지갑 연동 화면 (시작화면)
   // ==========================================
   if (state.screen === 'wallet') {
     return (
@@ -401,7 +540,6 @@ export default function App() {
         <p style={{ margin: '10px 0 30px 0', color: '#aaa', textAlign: 'center', fontSize: '13px', padding: '0 20px', lineHeight: '1.5', wordBreak: 'keep-all' }}>
           시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.<br/>TON 생태계 지갑을 연결하여 영지를 활성화하십시오.
         </p>
-        
         <button onClick={() => setModals(m => ({ ...m, wallet: true }))} 
                 style={{ background: '#0098EA', color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '10px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 0 15px rgba(0,152,234,0.5)', zIndex: 10 }}>
           TON 지갑 연결하기
@@ -429,7 +567,7 @@ export default function App() {
   }
 
   // ==========================================
-  // 🟢 2. 메인 게임 화면
+  // 🟢 3. 메인 게임 화면
   // ==========================================
   return (
     <div className="main-wrap" style={{ 
@@ -470,6 +608,8 @@ export default function App() {
         .img-box-special { width: 40%; background: linear-gradient(135deg, rgba(26,11,46,0.5), rgba(59,7,100,0.5)); border: 2px solid rgba(251,191,36,0.5); font-size: 60px; }
         
         .stat-badge { background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 6px; width: 100%; }
+        
+        @keyframes pulseLvl { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         
         @media (max-width: 768px) {
           .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
@@ -687,7 +827,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 🔥 가독성 개선된 확률/비용 테이블 모달 */}
+      {/* 🔥 가독성 극대화된 직관적인 확률/비용 모달 */}
       {modals.prob && (
         <div className="modal-overlay">
           <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '25px 20px', background: 'rgba(20,20,25,0.95)', maxHeight: '80vh', overflowY: 'auto' }}>
@@ -717,12 +857,12 @@ export default function App() {
                 </tr>
               </thead>
               <tbody style={{ color: '#fff' }}>
-                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>100~ / 1,000~</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>150~ / 1,500~</td></tr>
-                <tr><td style={{padding: '8px 0'}}>10~19강</td><td>65~60%</td><td>1,000~ / 10,000~</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>20~29강</td><td>55~50%</td><td>10,000~ / 100,000~</td></tr>
-                <tr><td style={{padding: '8px 0'}}>30~39강</td><td>45~40%</td><td>100,000~ / 1,000,000~</td></tr>
-                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>40~50강</td><td style={{color:'#ef4444'}}>38~20%</td><td>1,000,000~ / 10,000,000~</td></tr>
+                <tr><td style={{padding: '8px 0'}}>1~4강</td><td>100%</td><td>100 / 1,000</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>5~9강</td><td>70%</td><td>150 / 1,500</td></tr>
+                <tr><td style={{padding: '8px 0'}}>10~19강</td><td>65~60%</td><td>1,000 / 10,000</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>20~29강</td><td>55~50%</td><td>10,000 / 100,000</td></tr>
+                <tr><td style={{padding: '8px 0'}}>30~39강</td><td>45~40%</td><td>100,000 / 1,000,000</td></tr>
+                <tr style={{background: 'rgba(255,255,255,0.05)'}}><td style={{padding: '8px 0'}}>40~50강</td><td style={{color:'#ef4444'}}>38~20%</td><td>1,000,000 / 10,000,000</td></tr>
               </tbody>
             </table>
 
