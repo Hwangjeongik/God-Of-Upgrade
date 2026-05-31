@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU: THE KNIGHT'S TALE - PERFECT WALLET & COST SCALING EDITION (v8.5.0)
- * Update: Removed Splash Screen, Fixed Wallet Modal, Smoothed Cost Curve, Added Discount Info
+ * GOU: THE KNIGHT'S TALE - LOGIC FIX & STABLE EDITION (v8.5.1)
+ * Update: Fixed 100% Prob Bug (Math.min 0.99 cap), Added Max Level 50 Cap for Pet/Castle
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -16,7 +16,6 @@ export default function App() {
     { name: '화산', mult: 12, req: { atk: 230, hp: 2300, def: 115, acc: 46, sum: 125 } }
   ], []);
 
-  // 🔴 화면 시작을 'loading'이 아닌 'wallet'으로 강제 고정 (로딩창 삭제)
   const [state, setState] = useState({
     screen: 'wallet', 
     walletAddress: "",
@@ -49,7 +48,6 @@ export default function App() {
   const [imageErrors, setImageErrors] = useState({});
   const handleImgError = (id) => setImageErrors(prev => ({ ...prev, [id]: true }));
 
-  // 🔴 모달 객체에 wallet 상태 정상 복구
   const [modals, setModals] = useState({ rank: false, prob: false, token: false, wallet: false });
   const [anims, setAnims] = useState({});
 
@@ -103,7 +101,6 @@ export default function App() {
     return { pool: cost * r.pool, burn: cost * r.burn, jackpot: cost * r.jackpot, lp: cost * r.lp, reserve: cost * r.reserve };
   }, [hState.rates]);
 
-  // 🔥 비용 들쑥날쑥 완벽 수정 (절대 오르락내리락 하지 않는 스무스한 증가 곡선 적용)
   const getCost = useCallback((lvl, nLvl) => {
     let baseCost = 0;
     if (lvl < 10) baseCost = 1000 + (lvl * 150);
@@ -132,8 +129,30 @@ export default function App() {
     return Math.floor(baseCost * (1 - (nLvl * 0.005)) * hState.mult);
   }, [hState.mult]);
   
-  const getRate = useCallback((lvl, rLvl) => Math.min(0.99, ((lvl < 5 ? 1.0 : lvl < 10 ? 0.7 : lvl < 15 ? 0.6 : lvl < 20 ? 0.5 : [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][lvl - 20]) + (rLvl * 0.001))), []);
-  const getPetRate = useCallback((lvl, ringLvl) => Math.min(0.99, (lvl < 5 ? 1.0 : lvl < 10 ? 0.7 : lvl < 15 ? 0.65 : lvl < 20 ? 0.6 : lvl < 25 ? 0.55 : lvl < 30 ? 0.5 : lvl < 35 ? 0.45 : lvl < 40 ? 0.4 : ([0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 41] || 0.1)) + (ringLvl * 0.001)), []);
+  // 🔥 1~4강 100% 버그 수정 (0.99 Cap 회피)
+  const getRate = useCallback((lvl, rLvl) => {
+    let baseRate = 0;
+    if (lvl < 5) baseRate = 1.0;
+    else if (lvl < 10) baseRate = 0.7;
+    else if (lvl < 15) baseRate = 0.6;
+    else if (lvl < 20) baseRate = 0.5;
+    else baseRate = [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][lvl - 20] || 0.1;
+    return baseRate === 1.0 ? 1.0 : Math.min(0.99, baseRate + (rLvl * 0.001));
+  }, []);
+
+  const getPetRate = useCallback((lvl, ringLvl) => {
+    let baseRate = 0;
+    if (lvl < 5) baseRate = 1.0;
+    else if (lvl < 10) baseRate = 0.7;
+    else if (lvl < 15) baseRate = 0.65;
+    else if (lvl < 20) baseRate = 0.6;
+    else if (lvl < 25) baseRate = 0.55;
+    else if (lvl < 30) baseRate = 0.5;
+    else if (lvl < 35) baseRate = 0.45;
+    else if (lvl < 40) baseRate = 0.4;
+    else baseRate = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 40] || 0.1;
+    return baseRate === 1.0 ? 1.0 : Math.min(0.99, baseRate + (ringLvl * 0.001));
+  }, []);
 
   const checkHunt = useCallback((stats, currentNow) => {
     if (state.castleHuntEndTime > currentNow) return { name: '🏰 제국의 심장', mult: 50, special: true };
@@ -179,10 +198,12 @@ export default function App() {
     });
   };
 
+  // 🔥 펫 50강 MAX 레벨 캡 추가
   const upgradePet = () => {
-    if (!state.petActive) return;
+    if (!state.petActive || state.petLevel >= 50) return;
     const cost = getPetCost(state.petLevel, gears[5].lvl);
     if (state.balance < cost) return;
+    
     const success = Math.random() < getPetRate(state.petLevel, gears[6].lvl);
     triggerAnim('pet', success ? 'success' : 'fail');
     
@@ -197,10 +218,12 @@ export default function App() {
     });
   };
 
+  // 🔥 성 50강 MAX 레벨 캡 추가
   const upgradeCastle = () => {
-    if (!state.castleActive) return;
+    if (!state.castleActive || state.castleLevel >= 50) return;
     const cost = getCastleCost(state.castleLevel, gears[5].lvl);
     if (state.balance < cost) return;
+    
     const success = Math.random() < getPetRate(state.castleLevel, gears[6].lvl);
     triggerAnim('castle', success ? 'success' : 'fail');
     
@@ -225,7 +248,7 @@ export default function App() {
         const timer = setInterval(() => {
           setGears(p => {
             const currentG = p.find(x => x.id === gId);
-            if (currentG.lvl >= parseInt(target)) { 
+            if (currentG.lvl >= parseInt(target) || currentG.lvl >= 30) { 
               setState(s => { clearInterval(s.autoTimers[gId]); return { ...s, autoTimers: { ...s.autoTimers, [gId]: null } }; });
               return p; 
             }
@@ -246,7 +269,7 @@ export default function App() {
       if (target) {
         const timer = setInterval(() => {
           setState(s => {
-            if (s.petLevel >= parseInt(target)) { clearInterval(timer); return { ...s, autoTimers: { ...s.autoTimers, pet: null } }; }
+            if (s.petLevel >= parseInt(target) || s.petLevel >= 50) { clearInterval(timer); return { ...s, autoTimers: { ...s.autoTimers, pet: null } }; }
             upgradePet(); return s;
           });
         }, 350);
@@ -264,7 +287,7 @@ export default function App() {
       if (target) {
         const timer = setInterval(() => {
           setState(s => {
-            if (s.castleLevel >= parseInt(target)) { clearInterval(timer); return { ...s, autoTimers: { ...s.autoTimers, castle: null } }; }
+            if (s.castleLevel >= parseInt(target) || s.castleLevel >= 50) { clearInterval(timer); return { ...s, autoTimers: { ...s.autoTimers, castle: null } }; }
             upgradeCastle(); return s;
           });
         }, 350);
@@ -273,7 +296,6 @@ export default function App() {
     }
   };
 
-  // 펫/성 개방 및 이름 변경
   useEffect(() => {
     if (minLvl >= 30 && !state.petActive) {
       setState(s => ({ ...s, petActive: true }));
@@ -295,7 +317,6 @@ export default function App() {
     if (newName) setState(s => ({ ...s, castleName: newName }));
   };
 
-  // 텔레그램 SDK
   useEffect(() => {
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -306,7 +327,6 @@ export default function App() {
     }
   }, []);
 
-  // ⚙️ 메인 엔진 루프
   useEffect(() => {
     if (state.screen !== 'game') return;
 
@@ -344,7 +364,6 @@ export default function App() {
     alert("💱 GOU/TON DEX 스왑 거래소\n\n시즌 종료 직후 유동성 풀이 활성화됩니다!");
   };
 
-  // 🔴 다중 지갑 선택 완료 핸들러
   const selectWallet = (walletName) => {
     setModals(m => ({ ...m, wallet: false }));
     setState(s => ({ ...s, screen: 'game', walletAddress: `EQD...${Math.floor(Math.random()*999)}` }));
@@ -356,8 +375,9 @@ export default function App() {
     return [...others, { ...me, powerVal: me.power, power: me.power.toLocaleString() }].sort((a,b) => b.powerVal - a.powerVal).map((r, i) => ({ ...r, rank: i + 1 }));
   }, [state.userName, state.userTitle, state.castleLevel, state.petLevel, currentStats.sum, mockRankings]);
 
+
   // ==========================================
-  // 🟢 1. 지갑 연동 화면 (사각 로딩창 삭제, 앱 켜자마자 바로 꽉 차게 진입)
+  // 🟢 1. 지갑 연동 화면 (시작화면)
   // ==========================================
   if (state.screen === 'wallet') {
     return (
@@ -375,8 +395,6 @@ export default function App() {
         <p style={{ margin: '10px 0 30px 0', color: '#aaa', textAlign: 'center', fontSize: '13px', padding: '0 20px', lineHeight: '1.5', wordBreak: 'keep-all' }}>
           시즌제 토큰 마이닝 생태계에 오신 것을 환영합니다.<br/>TON 생태계 지갑을 연결하여 영지를 활성화하십시오.
         </p>
-        
-        {/* 지갑 모달창을 띄우는 메인 버튼 */}
         <button onClick={() => setModals(m => ({ ...m, wallet: true }))} 
                 style={{ background: '#0098EA', color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '10px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 0 15px rgba(0,152,234,0.5)', zIndex: 10 }}>
           TON 지갑 연결하기
@@ -566,7 +584,6 @@ export default function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>비용</span><span>{getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
                 </div>
-                {/* 🔴 명확한 할인 안내 텍스트 */}
                 <div style={{ fontSize: '9px', color: '#06b6d4', marginTop: '2px', textAlign: 'center' }}>
                   목걸이 -{(gears[5].lvl * 0.5).toFixed(1)}% 적용
                 </div>
