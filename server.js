@@ -1,12 +1,24 @@
-// God of Upgrade: Core Economic Engine
+// God of Upgrade: Core Economic Engine (React 호환 버전)
 const express = require('express');
+const path = require('path');
 const app = express();
+
+// ★★★ React 연동용 안내판 설정 ★★★
+// 1. React 코드가 압축된 'build' 폴더를 방문자에게 화면으로 띄웁니다.
+app.use(express.static(path.join(__dirname, 'build')));
+
+// 2. 어떤 주소로 들어오든 무조건 게임 화면(index.html)을 보여주도록 강제합니다.
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+// ★★★ 여기까지 ★★★
+
 
 // 1. 경제 분배 엔진 (핵심)
 function processFailedUpgrade(cost) {
     const data = {
-        burn: cost * 0.40,          // 40% 소각
-        rewardPool: cost * 0.40,    // 40% 보상풀
+        burn: cost * 0.50,          // 50% 소각
+        rewardPool: cost * 0.30,    // 30% 보상풀
         lp: cost * 0.10,            // 10% 유동성 공급(LP)
         jackpot: cost * 0.05,       // 5% 잭팟
         reserve: cost * 0.05        // 5% 예비비
@@ -41,4 +53,6 @@ function getPetBonus(level) {
     return base + perLevel + breakthrough;
 }
 
-app.listen(3000, () => console.log('God of Upgrade Engine is running on port 3000'));
+// Render 호환용 포트 설정
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`God of Upgrade Engine is running on port ${port}`));
