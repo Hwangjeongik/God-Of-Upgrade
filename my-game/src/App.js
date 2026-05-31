@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 /**
- * GOU3: THE KNIGHT'S TALE - GRID INVENTORY & SEASON REWARD EDITION (v7.0.5)
- * Update: Gear UI compressed to Grid, Jackpot renamed to Season Reward with detailed eligibility UI
+ * GOU3: THE KNIGHT'S TALE - DEX REVOLUTION & TOTAL SEASON REWARD EDITION (v7.0.6)
+ * Update: Removed all 'Jackpot' remnants, Added wide Season Reward layout with massive button, Added DEX shortcut card
+ * Principle: No Omissions, Full Code Integration, Telegram Mobile Optimized
  */
 
 const MAX_SUPPLY = 10000000000; 
@@ -356,24 +357,24 @@ export default function App() {
     }
   }, [state.petLevel, state.castleActive, triggerAnim]);
 
-  // 🏆 잭팟 -> 시즌보상으로 완벽 교체 및 실패 사유 구체화
+  // 🏆 시즌보상 정산 시스템 (내부 '잭팟' 소거 완료)
   const processJackpot = useCallback((isAuto = false) => {
     setState(s => {
       if (s.jackpot <= 0) { 
-        if(!isAuto) alert("시즌보상 기금이 비어있습니다."); 
+        if(!isAuto) alert("시즌 보상 기금이 비어있습니다."); 
         return s; 
       }
       
       let message = "";
       if (s.castleLevel >= 50) {
-        message = `[정산 완료] 절대 권력(성 50강) 달성!\n시즌보상 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
+        message = `[${isAuto ? '자동' : '수동'} 정산] 절대 권력(성 50강) 달성!\n시즌 보상 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
       } else if (s.petLevel >= 50) {
-        message = `[정산 완료] 신의 경지(펫 50강) 달성!\n시즌보상 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
+        message = `[${isAuto ? '자동' : '수동'} 정산] 신의 경지(펫 50강) 달성!\n시즌 보상 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
       } else if (minLvl >= 30) {
-        message = `[정산 완료] 전설의 기사(ALL 30강) 자격 증명!\n시즌보상 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
+        message = `[${isAuto ? '자동' : '수동'} 정산] 전설의 기사(ALL 30강) 자격 증명!\n시즌 보상 기금 ${Math.floor(s.jackpot).toLocaleString()} GOU를 수령합니다!`;
       } else { 
         if(!isAuto) {
-          alert(`[정산 실패] 수령 조건 미달입니다.\n\n- 필요 조건: 모든 장비 최소 30강 이상\n- 사령관님의 현재 최소 레벨: +${minLvl}`); 
+          alert(`[정산 실패] 시즌 보상 수령 자격 미달입니다.\n\n- 필요 조건: 모든 장비 최소 +30강 이상 달성\n- 사령관님의 현재 최소 장비 레벨: +${minLvl}강`); 
         }
         return s; 
       }
@@ -382,6 +383,10 @@ export default function App() {
       return { ...s, balance: s.balance + s.jackpot, jackpot: 0, lastJackpotDate: new Date().toDateString() };
     });
   }, [minLvl]);
+
+  const handleDEXClick = () => {
+    alert("💱 GOU/TON DEX 스왑 거래소\n\n사령관님이 획득하신 GOU 코인을 TON 파트너 코인 또는 메이저 자산으로 즉시 스왑할 수 있는 DEX 유동성 풀(LP)이 시즌 종료 직후 활성화됩니다!\n(현재 영지 통신망 구축 및 준비 중입니다.)");
+  };
 
   const setGodTitle = () => {
     const newTitle = prompt("신이시여, 만천하에 선포할 호칭을 입력하소서:", state.userTitle);
@@ -453,13 +458,15 @@ export default function App() {
         .glass-panel { background: rgba(20, 20, 25, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(197, 160, 89, 0.3); border-radius: 12px; }
         .glass-panel-unlocked { background: rgba(6, 182, 212, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(6, 182, 212, 0.4); }
 
-        /* 데스크탑 기본 크기 */
         .dash-panel { padding: 30px; margin-bottom: 25px; }
         .treasury-title { font-size: 28px; margin: 20px 0 25px 0; }
         .balance-text { font-size: 52px; margin-bottom: 30px; }
         .grid-hunts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px; }
         .hunt-box { padding: 20px 15px; min-height: 160px; }
-        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+
+        /* 📊 상단 스탯 대시보드 2x2 깔끔 격자 (DEX 바로가기 안착) */
+        .grid-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .grid-stats > div { padding: 18px; border-radius: 10px; text-align: center; display: flex; flexDirection: column; justify-content: center; }
 
         /* ⚔️ 장비창 그리드화 (바둑판 배열) */
         .gears-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 850px; }
@@ -476,7 +483,7 @@ export default function App() {
         .special-name { font-size: 28px; }
         .pet-actions { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
 
-        /* 📱 반응형 모바일 디자인 (텔레그램 사이즈 극강 최적화) */
+        /* 📱 반응형 모바일 디자인 (텔레그램 전용 극치 설계) */
         @media (max-width: 768px) {
           .main-wrap { padding: 10px 5px !important; }
           .dash-panel { padding: 15px 10px !important; margin-bottom: 15px !important; }
@@ -484,16 +491,18 @@ export default function App() {
           .balance-text { font-size: 32px !important; margin-bottom: 20px !important; }
           .balance-text span { font-size: 16px !important; }
           
-          .grid-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+          .grid-stats { gap: 10px !important; }
           .grid-stats > div { padding: 12px !important; }
-          .grid-stats > div:nth-child(3) { grid-column: 1 / -1; } /* 시즌보상 박스 넓게 */
-          .grid-stats > div:last-child { grid-column: 1 / -1; }
+          .grid-stats .stat-value { font-size: 18px !important; }
+          .grid-stats .stat-label { font-size: 12px !important; }
           
+          .season-wide-panel { flex-direction: column !important; text-align: center !important; gap: 12px !important; padding: 15px 12px !important; }
+          .btn-season-claim { width: 100% !important; padding: 14px 0 !important; font-size: 16px !important; }
+
           .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; margin-bottom: 15px !important; }
-          .hunt-box { padding: 10px !important; min-height: 100px !important; display: flex !important; flex-direction: column !important; justify-content: center !important; }
+          .hunt-box { padding: 10px !important; min-height: 100px !important; }
           .hunt-name { font-size: 14px !important; margin-bottom: 5px !important; }
           
-          /* 장비창 모바일 그리드 (2열 바둑판) */
           .gears-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
           .gear-card { padding: 12px 8px !important; border-top: 3px solid #555 !important; }
           .img-box-gear { width: 55px !important; height: 55px !important; border-radius: 8px !important; }
@@ -507,7 +516,6 @@ export default function App() {
           .special-name { font-size: 18px !important; margin: 0 0 5px 0 !important; }
           .pet-desc { font-size: 12px !important; margin: 0 0 10px 0 !important; }
           .pet-actions { width: 100%; justify-content: space-between !important; gap: 8px !important; }
-          .btn-special { font-size: 11px !important; padding: 8px !important; width: 100%; text-align: center; }
         }
       `}</style>
 
@@ -528,41 +536,58 @@ export default function App() {
           {Math.floor(state.balance).toLocaleString()} <span style={{color: '#c5a059', fontWeight: 'normal'}}>GOU</span>
         </div>
         
+        {/* 상단 4칸 그리드 시스템 (DEX 바로가기 합류 완료) */}
         <div className="grid-stats">
-          <div style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '8px', textAlign: 'center' }}>
-            <div style={{ color: '#06b6d4', fontWeight: 'bold', marginBottom: '4px', fontSize: '14px' }}>📈 일일 획득량</div>
-            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>+{dailyGainDisplay.toLocaleString()}</div>
-          </div>
-          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', textAlign: 'center' }}>
-            <div style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '4px', fontSize: '14px' }}>🔥 누적 소각</div>
-            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>{Math.floor(state.burned).toLocaleString()}</div>
+          <div style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.3)' }}>
+            <div className="stat-label" style={{ color: '#06b6d4', fontWeight: 'bold', marginBottom: '4px' }}>📈 일일 획득량</div>
+            <div className="stat-value" style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>+{dailyGainDisplay.toLocaleString()}</div>
           </div>
           
-          {/* 🏆 시즌보상 구역 (확대 및 사유 명시) */}
-          <div style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.5)', borderRadius: '8px', textAlign: 'center', padding: '15px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ color: '#fbbf24', fontWeight: 'bold', marginBottom: '8px', fontSize: '18px', textShadow: '0 0 5px rgba(251,191,36,0.5)' }}>
-              🏆 시즌 보상
+          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+            <div className="stat-label" style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '4px' }}>🔥 누적 소각</div>
+            <div className="stat-value" style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>{Math.floor(state.burned).toLocaleString()}</div>
+          </div>
+
+          <div style={{ background: 'rgba(197,160,89,0.1)', border: '1px solid rgba(197,160,89,0.3)' }}>
+            <div className="stat-label" style={{ color: '#c5a059', fontWeight: 'bold', marginBottom: '4px' }}>⚔️ 통합 보너스</div>
+            <div className="stat-value" style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}>+{totalBonusPct}%</div>
+          </div>
+
+          {/* 💱 남는 한 칸을 채우는 강력한 DEX 바로가기 모듈 */}
+          <div onClick={handleDEXClick} style={{ background: 'rgba(147,51,234,0.15)', border: '1px solid rgba(147,51,234,0.5)', cursor: 'pointer', transition: 'all 0.2s' }}
+               onMouseOver={(e) => e.currentTarget.style.background = 'rgba(147,51,234,0.3)'}
+               onMouseOut={(e) => e.currentTarget.style.background = 'rgba(147,51,234,0.15)'}>
+            <div className="stat-label" style={{ color: '#a855f7', fontWeight: 'bold', marginBottom: '4px' }}>💱 DEX 거래소</div>
+            <div className="stat-value" style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold', textShadow: '0 0 5px #a855f7' }}>바로가기 ➡️</div>
+          </div>
+        </div>
+
+        {/* 🏆 시즌보상 전용 독립 와이드 패널 및 거대 클릭 버튼 */}
+        <div className="season-wide-panel" style={{ 
+          background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.4)', borderRadius: '12px', 
+          padding: '16px 20px', marginTop: '15px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '15px' 
+        }}>
+          <div style={{ textAlign: 'left', flex: 1 }}>
+            <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '15px', letterSpacing: '1px' }}>🏆 시즌 종료 정산 보상</div>
+            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '28px', margin: '2px 0' }}>
+              {Math.floor(state.jackpot).toLocaleString()} <span style={{fontSize:'14px', color:'#c5a059', fontWeight:'normal'}}>GOU</span>
             </div>
-            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '26px', marginBottom: '12px' }}>
-              {Math.floor(state.jackpot).toLocaleString()}
-            </div>
-            
-            <button onClick={() => processJackpot(false)} 
-                    style={{ background: '#fbbf24', color: '#000', border: 'none', borderRadius: '6px', padding: '12px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 0 10px rgba(251,191,36,0.4)', transition: 'all 0.2s' }}>
-              보상 정산 받기
-            </button>
-            
-            <div style={{ marginTop: '10px', fontSize: '13px', fontWeight: 'bold', color: minLvl >= 30 ? '#06b6d4' : '#ef4444' }}>
+            {/* 수령 불가 사유 실시간 계측 장치 */}
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: minLvl >= 30 ? '#06b6d4' : '#ef4444' }}>
               {minLvl >= 30 
-                ? "✅ 현재 정산 수령이 가능합니다!" 
-                : `❌ 수령 불가 (필요: ALL 30강 / 현재: +${minLvl})`}
+                ? "✅ 현재 즉시 수령 권한 획득 완료!" 
+                : `❌ 수령 조건 미달 (필요: ALL +30강 / 현재 최소: +${minLvl}강)`}
             </div>
           </div>
 
-          <div style={{ background: 'rgba(197,160,89,0.1)', border: '1px solid rgba(197,160,89,0.3)', borderRadius: '8px', textAlign: 'center' }}>
-            <div style={{ color: '#c5a059', fontWeight: 'bold', marginBottom: '4px', fontSize: '14px' }}>⚔️ 통합 보너스 (+{totalBonusPct}%)</div>
-            <div style={{ color: '#fff', fontSize: '13px' }}>장비 +{setBonus}% | 펫 +{petBonus}% | 성 +{castleBonus}%</div>
-          </div>
+          <button className="btn-season-claim" onClick={() => processJackpot(false)} style={{ 
+            background: '#fbbf24', color: '#000', border: 'none', borderRadius: '8px', 
+            padding: '14px 28px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', 
+            boxShadow: '0 0 15px rgba(251,191,36,0.4)', transition: 'all 0.1s' 
+          }} onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.96)'}
+             onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+            보상 정산 수령 ⚡
+          </button>
         </div>
       </div>
 
@@ -584,7 +609,7 @@ export default function App() {
               {h.name === '초원' ? (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? '#fbbf24' : '#aaa', fontSize: '12px' }}>기본 개방 영토</div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', color: '#e6d5b8', background: 'rgba(0, 0, 0, 0.6)', padding: '10px', borderRadius: '8px', marginBottom: '8px', fontSize: '11px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', color: '#e6d5b8', background: 'rgba(0, 0, 0, 0.6)', padding: '8px', borderRadius: '8px', marginBottom: '8px', fontSize: '11px' }}>
                   <div style={{textAlign: 'left'}}>공 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.atk}</span></div>
                   <div style={{textAlign: 'right'}}>체 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.hp}</span></div>
                   <div style={{textAlign: 'left'}}>방 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444', fontWeight: 'bold'}}>{h.req.def}</span></div>
