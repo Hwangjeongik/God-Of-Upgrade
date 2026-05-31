@@ -24,13 +24,13 @@ export default function App() {
     screen: 'wallet', 
     walletAddress: "",
     userId: null,         
-    balance: 50000000000,
+    balance: 0,
     pendingGOU: 0,        
     lastClaimTime: Date.now(), 
-    burned: 1990000000, 
-    jackpot: 50000000,
-    lp: 0, pool: 5000000000, reserve: 0,
-    mintedGOU: 2999000000,
+    burned: 0, 
+    jackpot: 0,
+    lp: 0, pool: 0, reserve: 0,
+    mintedGOU: 0,
     currentHunt: '초원',
     autoTimers: {},
     userName: "사령관", userTitle: "견습 기사",
@@ -146,22 +146,26 @@ export default function App() {
   };
 
   useEffect(() => {
-    const initFirebaseData = async (tgUser, inviterId) => {
+ const initFirebaseData = async (tgUser, inviterId) => {
       const uId = tgUser.id.toString(); const uName = tgUser.first_name || "사령관";
       setState(s => ({ ...s, userName: uName, userId: uId }));
       const userRef = doc(db, "users", uId);
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        alert(`🎉 사전예약 환영합니다!\n보상으로 100,000 GOU가 지급되었습니다.`);
-        await setDoc(userRef, { name: uName, joinedAt: new Date(), invitedBy: inviterId || "none", inviteCount: 0 });
-        setState(s => ({ ...s, balance: s.balance + 100000 }));
+        // 🔥 신규 유저 50만 보상
+        alert(`🎉 사전예약 환영합니다!\n보상으로 500,000 GOU가 지급되었습니다.`);
+        await setDoc(userRef, { name: uName, joinedAt: new Date(), invitedBy: inviterId || "none", inviteCount: 0, balance: 500000 });
+        setState(s => ({ ...s, balance: 500000 }));
+        
         if (inviterId && inviterId !== uId) {
-          try { await updateDoc(doc(db, "users", inviterId), { balance: increment(100000), inviteCount: increment(1) }); } catch(e) { console.log(e); }
+          // 🔥 초대자에게도 50만 보상
+          try { await updateDoc(doc(db, "users", inviterId), { balance: increment(500000), inviteCount: increment(1) }); } catch(e) { console.log(e); }
         }
       } else {
+        // 🔥 기존 유저는 DB에서 초대 인원과 잔액을 정상적으로 불러옴
         const data = userSnap.data();
-        if(data.inviteCount) setState(s => ({...s, inviteCount: data.inviteCount}));
+        setState(s => ({...s, inviteCount: data.inviteCount || 0, balance: data.balance || 500000}));
       }
     };
 
