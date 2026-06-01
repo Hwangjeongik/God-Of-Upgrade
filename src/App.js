@@ -358,12 +358,11 @@ if (state.screen === 'wallet') {
           내 초대 링크 복사하기 🔗
         </button>
 
-   {/* 🔥 사령관님의 웅장한 백서 창 (대기실 전용) */}
+  {/* 🔥 사령관님의 웅장한 백서 창 (대기실 전용) */}
         {modals.guide && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
             <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', padding: '30px', background: 'rgba(15, 15, 20, 0.98)', border: '2px solid #fbbf24', borderRadius: '12px', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 0 30px rgba(251, 191, 36, 0.2)' }}>
               
-              {/* 헤더 타이틀 */}
               <h1 style={{ textAlign: 'center', color: '#fbbf24', borderBottom: '2px solid rgba(251, 191, 36, 0.3)', paddingBottom: '15px', marginTop: 0, fontSize: '24px', letterSpacing: '1px' }}>
                 👑 GOD OF UPGRADE 공식 백서
               </h1>
@@ -373,7 +372,6 @@ if (state.screen === 'wallet') {
                 <span style={{color: '#fbbf24', fontWeight: 'bold'}}>하이퍼 디플레이션 상상형 P2E RPG</span> 생태계입니다.
               </p>
 
-              {/* 1. 토큰노믹스 */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#06b6d4', margin: '0 0 10px 0', fontSize: '18px' }}>
                   💎 경제 모델 & 투명성 (Tokenomics)
@@ -384,7 +382,6 @@ if (state.screen === 'wallet') {
                 </div>
               </div>
 
-              {/* 2. 강화 시스템 분배 구조 */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#ef4444', margin: '0 0 10px 0', fontSize: '18px' }}>
                   🔥 하이퍼 디플레이션 및 선순환 구조
@@ -405,7 +402,6 @@ if (state.screen === 'wallet') {
                 </div>
               </div>
 
-              {/* 3. 사냥터 단계 */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#10b981', margin: '0 0 10px 0', fontSize: '18px' }}>
                   🗺️ 무한한 성장과 차등 채굴 시스템
@@ -420,7 +416,6 @@ if (state.screen === 'wallet') {
                 </div>
               </div>
 
-              {/* 4. 시즌 보상 분배 시스템 */}
               <div style={{ marginBottom: '5px' }}>
                 <h3 style={{ color: '#fbbf24', margin: '0 0 10px 0', fontSize: '18px' }}>
                   🏆 공정 분배형 주간 시즌 보상 (Season Rewards)
@@ -448,6 +443,9 @@ if (state.screen === 'wallet') {
             </div>
           </div>
         )}
+      </div>
+    );
+  }
 
   // ---------------- 본 게임 화면 ----------------
   return (
