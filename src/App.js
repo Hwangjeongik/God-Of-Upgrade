@@ -343,16 +343,19 @@ if (state.screen === 'wallet') {
             ✔️ 친구 초대 보상 : <span style={{color: '#fff', fontWeight: 'bold'}}>1명당 100,000 GOU</span>
           </div>
 
-          <div style={{ fontSize: '15px', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
+   <div style={{ fontSize: '15px', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
             현재 내 초대로 가입한 인원 : <span style={{color: '#06b6d4', fontWeight: 'bold', fontSize: '18px'}}>{state.inviteCount}명</span>
           </div>
         </div>
         
-        <button onClick={copyReferralLink} style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '15px', width: '100%', maxWidth: '400px', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
-          내 초대 링크 복사하기 🔗
-          {/* 공지사항(백서) 버튼 */}
+        {/* 공지사항(백서) 버튼 */}
         <button onClick={() => setModals(m => ({ ...m, guide: true }))} style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid #fbbf24', color: '#fbbf24', padding: '12px', width: '100%', maxWidth: '400px', borderRadius: '8px', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', marginBottom: '15px' }}>
           📜 게임 백서 및 시스템 가이드 보기
+        </button>
+
+        {/* 초대 링크 복사 버튼 (꼬리 복구 완료!) */}
+        <button onClick={copyReferralLink} style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '15px', width: '100%', maxWidth: '400px', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+          내 초대 링크 복사하기 🔗
         </button>
       </div>
     );
