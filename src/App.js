@@ -25,7 +25,7 @@ export default function App() {
     screen: 'wallet', 
     walletAddress: "",
     userId: null,         
-    balance: 0,
+    balance: 0,          // 💰 GOU 잔액 0으로 완전 초기화
     pendingGOU: 0,        
     lastClaimTime: Date.now(), 
     burned: 0, 
@@ -35,23 +35,27 @@ export default function App() {
     currentHunt: '초원',
     autoTimers: {},
     userName: "사령관", userTitle: "견습 기사",
-    petActive: true, petLevel: 49, petName: "고대 황금 드래곤", petHuntEndTime: 0,
-    castleActive: false, castleLevel: 0, castleName: "위대한 군주의 성", castleHuntEndTime: 0,
+    petActive: false,    // 🐉 펫 비활성화 (장비 ALL 30강 달성 전까지 봉인)
+    petLevel: 0,         // 🐉 펫 레벨 0 초기화
+    petName: "고대 황금 드래곤", petHuntEndTime: 0,
+    castleActive: false, // 🏰 성 비활성화
+    castleLevel: 0,      // 🏰 성 레벨 0 초기화
+    castleName: "위대한 군주의 성", castleHuntEndTime: 0,
     adBuffEndTime: 0, settlementLogs: [], lastJackpotDate: null,
     gameTickets: 5,
     lastTicketRegen: Date.now(),
     inviteCount: 0
   });
 
-  // 🔥 이미지 엑스박스 해결: 경로 앞에 '/' 를 붙여 public 폴더를 정확히 바라보게 수정
+  // 🔥 모든 장비 0강으로 강등 처리
   const [gears, setGears] = useState([
-    { id: 'weapon', name: '성검 엑스칼리버', lvl: 30, stat: '공격력', base: 10, unit: '', imgFile: '/weapon.png', emoji: '⚔️' },
-    { id: 'helmet', name: '사자왕의 투구', lvl: 30, stat: '체력', base: 100, unit: '', imgFile: '/helmet.png', emoji: '🪖' },
-    { id: 'armor', name: '성기사의 갑옷', lvl: 30, stat: '방어력', base: 5, unit: '', imgFile: '/armor.png', emoji: '🛡️' },
-    { id: 'gloves', name: '용기사의 장갑', lvl: 30, stat: '명중률', base: 2, unit: '', imgFile: '/gloves.png', emoji: '🧤' },
-    { id: 'shoes', name: '바람의 장화', lvl: 30, stat: 'GOU 획득량', base: 5, unit: '%', imgFile: '/shoes.png', emoji: '👢' },
-    { id: 'necklace', name: '현자의 목걸이', lvl: 30, stat: '강화비용감소', base: 0.5, unit: '%', imgFile: '/necklace.png', emoji: '📿' },
-    { id: 'ring', name: '행운의 반지', lvl: 30, stat: '강화성공확률', base: 0.1, unit: '%', imgFile: '/ring.png', emoji: '💍' }
+    { id: 'weapon', name: '성검 엑스칼리버', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: '/weapon.png', emoji: '⚔️' },
+    { id: 'helmet', name: '사자왕의 투구', lvl: 0, stat: '체력', base: 100, unit: '', imgFile: '/helmet.png', emoji: '🪖' },
+    { id: 'armor', name: '성기사의 갑옷', lvl: 0, stat: '방어력', base: 5, unit: '', imgFile: '/armor.png', emoji: '🛡️' },
+    { id: 'gloves', name: '용기사의 장갑', lvl: 0, stat: '명중률', base: 2, unit: '', imgFile: '/gloves.png', emoji: '🧤' },
+    { id: 'shoes', name: '바람의 장화', lvl: 0, stat: 'GOU 획득량', base: 5, unit: '%', imgFile: '/shoes.png', emoji: '👢' },
+    { id: 'necklace', name: '현자의 목걸이', lvl: 0, stat: '강화비용감소', base: 0.5, unit: '%', imgFile: '/necklace.png', emoji: '📿' },
+    { id: 'ring', name: '행운의 반지', lvl: 0, stat: '강화성공확률', base: 0.1, unit: '%', imgFile: '/ring.png', emoji: '💍' }
   ]);
 
   // 필터 우회를 위해 변수명 건전하게 변경 (betSize -> tradeAmt, prediction -> forecast)
@@ -121,15 +125,44 @@ export default function App() {
   const getCost = useCallback((lvl, nLvl, mult = hState.mult) => { return Math.floor(calculateBaseCost(lvl, 1000) * (1 - (nLvl * 0.005)) * mult); }, [hState.mult]);
   const getPetCost = useCallback((lvl, nLvl, mult = hState.mult) => { return Math.floor(calculateBaseCost(lvl, 1000) * (1 - (nLvl * 0.005)) * mult); }, [hState.mult]);
   const getCastleCost = useCallback((lvl, nLvl, mult = hState.mult) => { return Math.floor(calculateBaseCost(lvl, 10000) * (1 - (nLvl * 0.005)) * mult); }, [hState.mult]);
+  // 🚨 [사령관 전용 마스터 스위치] 
+  // true = 테스트 모드 (모든 장비/펫/성 90% 성공)
+  // false = 라이브 모드 (원래의 빡센 밸런스 공식 적용)
+  const IS_TEST_MODE = true;
+
+  // 1. 일반 장비 확률
   const getRate = useCallback((lvl, rLvl) => {
+    if (IS_TEST_MODE) return 0.9;
+
     if (lvl < 5) return 1.0; let baseRate = 0;
     if (lvl < 10) baseRate = 0.7; else if (lvl < 15) baseRate = 0.6; else if (lvl < 20) baseRate = 0.5; else baseRate = [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][lvl - 20] || 0.1;
     return Math.min(0.99, baseRate + (rLvl * 0.001));
   }, []);
 
+  // 2. 펫(Pet) 확률
   const getPetRate = useCallback((lvl, ringLvl) => {
+    if (IS_TEST_MODE) return 0.9;
+
     if (lvl < 5) return 1.0; let baseRate = 0;
     if (lvl < 10) baseRate = 0.7; else if (lvl < 15) baseRate = 0.65; else if (lvl < 20) baseRate = 0.6; else if (lvl < 25) baseRate = 0.55; else if (lvl < 30) baseRate = 0.5; else if (lvl < 35) baseRate = 0.45; else if (lvl < 40) baseRate = 0.4; else baseRate = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 40] || 0.1;
+    return Math.min(0.99, baseRate + (ringLvl * 0.001));
+  }, []);
+
+ // 3. 🏰 성(Castle) 전용 확률 (펫과 100% 동일하게 동기화 완료)
+  const getCastleRate = useCallback((lvl, ringLvl) => {
+    if (IS_TEST_MODE) return 0.9;
+
+    // 🔒 [밸런스 조정] 펫(Pet) 공식과 완벽하게 일치하는 계단식 확률 구조
+    if (lvl < 5) return 1.0; let baseRate = 0;
+    if (lvl < 10) baseRate = 0.7; 
+    else if (lvl < 15) baseRate = 0.65; 
+    else if (lvl < 20) baseRate = 0.6; 
+    else if (lvl < 25) baseRate = 0.55; 
+    else if (lvl < 30) baseRate = 0.5; 
+    else if (lvl < 35) baseRate = 0.45; 
+    else if (lvl < 40) baseRate = 0.4; 
+    else baseRate = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 40] || 0.1;
+
     return Math.min(0.99, baseRate + (ringLvl * 0.001));
   }, []);
 
@@ -343,14 +376,38 @@ if (state.screen === 'wallet') {
             ✔️ 가입 기본 보상 : <span style={{color: '#fff', fontWeight: 'bold'}}>100,000 GOU</span><br/>
             ✔️ 친구 초대 보상 : <span style={{color: '#fff', fontWeight: 'bold'}}>1명당 100,000 GOU</span>
           </div>
-          {/* 💎 톤(TON) 지갑 연결 버튼 */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', marginTop: '10px' }}>
-            <TonConnectButton />
+          {/* 💎 톤(TON) 지갑 및 자산 관리 중앙 통제소 */}
+          <div style={{ background: 'rgba(15, 15, 20, 0.9)', padding: '20px', borderRadius: '12px', border: '1px solid #fbbf24', marginBottom: '25px', boxShadow: '0 0 15px rgba(251, 191, 36, 0.1)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              <TonConnectButton />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+              <button onClick={() => alert('🚨 [테스트넷 알림] 입금 스마트 컨트랙트 연결 대기 중입니다!')} style={{ flex: 1, background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
+                📥 GOU 입금하기
+              </button>
+              <button onClick={() => alert('🚨 [테스트넷 알림] 출금 스마트 컨트랙트 연결 대기 중입니다!')} style={{ flex: 1, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
+                📤 GOU 출금하기
+              </button>
+            </div>
           </div>
-   <div style={{ fontSize: '15px', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
-            현재 내 초대로 가입한 인원 : <span style={{color: '#06b6d4', fontWeight: 'bold', fontSize: '18px'}}>{state.inviteCount}명</span>
+   {/* 🤝 바이럴 마케팅의 심장 : 초대 시스템 구역 */}
+          <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)', marginTop: '20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '15px', color: '#eee', marginBottom: '15px' }}>
+              현재 내 초대로 가입한 인원 : <span style={{color: '#06b6d4', fontWeight: 'bold', fontSize: '20px'}}>{state.inviteCount}명</span>
+            </div>
+            <button onClick={() => {
+              // 봇 주소 뒤에 유저의 고유 코드가 붙어서 복사되도록 하는 마법의 기능입니다.
+              navigator.clipboard.writeText('https://t.me/god_of_upgrade_bot?start=MY_INVITE_CODE');
+              alert('🔗 초대 링크가 복사되었습니다! 텔레그램 방에 공유하여 GOU 생태계를 확장하십시오!');
+            }} style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)', color: '#fff', border: 'none', padding: '12px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', width: '100%', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
+              🔗 내 전용 초대 링크 복사하기
+            </button>
+            <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '10px', marginBottom: 0 }}>
+              * 친구가 내 링크로 접속하면 강력한 추가 혜택이 주어집니다. (예정)
+            </p>
           </div>
-        </div>
         
         {/* 공지사항(백서) 버튼 */}
         <button onClick={() => setModals(m => ({ ...m, guide: true }))} style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid #fbbf24', color: '#fbbf24', padding: '12px', width: '100%', maxWidth: '400px', borderRadius: '8px', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', marginBottom: '15px' }}>
