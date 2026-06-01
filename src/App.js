@@ -580,8 +580,7 @@ if (state.screen === 'wallet') {
         </div>
       </div>
 
-      {/* 미니게임 모달 */}
-  {/* 📜 사령관님의 시스템 가이드 (게임 백서) */}
+ {/* 📜 사령관님의 시스템 가이드 (게임 백서) */}
       {modals.guide && (
         <div className="modal-overlay" style={{ overflowY: 'auto' }}>
           <div className="glass-panel" style={{ width: '100%', maxWidth: '900px', padding: '25px', background: 'rgba(15, 15, 20, 0.98)', border: '2px solid #fbbf24', margin: 'auto', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -596,13 +595,13 @@ if (state.screen === 'wallet') {
                 • 생태계 투명성을 위해 정식 오픈 시 <b>운영, 잭팟, 소각 지갑 주소를 모두 공개</b>합니다.
               </p>
             </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div>
                 <h3 style={{ color: '#a855f7', borderBottom: '1px solid #333', paddingBottom: '8px' }}>⚔️ 기본 시스템</h3>
                 <ul style={{ fontSize: '13px', lineHeight: '1.7', paddingLeft: '20px', color: '#ccc' }}>
                   <li><b>기본 채굴:</b> 하루 300,000 GOU</li>
                   <li><b>광고 버프:</b> 1시간 동안 2배 획득</li>
-                  <li><b>1분봉 차트 예측 계약금:</b><br/>기본 100만 ➔ ALL 30강 1천만 ➔ 펫 50강 1억 ➔ 성 50강 10억</li>
                 </ul>
 
                 <h3 style={{ color: '#10b981', borderBottom: '1px solid #333', paddingBottom: '8px', marginTop: '20px' }}>🗺️ 사냥터 & 특수 던전</h3>
@@ -637,97 +636,13 @@ if (state.screen === 'wallet') {
               </div>
             </div>
             
-            <button onClick={() => setModals(m => ({ ...m, guide: false }))} style={{ background: '#333', color: '#fff', border: 'none', padding: '15px', width: '100%', borderRadius: '8px', marginTop: '25px', fontWeight: 'bold', cursor: 'pointer' }}>닫기</button>
-          </div>
-        </div>
-      )}
-        <div className="modal-overlay">
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '420px', padding: '20px', background: '#111', border: '1px solid #a855f7' }}>
-            <h2 style={{ textAlign: 'center', color: '#a855f7', marginTop: 0 }}>📈 실시간 마켓 예측</h2>
-            <div style={{ background: '#000', height: '120px', padding: '10px', display: 'flex', alignItems: 'flex-end', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: 5, left: 10, fontSize: '11px', color: '#888' }}>시작: ${miniGame.startPrice?.toLocaleString()}</div>
-              <div style={{ position: 'absolute', top: 20, left: 10, fontSize: '14px', fontWeight: 'bold', color: miniGame.chartData[miniGame.chartData.length-1] >= miniGame.startPrice ? '#06b6d4' : '#ef4444' }}>
-                현재: ${miniGame.chartData[miniGame.chartData.length-1]?.toLocaleString(undefined, {maximumFractionDigits: 1})}
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', margin: '20px 0', fontSize: '30px', fontWeight: 'bold' }}>{miniGame.timer} 초</div>
-            {miniGame.status === 'playing' ? (
-              <div style={{ textAlign: 'center', color: miniGame.forecast === 'UP' ? '#06b6d4' : '#ef4444' }}>{miniGame.forecast === 'UP' ? "상승 예측 중..." : "하락 예측 중..."}</div>
-            ) : (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => startMiniGame('UP')} style={{ flex: 1, background: '#06b6d4', padding: '12px', border: 'none', color: '#fff', borderRadius: '8px' }}>상승 (UP)</button>
-                <button onClick={() => startMiniGame('DOWN')} style={{ flex: 1, background: '#ef4444', padding: '12px', border: 'none', color: '#fff', borderRadius: '8px' }}>하락 (DOWN)</button>
-              </div>
-            )}
-            <button onClick={() => setModals(m => ({ ...m, game: false }))} className="btn-neon" style={{ marginTop: '15px' }}>닫기</button>
-          </div>
-        </div>
-      )}
-      {/* 📜 사령관님의 시스템 가이드 (게임 백서) */}
-      {modals.guide && (
-        <div className="modal-overlay" style={{ overflowY: 'auto' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '900px', padding: '25px', background: 'rgba(15, 15, 20, 0.98)', border: '2px solid #fbbf24', margin: 'auto', maxHeight: '90vh', overflowY: 'auto' }}>
-            
-            <h2 style={{ textAlign: 'center', color: '#fbbf24', borderBottom: '1px solid #333', paddingBottom: '15px' }}>👑 GOD OF UPGRADE 백서</h2>
-            
-            <div style={{ background: 'rgba(6, 182, 212, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid #06b6d4', marginBottom: '20px' }}>
-              <h3 style={{ color: '#06b6d4', margin: '0 0 10px 0' }}>💎 토큰 노믹스</h3>
-              <p style={{ fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                • <b>총 발행량:</b> 10,000,000,000 (100억) GOU<br/>
-                • <b>운영비:</b> 10% 배정<br/>
-                • 생태계 투명성을 위해 정식 오픈 시 <b>운영, 잭팟, 소각 지갑 주소를 모두 공개</b>합니다.
-              </p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div>
-                <h3 style={{ color: '#a855f7', borderBottom: '1px solid #333', paddingBottom: '8px' }}>⚔️ 기본 시스템</h3>
-                <ul style={{ fontSize: '13px', lineHeight: '1.7', paddingLeft: '20px', color: '#ccc' }}>
-                  <li><b>기본 채굴:</b> 하루 300,000 GOU</li>
-                  <li><b>광고 버프:</b> 1시간 동안 2배 획득</li>
-                  <li><b>1분봉 차트 예측 계약금:</b><br/>기본 100만 ➔ ALL 30강 1천만 ➔ 펫 50강 1억 ➔ 성 50강 10억</li>
-                </ul>
-
-                <h3 style={{ color: '#10b981', borderBottom: '1px solid #333', paddingBottom: '8px', marginTop: '20px' }}>🗺️ 사냥터 & 특수 던전</h3>
-                <ul style={{ fontSize: '13px', lineHeight: '1.7', paddingLeft: '20px', color: '#ccc' }}>
-                  <li>초원(x1) ➔ 숲(x1.5) ➔ 사막(x2.5) ➔ 정글(x5) ➔ 화산(x12)</li>
-                  <li style={{ color: '#fbbf24' }}><b>진화:</b> ALL 30강(펫 오픈) ➔ 펫 50강(성 오픈)</li>
-                  <li>펫/성 50강 달성 시 12시간 특수 던전 입장권 획득</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 style={{ color: '#ef4444', borderBottom: '1px solid #333', paddingBottom: '8px' }}>🔥 강화 시스템 & 확률</h3>
-                <ul style={{ fontSize: '13px', lineHeight: '1.7', paddingLeft: '20px', color: '#ccc' }}>
-                  <li>실패 시 코인은 <b>잭팟(상금), 유동성, 소각</b>으로 자동 분배됩니다.</li>
-                </ul>
-                <div style={{ background: '#222', padding: '10px', borderRadius: '5px', fontSize: '12px', color: '#fbbf24' }}>
-                  [장비 & 펫 강화비용 구간 (성은 10배)]<br/>
-                  Lv 01~10 : 1천 ~ 1만<br/>
-                  Lv 11~20 : 1만 ~ 10만<br/>
-                  Lv 21~30 : 10만 ~ 100만<br/>
-                  Lv 31~40 : 100만 ~ 1천만<br/>
-                  Lv 41~50 : 1천만 ~ 1억
-                </div>
-
-                <h3 style={{ color: '#fbbf24', borderBottom: '1px solid #333', paddingBottom: '8px', marginTop: '20px' }}>🏆 시즌 보상 (JACKPOT)</h3>
-                <div style={{ background: 'rgba(251, 191, 36, 0.1)', padding: '10px', fontSize: '13px' }}>
-                  <b>1순위:</b> 성 50강 ➔ <b>2순위:</b> 펫 50강 ➔ <b>3순위:</b> ALL 30강
-                </div>
-                <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '10px', fontWeight: 'bold' }}>
-                  ※ 달성자가 없으면 상금 이월. 우리는 진정한 GOD을 원합니다.
-                </p>
-              </div>
-            </div>
-            
-        <button onClick={() => setModals(m => ({ ...m, guide: false }))} className="btn-neon" style={{ marginTop: '20px', padding: '15px', fontSize: '16px', fontWeight: 'bold' }}>
+            <button onClick={() => setModals(m => ({ ...m, guide: false }))} className="btn-neon" style={{ marginTop: '20px', padding: '15px', fontSize: '16px', fontWeight: 'bold', width: '100%', cursor: 'pointer' }}>
               백서 닫기
             </button>
           </div>
         </div>
       )}
 
- // 🚨 기존 맨 밑바닥 3줄을 지우고, 아래 코드를 붙여넣어 문짝을 완전히 닫아줍니다!
     </div>
   );
 }
