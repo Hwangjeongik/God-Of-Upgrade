@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore'; 
 import { TonConnectButton } from '@tonconnect/ui-react';
 import './App.css'; 
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 /**
  * GOU: THE KNIGHT'S TALE - PRE-REGISTRATION & UI POLISHED (v9.3.0)
@@ -138,11 +139,32 @@ export default function App() {
     return { ...(found || hunts[0]), special: false };
   }, [hunts]);
 
-  const claimGOU = () => {
-    if (state.pendingGOU <= 0) { alert("획득할 GOU가 없습니다."); return; }
-    const harvested = state.pendingGOU;
-    setState(s => ({ ...s, balance: s.balance + harvested, pendingGOU: 0, lastClaimTime: Date.now() }));
-    alert(`💰 ${Math.floor(harvested).toLocaleString()} GOU를 획득했습니다!`);
+ const claimGOU = async () => {
+    const functions = getFunctions();
+    const claimGOUFunction = httpsCallable(functions, 'claimGOU');
+
+    try {
+      const result = await claimGOUFunction({ 
+        currentMultiplier: 1.0 
+      }); 
+      
+      const data = result.data;
+
+      if (data.success) {
+        setState(s => ({ 
+          ...s, 
+          balance: s.balance + data.harvestedAmount, 
+          pendingGOU: 0, 
+          lastClaimTime: Date.now() 
+        }));
+        alert(`💰 ${data.message}`);
+      } else {
+        alert(`🚨 수확 거부됨: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("서버 통신 에러:", error);
+      alert("서버와 통신하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   useEffect(() => {
@@ -216,51 +238,60 @@ export default function App() {
     setTimeout(() => { setState(s => ({ ...s, screen: IS_PRE_REGISTRATION ? 'pre_reg' : 'game', walletAddress: `EQD...${Math.floor(1000 + Math.random() * 9000)}` })); }, 1500);
   };
 
-  const handleUpgrade = (type, id = null) => {
-    const s = stateRef.current; const gAll = gearsRef.current; const curH = getHalvingStateInternal(s.burned);
-    let currentLvl, cost, rate, isMax;
-
-    if (type === 'gear') {
-      const g = gAll.find(x => x.id === id); currentLvl = g.lvl; isMax = currentLvl >= 30;
-      if (isMax) return; cost = getCost(currentLvl, gAll[5].lvl, curH.mult); rate = getRate(currentLvl, gAll[6].lvl);
-    } else if (type === 'pet') {
-      currentLvl = s.petLevel; isMax = currentLvl >= 50;
-      if (isMax || !s.petActive) return; cost = getPetCost(currentLvl, gAll[5].lvl, curH.mult); rate = getPetRate(currentLvl, gAll[6].lvl);
-    } else if (type === 'castle') {
-      currentLvl = s.castleLevel; isMax = currentLvl >= 50;
-      if (isMax || !s.castleActive) return; cost = getCastleCost(currentLvl, gAll[5].lvl, curH.mult); rate = getPetRate(currentLvl, gAll[6].lvl);
-    }
+const handleUpgrade = async (type, id = null) => {
+    const s = stateRef.current; 
+    const key = id || type; // AUTO 타이머를 찾기 위한 고유 키
     
-    if (s.balance < cost) { alert("💰 GOU가 부족합니다! (수확을 눌러 채굴하십시오)"); return; }
-    
-    const success = Math.random() < rate;
-    triggerAnim(id || type, success ? 'success' : 'fail');
-
-    if (type === 'gear') {
-      setGears(prevG => {
-        const next = prevG.map(item => item.id === id ? { ...item, lvl: success ? item.lvl + 1 : Math.max(0, item.lvl - 1) } : item);
-        if (next.every(g => g.lvl >= 30) && !s.petActive) {
-          setState(prevS => ({ ...prevS, petActive: true }));
-          alert("🎉 장비 ALL 30강 달성! 신수(Pet)가 개방되었습니다!");
+    // 🚨 긴급 제동 1: 클라이언트 단에서 돈이 부족할 때 AUTO 즉시 해제
+    if (s.balance < 1000) { 
+        if (s.autoTimers[key]) {
+            clearInterval(s.autoTimers[key]); // 타이머 파괴
+            setState(prev => ({ ...prev, autoTimers: { ...prev.autoTimers, [key]: null } }));
         }
-        return next;
-      });
+        alert("💰 GOU가 부족하여 강화(AUTO)를 중지합니다. 수확을 진행해주세요."); 
+        return; 
     }
 
-    setState(prevS => {
-      const dist = distributeFailure(cost, curH);
-      const nextPetLvl = success ? prevS.petLevel + 1 : Math.max(0, prevS.petLevel - 1);
-      const unlockCastle = type === 'pet' && success && nextPetLvl >= 50 && !prevS.castleActive;
-      if (unlockCastle) alert("🏰 펫 50강 달성! 위대한 군주의 성이 개방되었습니다!");
-      
-      return { 
-        ...prevS, balance: prevS.balance - cost, pool: prevS.pool + (success ? cost : dist.pool), burned: prevS.burned + (success ? 0 : dist.burn), jackpot: prevS.jackpot + (success ? 0 : dist.jackpot), lp: prevS.lp + (success ? 0 : dist.lp), reserve: prevS.reserve + (success ? 0 : dist.reserve), 
-        ...(type === 'pet' && { petLevel: nextPetLvl, castleActive: prevS.castleActive || unlockCastle }), 
-        ...(type === 'castle' && { castleLevel: success ? prevS.castleLevel + 1 : Math.max(0, prevS.castleLevel - 1) }) 
-      };
-    });
-  };
+    const functions = getFunctions();
+    const upgradeItemFunction = httpsCallable(functions, 'upgradeItem');
 
+    try {
+      const result = await upgradeItemFunction({ type, id });
+      const data = result.data;
+
+      triggerAnim(id || type, data.success ? 'success' : 'fail');
+
+      if (data.unlockMessage) {
+          setTimeout(() => alert(data.unlockMessage), 500);
+      }
+
+      if (type === 'gear') {
+        setGears(prevG => {
+          return prevG.map(item => item.id === id ? { ...item, lvl: data.success ? item.lvl + 1 : Math.max(0, item.lvl - 1) } : item);
+        });
+      }
+
+      setState(prevS => {
+        return { 
+          ...prevS, 
+          balance: prevS.balance - data.cost,
+          ...(type === 'pet' && { petLevel: data.success ? prevS.petLevel + 1 : Math.max(0, prevS.petLevel - 1) }), 
+          ...(type === 'castle' && { castleLevel: data.success ? prevS.castleLevel + 1 : Math.max(0, prevS.castleLevel - 1) }),
+          ...(data.unlockMessage && data.unlockMessage.includes('신수') && { petActive: true }),
+          ...(data.unlockMessage && data.unlockMessage.includes('군주') && { castleActive: true })
+        };
+      });
+
+    } catch (error) {
+      console.error("강화 에러:", error);
+      // 🚨 긴급 제동 2: 서버에서 거절(비용 부족 등)했을 때도 AUTO 즉시 해제
+      if (s.autoTimers[key]) {
+          clearInterval(s.autoTimers[key]);
+          setState(prev => ({ ...prev, autoTimers: { ...prev.autoTimers, [key]: null } }));
+      }
+      alert("강화 중단: " + (error.message || "서버 오류가 발생했습니다."));
+    }
+  };
   const toggleAuto = (type, id = null) => {
     const key = id || type;
     if (state.autoTimers[key]) {
