@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TonConnectButton, useTonWallet } from '@tonconnect/ui-react';
 import { app } from './firebase'; 
@@ -7,7 +7,6 @@ const MAX_SUPPLY = 10000000000;
 const HALVING_BURN_THRESHOLD = MAX_SUPPLY * 0.2; 
 
 export default function App() {
-  // 🚨 사냥터 스탯 조건 완벽 복구 (reqSum + 개별 스탯 동시 만족해야 함)
   const hunts = useMemo(() => [
     {name: '초원 영지', mult: 1, reqSum: 0, req: {atk:0, hp:0, def:0, acc:0}},
     {name: '신의 숲', mult: 1.5, reqSum: 35, req: {atk:50, hp:500, def:25, acc:10}},
@@ -19,20 +18,26 @@ export default function App() {
   const [state, setState] = useState({ 
     screen: 'wallet', walletAddress: '', balance: 1000000000, burned: 1999000000, jackpot: 50000000, 
     pendingGOU: 0, unclaimedTime: 0, 
-    autoTimers: {}, userName: "사령관", userTitle: "견습 기사", isRankingOpen: false,
+    userName: "사령관", userTitle: "견습 기사", isRankingOpen: false,
     petLevel: 0, castleLevel: 0,
     petHuntEndTime: 0, castleHuntEndTime: 0, 
     isAdActive: false, adTimeLeft: 0
   });
 
+  // 🚨 AUTO 타이머의 무한루프(Stale Closure)를 막기 위한 실시간 참조 엔진
+  const autoTimersRef = useRef({});
+  const [autoActive, setAutoActive] = useState({});
+  const handleUpgradeRef = useRef();
+
+  // 🚨 사령관님의 완벽한 네이밍 센스 반영 완료 (이미지 파일명은 유지)
   const [gears, setGears] = useState([
-    {id: 'sword', name: '성검 엑스칼리버', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'weapon.png', emoji: '⚔️'},
-    {id: 'armor', name: '성기사의 갑옷', lvl: 0, stat: '체력', base: 100, unit: '', imgFile: 'armor.png', emoji: '👕'},
-    {id: 'helmet', name: '사자왕의 투구', lvl: 0, stat: '방어력', base: 5, unit: '', imgFile: 'helmet.png', emoji: '🪖'},
-    {id: 'gloves', name: '용기사의 장갑', lvl: 0, stat: '명중률', base: 2, unit: '', imgFile: 'gloves.png', emoji: '🧤'},
-    {id: 'boots', name: '바람의 장화', lvl: 0, stat: 'GOU 보너스', base: 5, unit: '%', imgFile: 'shoes.png', emoji: '👢'},
-    {id: 'necklace', name: '현자의 목걸이', lvl: 0, stat: '비용감소', base: 0.5, unit: '%', imgFile: 'necklace.png', emoji: '📿'},
-    {id: 'ring', name: '행운의 반지', lvl: 0, stat: '성공확률', base: 0.1, unit: '%', imgFile: 'ring.png', emoji: '💍'}
+    {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'weapon.png', emoji: '⚡'},
+    {id: 'armor', name: '아레스의 갑옷', lvl: 0, stat: '체력', base: 100, unit: '', imgFile: 'armor.png', emoji: '🔥'},
+    {id: 'helmet', name: '아테나의 투구', lvl: 0, stat: '방어력', base: 5, unit: '', imgFile: 'helmet.png', emoji: '🦉'},
+    {id: 'gloves', name: '헤파이스토스의 장갑', lvl: 0, stat: '명중률', base: 2, unit: '', imgFile: 'gloves.png', emoji: '🔨'},
+    {id: 'boots', name: '헤르메스의 신발', lvl: 0, stat: 'GOU 보너스', base: 5, unit: '%', imgFile: 'shoes.png', emoji: '🪽'},
+    {id: 'necklace', name: '아프로디테의 목걸이', lvl: 0, stat: '비용감소', base: 0.5, unit: '%', imgFile: 'necklace.png', emoji: '🌹'},
+    {id: 'ring', name: '포세이돈의 반지', lvl: 0, stat: '성공확률', base: 0.1, unit: '%', imgFile: 'ring.png', emoji: '🌊'}
   ]);
 
   const [anims, setAnims] = useState({});
@@ -40,7 +45,7 @@ export default function App() {
 
   const triggerAnim = useCallback((id, type) => {
     setAnims(prev => ({ ...prev, [id]: type }));
-    setTimeout(() => setAnims(prev => ({ ...prev, [id]: null })), 200);
+    setTimeout(() => setAnims(prev => ({ ...prev, [id]: null })), 250);
   }, []);
 
   const totalGearLevel = gears.reduce((a, b) => a + b.lvl, 0); 
@@ -77,7 +82,6 @@ export default function App() {
   const getPetCost = useCallback((lvl, nLvl) => Math.floor((lvl < 9 ? 100 + (lvl * 10) : lvl < 19 ? 1000 + ((lvl % 10) * 100) : lvl < 29 ? 10000 + ((lvl % 10) * 1000) : lvl < 39 ? 100000 + ((lvl % 10) * 10000) : 1000000 + ((lvl % 10) * 100000)) * (1 - (nLvl * 0.005)) * halvingMult), [halvingMult]);
   const getCastleCost = useCallback((lvl, nLvl) => Math.floor((lvl < 9 ? 1000 + (lvl * 100) : lvl < 19 ? 10000 + ((lvl % 10) * 1000) : lvl < 29 ? 100000 + ((lvl % 10) * 10000) : lvl < 39 ? 1000000 + ((lvl % 10) * 100000) : 10000000 + ((lvl % 10) * 1000000)) * (1 - (nLvl * 0.005)) * halvingMult), [halvingMult]);
 
-  // 🚨 사냥터 입장 로직 (reqSum + 4대 스탯 모두 만족)
   const checkHunt = useCallback((now, stats) => {
     if (state.castleHuntEndTime > now) return { name: '🏰 제국의 심장 (특수)', mult: 50, isSpecial: true };
     if (state.petHuntEndTime > now) return { name: '🐉 신수의 둥지 (특수)', mult: 30, isSpecial: true };
@@ -113,6 +117,7 @@ export default function App() {
 
   const handleUpgrade = async (type, id = null) => {
     let cost = 0; let currentLvl = 0; let maxLimit = type === 'gear' ? 30 : 50;
+    const timerKey = id || type;
 
     if (type === 'gear') {
       const g = gears.find(x => x.id === id);
@@ -123,15 +128,26 @@ export default function App() {
       cost = getCastleCost(state.castleLevel, gears[5].lvl); currentLvl = state.castleLevel;
     }
 
+    // 🚨 MAX 레벨 도달 시 즉시 AUTO 타이머 강제 종료 (무한 루프 완벽 차단)
     if (currentLvl >= maxLimit) {
-      toggleAuto(type, id); // MAX 도달 시 오토 강제 종료
+      if (autoTimersRef.current[timerKey]) {
+        clearInterval(autoTimersRef.current[timerKey]);
+        delete autoTimersRef.current[timerKey];
+        setAutoActive(p => ({ ...p, [timerKey]: false }));
+      }
       return; 
     }
+
     if (state.balance < cost) {
-      toggleAuto(type, id);
+      if (autoTimersRef.current[timerKey]) {
+        clearInterval(autoTimersRef.current[timerKey]);
+        delete autoTimersRef.current[timerKey];
+        setAutoActive(p => ({ ...p, [timerKey]: false }));
+      }
       return alert("GOU 잔고가 부족합니다.");
     }
 
+    // 🚨 서버의 대답을 기다리지 않고 화면부터 즉각 올리는 초고속 모드
     setState(s => ({ ...s, balance: s.balance - cost }));
     if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: Math.min(maxLimit, g.lvl + 1) } : g));
     else if (type === 'pet') setState(s => ({ ...s, petLevel: Math.min(maxLimit, s.petLevel + 1) }));
@@ -143,6 +159,7 @@ export default function App() {
       const result = await httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id });
       const data = result.data;
       
+      // 🚨 절대 동기화: 백엔드의 진짜 레벨로 프론트엔드를 교정 (유령 엇갈림 완벽 치료)
       if (data.newLevel !== undefined) {
         if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: data.newLevel } : g));
         else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
@@ -152,19 +169,28 @@ export default function App() {
       else triggerAnim(id || type, 'fail');
     } catch (error) { 
         setState(s => ({ ...s, balance: s.balance + cost })); 
-        // 롤백 방어
+        // 통신 에러시에만 UI 롤백
     }
   };
 
-  // 🚨 오토 속도를 렉이 없는 한계점(1.2초)으로 설정 (다중 클릭 트래픽 잼 방지)
+  // 🚨 handleUpgrade 함수 자체를 매 랜더링마다 최신화하여 타이머 안에 주입 (Stale Closure 해제)
+  useEffect(() => {
+    handleUpgradeRef.current = handleUpgrade;
+  });
+
   const toggleAuto = (type, id = null) => {
     const timerKey = id || type;
-    setState(s => {
-      const newAuto = { ...s.autoTimers };
-      if (newAuto[timerKey]) { clearInterval(newAuto[timerKey]); delete newAuto[timerKey]; }
-      else { newAuto[timerKey] = setInterval(() => handleUpgrade(type, id), 1200); } 
-      return { ...s, autoTimers: newAuto };
-    });
+    if (autoTimersRef.current[timerKey]) { 
+      clearInterval(autoTimersRef.current[timerKey]); 
+      delete autoTimersRef.current[timerKey]; 
+      setAutoActive(p => ({ ...p, [timerKey]: false }));
+    } else { 
+      setAutoActive(p => ({ ...p, [timerKey]: true }));
+      // 🚨 렉이 걸리지 않는 최적의 밸런스 속도 1.5초(1500ms) 적용
+      autoTimersRef.current[timerKey] = setInterval(() => {
+        if (handleUpgradeRef.current) handleUpgradeRef.current(type, id);
+      }, 1500); 
+    }
   };
 
   const startSpecialHunt = (type) => {
@@ -249,7 +275,7 @@ export default function App() {
         }
       `}</style>
 
-      {/* 상단 고정 헤더 */}
+      {/* 🚀 상단 고정 헤더 */}
       <div className="fixed-header">
         <div>
           <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold' }}>{state.walletAddress || "지갑 연결됨"}</div>
@@ -286,7 +312,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 🚨 [복구 완수] 실시간 소각량 및 시즌 잭팟 보상금 UI */}
+        {/* 🚨 실시간 소각량 및 시즌 잭팟 보상금 UI 보존 완료 */}
         <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px' }}>
           <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0, border: '1px solid rgba(239, 68, 68, 0.5)', background: 'rgba(239, 68, 68, 0.05)' }}>
             <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '11px' }}>🔥 GOU 실시간 소각량 (Burned)</div>
@@ -298,7 +324,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 📈 스탯 보너스 및 🎯 마일스톤 UI */}
+        {/* 📈 스탯 보너스 및 🎯 마일스톤 UI 보존 완료 */}
         <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row' }}>
           <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0 }}>
             <div style={{ color: '#06b6d4', fontWeight: 'bold', fontSize: '12px' }}>📈 일일 총 획득 속도</div>
@@ -329,7 +355,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 🗺️ 사냥터 UI (스탯 완벽 복구 및 동시 적용) */}
+        {/* 🗺️ 사냥터 UI (스탯 완벽 보존) */}
         <h3 style={{ color: '#fbbf24', margin: '15px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>🗺️ 점령 영지 현황 (전투력 매칭)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginBottom: '25px' }} className="grid-hunts">
           {hunts.map(h => {
@@ -355,8 +381,8 @@ export default function App() {
           })}
         </div>
 
-        {/* ⚔️ 장비 무기고 */}
-        <h3 style={{ color: '#fbbf24', margin: '20px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>⚔️ 왕실 무기고 강화 (총합: <span style={{color: '#fff'}}>{totalGearLevel}강</span>)</h3>
+        {/* ⚔️ 장비 무기고 (그리스 로마 신화 네이밍 적용 완료) */}
+        <h3 style={{ color: '#fbbf24', margin: '20px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>⚔️ 신화 무기고 강화 (총합: <span style={{color: '#fff'}}>{totalGearLevel}강</span>)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }} className="gears-grid">
           {gears.map((g) => {
             const isMax = g.lvl >= 30;
@@ -366,21 +392,21 @@ export default function App() {
                   <img src={getAbsoluteImgUrl(g.imgFile)} alt={g.name} onError={(e) => handleImageError(e, g.emoji)} />
                 </div>
                 <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', margin: '4px 0', color: '#fff' }}>{g.name} <span style={{ color: '#fbbf24' }}>+{g.lvl}</span></div>
+                <div style={{ fontSize: '13px', fontWeight: 'bold', margin: '4px 0', color: '#fff', textAlign: 'center' }}>{g.name} <br/><span style={{ color: '#fbbf24' }}>+{g.lvl}</span></div>
                 <div style={{ color: '#ccc', fontSize: '11px', lineHeight: '1.4', textAlign: 'center' }}>
                   확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `80.0%`}</span><br/>
                   비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '10px' }}>
                   <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
-                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: state.autoTimers[g.id] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[g.id] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[g.id] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[g.id] ? 'STOP' : 'AUTO'}</button>
+                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoActive[g.id] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoActive[g.id] ? '#06b6d4' : '#aaa', border: `1px solid ${autoActive[g.id] ? '#06b6d4' : '#555'}` }}>{autoActive[g.id] ? 'STOP' : 'AUTO'}</button>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* 🐉 펫/성 */}
+        {/* 🐉 신수 및 영지 */}
         {['pet', 'castle'].map(type => {
           const isPet = type === 'pet'; 
           const isUnlocked = isPet ? isPetUnlocked : isCastleUnlocked; 
@@ -410,7 +436,7 @@ export default function App() {
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                     <button onClick={() => handleUpgrade(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
-                    <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: state.autoTimers[type] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[type] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[type] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[type] ? 'STOP' : 'AUTO'}</button>
+                    <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: autoActive[type] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoActive[type] ? '#06b6d4' : '#aaa', border: `1px solid ${autoActive[type] ? '#06b6d4' : '#555'}` }}>{autoActive[type] ? 'STOP' : 'AUTO'}</button>
                   </div>
                   
                   {isMax && (
