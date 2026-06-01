@@ -358,65 +358,95 @@ if (state.screen === 'wallet') {
           내 초대 링크 복사하기 🔗
         </button>
 
-        {/* 🔥 사령관님의 웅장한 백서 창 (대기실 전용) */}
+       {/* 🔥 사령관님의 웅장한 백서 창 (대기실 전용) */}
         {modals.guide && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
-            <div className="glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '25px', background: 'rgba(15, 15, 20, 0.98)', border: '2px solid #fbbf24', borderRadius: '12px', maxHeight: '85vh', overflowY: 'auto' }}>
-              <h2 style={{ textAlign: 'center', color: '#fbbf24', borderBottom: '1px solid #333', paddingBottom: '15px', marginTop: 0 }}>👑 GOD OF UPGRADE 백서</h2>
+            <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', padding: '30px', background: 'rgba(15, 15, 20, 0.98)', border: '2px solid #fbbf24', borderRadius: '12px', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 0 30px rgba(251, 191, 36, 0.2)' }}>
               
-              <div style={{ background: 'rgba(6, 182, 212, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid #06b6d4', marginBottom: '20px' }}>
-                <h3 style={{ color: '#06b6d4', margin: '0 0 10px 0' }}>💎 토큰 노믹스</h3>
-                <p style={{ fontSize: '14px', lineHeight: '1.6', margin: 0, color: '#fff' }}>
-                  • <b>총 발행량:</b> 10,000,000,000 (100억) GOU<br/>
-                  • <b>운영비:</b> 10% 배정<br/>
-                  • 생태계 투명성을 위해 정식 오픈 시 <b>운영, 잭팟, 소각 지갑 주소 공개</b>
-                </p>
-              </div>
-  
-              <h3 style={{ color: '#a855f7', borderBottom: '1px solid #333', paddingBottom: '8px', margin: 0 }}>⚔️ 기본 시스템</h3>
-              <ul style={{ fontSize: '13px', lineHeight: '1.7', paddingLeft: '20px', color: '#ccc', margin: '10px 0 20px 0' }}>
-                <li><b>기본 채굴:</b> 하루 300,000 GOU</li>
-                <li><b>광고 버프:</b> 1시간 동안 2배 획득</li>
-                <li><b>1분봉 차트 예측 계약금:</b><br/>기본 100만 ➔ ALL 30강 1천만 ➔ 펫 50강 1억 ➔ 성 50강 10억</li>
-              </ul>
-  
-              <h3 style={{ color: '#10b981', borderBottom: '1px solid #333', paddingBottom: '8px', margin: 0 }}>🗺️ 사냥터 & 특수 던전</h3>
-              <ul style={{ fontSize: '13px', lineHeight: '1.7', paddingLeft: '20px', color: '#ccc', margin: '10px 0 20px 0' }}>
-                <li>초원(x1) ➔ 숲(x1.5) ➔ 사막(x2.5) ➔ 정글(x5) ➔ 화산(x12)</li>
-                <li style={{ color: '#fbbf24' }}><b>진화:</b> ALL 30강(펫 오픈) ➔ 펫 50강(성 오픈)</li>
-                <li>펫/성 50강 달성 시 12시간 특수 던전 입장권 획득</li>
-              </ul>
-  
-              <h3 style={{ color: '#ef4444', borderBottom: '1px solid #333', paddingBottom: '8px', margin: 0 }}>🔥 강화 시스템</h3>
-              <ul style={{ fontSize: '13px', lineHeight: '1.7', paddingLeft: '20px', color: '#ccc', margin: '10px 0' }}>
-                <li>실패 시 코인은 <b>잭팟, 유동성, 소각</b>으로 자동 분배됩니다.</li>
-              </ul>
-              <div style={{ background: '#222', padding: '10px', borderRadius: '5px', fontSize: '12px', color: '#fbbf24', marginBottom: '20px' }}>
-                [장비 & 펫 강화비용 (성은 10배)]<br/>
-                Lv 01~10 : 1천 ~ 1만<br/>
-                Lv 11~20 : 1만 ~ 10만<br/>
-                Lv 21~30 : 10만 ~ 100만<br/>
-                Lv 31~40 : 100만 ~ 1천만<br/>
-                Lv 41~50 : 1천만 ~ 1억
-              </div>
-  
-              <h3 style={{ color: '#fbbf24', borderBottom: '1px solid #333', paddingBottom: '8px', margin: 0 }}>🏆 시즌 보상 (JACKPOT)</h3>
-              <div style={{ background: 'rgba(251, 191, 36, 0.1)', padding: '10px', fontSize: '13px', color: '#fff', borderRadius: '5px', marginTop: '10px' }}>
-                <b>1순위:</b> 성 50강 ➔ <b>2순위:</b> 펫 50강 ➔ <b>3순위:</b> ALL 30강
-              </div>
-              <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '10px', fontWeight: 'bold' }}>
-                ※ 달성자가 없으면 상금 이월. 우리는 진정한 GOD을 원합니다.
+              {/* 헤더 타이틀 */}
+              <h1 style={{ textAlign: 'center', color: '#fbbf24', borderBottom: '2px solid rgba(251, 191, 36, 0.3)', paddingBottom: '15px', marginTop: 0, fontSize: '24px', letterSpacing: '1px' }}>
+                👑 GOD OF UPGRADE 백서
+              </h1>
+              <p style={{ textAlign: 'center', color: '#ccc', fontSize: '14px', marginBottom: '30px', lineHeight: '1.6' }}>
+                단순한 방치형 채굴이 아닙니다.<br/>
+                당신의 <span style={{color: '#fbbf24', fontWeight: 'bold'}}>시간, 운, 그리고 전략</span>이 실제 가치(Token)로 증명되는<br/>
+                하드코어 디플레이션 P2E RPG 생태계에 오신 것을 환영합니다.
               </p>
+
+              {/* 핵심 1: 디플레이션 시스템 */}
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ color: '#ef4444', margin: '0 0 10px 0', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🔥 완벽한 가치 보존, 디플레이션 시스템
+                </h3>
+                <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.3)', fontSize: '14px', lineHeight: '1.7', color: '#eee' }}>
+                  강화 실패는 끝이 아닙니다. 유저가 강화에 실패하여 소모된 GOU 토큰은 시스템이 회수하여 <b>[잭팟 상금 누적], [유동성 풀(LP) 공급], [영구 소각(Burn)]</b>으로 즉각 분배됩니다.<br/>
+                  <span style={{color: '#fca5a5'}}>유저들이 더 높은 곳을 향해 도전할수록 토큰의 유통량은 줄어들고 가치는 우상향합니다.</span>
+                </div>
+              </div>
+
+              {/* 핵심 2: 성장과 보상 */}
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ color: '#10b981', margin: '0 0 10px 0', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🗺️ 무한한 성장과 압도적인 채굴량
+                </h3>
+                <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: '14px', lineHeight: '1.7', color: '#eee' }}>
+                  기본 채굴(일 30만 GOU)에 만족하지 마십시오. 장비를 업그레이드하여 더 높은 배율의 사냥터로 진출하십시오.<br/>
+                  <ul style={{ paddingLeft: '20px', marginTop: '10px', marginBottom: '10px' }}>
+                    <li>초원(x1) ➔ 숲(x1.5) ➔ 사막(x2.5) ➔ 정글(x5) ➔ <b style={{color: '#fbbf24'}}>화산(x12)</b></li>
+                    <li><b>한계 돌파:</b> 장비 ALL 30강 달성 시 <b style={{color: '#a855f7'}}>펫(Pet)</b> 오픈</li>
+                    <li><b>최종 진화:</b> 펫 50강 달성 시 <b style={{color: '#3b82f6'}}>성(Castle)</b> 오픈</li>
+                  </ul>
+                  성장을 이뤄낼 때마다 차원이 다른 채굴 속도를 경험하게 됩니다.
+                </div>
+              </div>
+
+              {/* 핵심 3: 크립토 미니게임 */}
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ color: '#a855f7', margin: '0 0 10px 0', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📈 P2E의 꽃, 1분봉 차트 예측 (트레이딩)
+                </h3>
+                <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.3)', fontSize: '14px', lineHeight: '1.7', color: '#eee' }}>
+                  채굴한 GOU 토큰을 사용하여 실시간 비트코인 1분봉 차트의 상승/하락에 배팅하십시오. 유저의 성장 단계에 따라 배팅 스케일이 폭발적으로 증가합니다.<br/>
+                  <span style={{ color: '#d8b4fe', fontWeight: 'bold' }}>
+                    기본 100만 ➔ ALL 30강 1천만 ➔ 펫 50강 1억 ➔ 성 50강 10억
+                  </span>
+                </div>
+              </div>
+
+              {/* 핵심 4: 잭팟 */}
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ color: '#fbbf24', margin: '0 0 10px 0', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🏆 진정한 승자독식, 시즌 잭팟 (JACKPOT)
+                </h3>
+                <div style={{ background: 'rgba(251, 191, 36, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(251, 191, 36, 0.5)', fontSize: '14px', lineHeight: '1.7', color: '#eee' }}>
+                  강화 실패로 겹겹이 쌓인 막대한 잭팟 누적 상금은 단 한 명의 승자를 기다립니다.<br/>
+                  <div style={{ background: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '5px', marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>
+                    1순위: 성 50강 ➔ 2순위: 펫 50강 ➔ 3순위: ALL 30강
+                  </div>
+                  <p style={{ color: '#fbbf24', marginTop: '10px', marginBottom: 0, textAlign: 'center' }}>
+                    ※ 조건 달성자가 없으면 상금은 다음 시즌으로 이월됩니다.<br/>우리는 진정한 GOD을 원합니다.
+                  </p>
+                </div>
+              </div>
+
+              {/* 핵심 5: 토큰노믹스 */}
+              <div>
+                <h3 style={{ color: '#06b6d4', margin: '0 0 10px 0', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  💎 투명한 토큰노믹스 (Tokenomics)
+                </h3>
+                <div style={{ background: 'rgba(6, 182, 212, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(6, 182, 212, 0.3)', fontSize: '14px', lineHeight: '1.7', color: '#eee' }}>
+                  • <b>총 발행량:</b> 10,000,000,000 (100억) GOU<br/>
+                  • <b>운영비:</b> 전체의 10% 배정<br/>
+                  • 생태계의 절대적인 투명성을 위해 정식 오픈 시 <b>운영, 잭팟, 소각 지갑 주소를 모두 대중에게 공개</b>하여 러그풀(Rug-pull)을 원천 차단합니다.
+                </div>
+              </div>
               
-              <button onClick={() => setModals(m => ({ ...m, guide: false }))} style={{ background: '#333', color: '#fff', border: 'none', padding: '15px', width: '100%', borderRadius: '8px', marginTop: '25px', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px' }}>
-                닫기
+              <button onClick={() => setModals(m => ({ ...m, guide: false }))} style={{ background: 'linear-gradient(to right, #fbbf24, #f59e0b)', color: '#000', border: 'none', padding: '15px', width: '100%', borderRadius: '8px', marginTop: '30px', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px', textShadow: '0 1px 2px rgba(255,255,255,0.3)' }}>
+                백서 닫기 및 생태계 합류 준비
               </button>
             </div>
           </div>
         )}
-      </div>
-    );
-  }
   // ---------------- 본 게임 화면 ----------------
   return (
     <div style={{ background: '#111', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '80px' }}>
