@@ -7,7 +7,6 @@ const MAX_SUPPLY = 10000000000;
 const HALVING_BURN_THRESHOLD = MAX_SUPPLY * 0.2; 
 
 export default function App() {
-  // 🚨 [복원 완료] 사냥터 4대 스탯(req) 및 강화총합(reqSum) 동시 표기
   const hunts = useMemo(() => [
     {name: '초원 영지', mult: 1, reqSum: 0, req: {atk:0, hp:0, def:0, acc:0}},
     {name: '신의 숲', mult: 1.5, reqSum: 35, req: {atk:50, hp:500, def:25, acc:10}},
@@ -16,24 +15,24 @@ export default function App() {
     {name: '황혼 화산', mult: 12, reqSum: 150, req: {atk:230, hp:2300, def:115, acc:46}}
   ], []);
 
+  // 🚨 테스트 초기 상태: 10억 지급, 레벨 0
   const [state, setState] = useState({ 
-    screen: 'wallet', walletAddress: '', balance: 50000000000, burned: 1999000000, jackpot: 50000000, 
+    screen: 'wallet', walletAddress: '', balance: 1000000000, burned: 1999000000, jackpot: 50000000, 
     pendingGOU: 0, unclaimedTime: 0, 
     autoTimers: {}, userName: "사령관", userTitle: "견습 기사", isRankingOpen: false,
-    petLevel: 49, castleLevel: 0,
+    petLevel: 0, castleLevel: 0,
     petHuntEndTime: 0, castleHuntEndTime: 0, 
     isAdActive: false, adTimeLeft: 0
-    // 🚨 반응속도를 느리게 만들던 isWaiting 완전 제거
   });
 
   const [gears, setGears] = useState([
-    {id: 'sword', name: '성검 엑스칼리버', lvl: 30, stat: '공격력', base: 10, unit: '', imgFile: 'weapon.png', emoji: '⚔️'},
-    {id: 'armor', name: '성기사의 갑옷', lvl: 30, stat: '체력', base: 100, unit: '', imgFile: 'armor.png', emoji: '👕'},
-    {id: 'helmet', name: '사자왕의 투구', lvl: 30, stat: '방어력', base: 5, unit: '', imgFile: 'helmet.png', emoji: '🪖'},
-    {id: 'gloves', name: '용기사의 장갑', lvl: 30, stat: '명중률', base: 2, unit: '', imgFile: 'gloves.png', emoji: '🧤'},
-    {id: 'boots', name: '바람의 장화', lvl: 30, stat: 'GOU 보너스', base: 5, unit: '%', imgFile: 'shoes.png', emoji: '👢'},
-    {id: 'necklace', name: '현자의 목걸이', lvl: 30, stat: '비용감소', base: 0.5, unit: '%', imgFile: 'necklace.png', emoji: '📿'},
-    {id: 'ring', name: '행운의 반지', lvl: 30, stat: '성공확률', base: 0.1, unit: '%', imgFile: 'ring.png', emoji: '💍'}
+    {id: 'sword', name: '성검 엑스칼리버', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'weapon.png', emoji: '⚔️'},
+    {id: 'armor', name: '성기사의 갑옷', lvl: 0, stat: '체력', base: 100, unit: '', imgFile: 'armor.png', emoji: '👕'},
+    {id: 'helmet', name: '사자왕의 투구', lvl: 0, stat: '방어력', base: 5, unit: '', imgFile: 'helmet.png', emoji: '🪖'},
+    {id: 'gloves', name: '용기사의 장갑', lvl: 0, stat: '명중률', base: 2, unit: '', imgFile: 'gloves.png', emoji: '🧤'},
+    {id: 'boots', name: '바람의 장화', lvl: 0, stat: 'GOU 보너스', base: 5, unit: '%', imgFile: 'shoes.png', emoji: '👢'},
+    {id: 'necklace', name: '현자의 목걸이', lvl: 0, stat: '비용감소', base: 0.5, unit: '%', imgFile: 'necklace.png', emoji: '📿'},
+    {id: 'ring', name: '행운의 반지', lvl: 0, stat: '성공확률', base: 0.1, unit: '%', imgFile: 'ring.png', emoji: '💍'}
   ]);
 
   const [anims, setAnims] = useState({});
@@ -41,7 +40,7 @@ export default function App() {
 
   const triggerAnim = useCallback((id, type) => {
     setAnims(prev => ({ ...prev, [id]: type }));
-    setTimeout(() => setAnims(prev => ({ ...prev, [id]: null })), 300);
+    setTimeout(() => setAnims(prev => ({ ...prev, [id]: null })), 200); // ⚡ 더 빠른 애니메이션 해제
   }, []);
 
   const totalGearLevel = gears.reduce((a, b) => a + b.lvl, 0); 
@@ -68,7 +67,6 @@ export default function App() {
 
   const petBonus = isPetUnlocked ? getPetBonus(state.petLevel) : 0;
   const castleBonus = isCastleUnlocked ? getCastleBonus(state.castleLevel) : 0;
-  
   const totalBonusPct = (gears[4].lvl * gears[4].base) + setBonus + petBonus + castleBonus; 
 
   const isHalving = state.burned >= HALVING_BURN_THRESHOLD;
@@ -78,8 +76,6 @@ export default function App() {
   const getCost = useCallback((lvl, nLvl) => Math.floor(((lvl < 10 ? 1000 : lvl < 20 ? 10000 : 100000) + ((lvl % 10) * 100)) * (1 - (nLvl * 0.005)) * halvingMult), [halvingMult]);
   const getPetCost = useCallback((lvl, nLvl) => Math.floor((lvl < 9 ? 100 + (lvl * 10) : lvl < 19 ? 1000 + ((lvl % 10) * 100) : lvl < 29 ? 10000 + ((lvl % 10) * 1000) : lvl < 39 ? 100000 + ((lvl % 10) * 10000) : 1000000 + ((lvl % 10) * 100000)) * (1 - (nLvl * 0.005)) * halvingMult), [halvingMult]);
   const getCastleCost = useCallback((lvl, nLvl) => Math.floor((lvl < 9 ? 1000 + (lvl * 100) : lvl < 19 ? 10000 + ((lvl % 10) * 1000) : lvl < 29 ? 100000 + ((lvl % 10) * 10000) : lvl < 39 ? 1000000 + ((lvl % 10) * 100000) : 10000000 + ((lvl % 10) * 1000000)) * (1 - (nLvl * 0.005)) * halvingMult), [halvingMult]);
-  const getRate = useCallback((lvl, rLvl) => Math.min(0.99, ((lvl < 5 ? 1.0 : lvl < 10 ? 0.7 : lvl < 15 ? 0.6 : lvl < 20 ? 0.5 : [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][lvl - 20]) + (rLvl * 0.001))), []);
-  const getPetRate = useCallback((lvl, ringLvl) => Math.min(0.99, (lvl < 5 ? 1.0 : lvl < 10 ? 0.7 : lvl < 15 ? 0.65 : lvl < 20 ? 0.6 : lvl < 25 ? 0.55 : lvl < 30 ? 0.5 : lvl < 35 ? 0.45 : lvl < 40 ? 0.4 : [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 41] || 0.1) + (ringLvl * 0.001)), []);
 
   const checkHunt = useCallback((now) => {
     if (state.castleHuntEndTime > now) return { name: '🏰 제국의 심장 (특수)', mult: 50, isSpecial: true };
@@ -89,7 +85,6 @@ export default function App() {
 
   const currentHuntData = checkHunt(Date.now());
   const dailyGainDisplay = Math.floor(300000 * currentHuntData.mult * (1 + totalBonusPct / 100) * halvingMult * adMultiplier);
-
   const formatTime = (seconds) => `${Math.floor(seconds / 3600).toString().padStart(2, '0')}:${Math.floor((seconds % 3600) / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
 
   useEffect(() => {
@@ -99,7 +94,6 @@ export default function App() {
 
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
-  // 🚀 초고속 연타 허용 (딜레이 제로화)
   const claimGOU = async () => {
     const estimatedGain = Math.floor(state.pendingGOU);
     if (estimatedGain < 10) return alert("최소 10 GOU 이상부터 수확 가능합니다.");
@@ -120,37 +114,47 @@ export default function App() {
 
     if (state.balance < cost) return alert("GOU 잔고가 부족합니다.");
 
-    // 🚨 딜레이 방지: 돈만 먼저 깎고 UI 즉시 반응 허용
+    // 낙관적 UI: 누르는 즉시 +1 시켜서 체감속도 극대화
     setState(s => ({ ...s, balance: s.balance - cost }));
+    if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: g.lvl + 1 } : g));
+    else if (type === 'pet') setState(s => ({ ...s, petLevel: s.petLevel + 1 }));
+    else if (type === 'castle') setState(s => ({ ...s, castleLevel: s.castleLevel + 1 }));
+    
     triggerAnim(id || type, 'loading'); 
 
     const functions = getFunctions(app);
     try {
       const result = await httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id });
       const data = result.data;
+      
+      // 🚨 절대 동기화: 백엔드가 계산한 "진짜 레벨"을 무조건 화면에 동기화시켜 유령 엇갈림 방지
+      if (data.newLevel !== undefined) {
+        if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: data.newLevel } : g));
+        else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
+        else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
+      }
+
       if (data.success) {
         triggerAnim(id || type, 'success');
-        if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: g.lvl + 1 } : g));
-        else if (type === 'pet') setState(s => ({ ...s, petLevel: s.petLevel + 1 }));
-        else if (type === 'castle') setState(s => ({ ...s, castleLevel: s.castleLevel + 1 }));
       } else {
         triggerAnim(id || type, 'fail');
+      }
+    } catch (error) { 
+        // 네트워크 에러 시만 롤백
+        setState(s => ({ ...s, balance: s.balance + cost })); 
         if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: Math.max(0, g.lvl - 1) } : g));
         else if (type === 'pet') setState(s => ({ ...s, petLevel: Math.max(0, s.petLevel - 1) }));
         else if (type === 'castle') setState(s => ({ ...s, castleLevel: Math.max(0, s.castleLevel - 1) }));
-      }
-    } catch (error) { 
-        setState(s => ({ ...s, balance: s.balance + cost })); 
-        alert(`강화 실패: ${error.message}`); 
     }
   };
 
+  // 🚨 오토 속도 기관총급(0.4초)으로 쾌속 상향
   const toggleAuto = (type, id = null) => {
     const timerKey = id || type;
     setState(s => {
       const newAuto = { ...s.autoTimers };
       if (newAuto[timerKey]) { clearInterval(newAuto[timerKey]); delete newAuto[timerKey]; }
-      else { newAuto[timerKey] = setInterval(() => handleUpgrade(type, id), 2000); }
+      else { newAuto[timerKey] = setInterval(() => handleUpgrade(type, id), 400); } 
       return { ...s, autoTimers: newAuto };
     });
   };
@@ -207,29 +211,30 @@ export default function App() {
 
   return (
     <div className="main-wrap" style={{ 
-      backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.1), rgba(26, 15, 20, 0.2)), url("/background.jpg")`,
+      /* 🚨 명도 조절: 배경을 더 어둡게 눌러 UI 텍스트들이 폭발적으로 잘 보이게 설정 */
+      backgroundImage: `linear-gradient(rgba(5, 8, 12, 0.75), rgba(15, 10, 12, 0.85)), url("/background.jpg")`,
       backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', 
       paddingTop: '85px' 
     }}>
       <style>{`
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
+        .fixed-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 850px; background: rgba(10, 12, 18, 0.95); backdrop-filter: blur(12px); border-bottom: 2px solid #fbbf24; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 5px 20px rgba(0,0,0,0.8); }
         
-        .fixed-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 850px; background: rgba(11, 15, 25, 0.85); backdrop-filter: blur(12px); border-bottom: 2px solid #fbbf24; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        @keyframes flashSuccess { 0% { background: rgba(251, 191, 36, 0.6); transform: scale(1.03); } 100% { background: transparent; transform: scale(1); } }
+        @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.6); transform: translateX(-4px); } 50% { transform: translateX(4px); } 100% { background: transparent; transform: translateX(0); } }
+        @keyframes breathing { 0% { box-shadow: 0 0 5px #fbbf24; border-color: #fbbf24; } 50% { box-shadow: 0 0 25px #fbbf24; border-color: #fff; } 100% { box-shadow: 0 0 5px #fbbf24; border-color: #fbbf24; } }
         
-        @keyframes flashSuccess { 0% { background: rgba(251, 191, 36, 0.6); transform: scale(1.02); } 100% { background: transparent; transform: scale(1); } }
-        @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.6); transform: translateX(-5px); } 50% { transform: translateX(5px); } 100% { background: transparent; transform: translateX(0); } }
-        @keyframes breathing { 0% { box-shadow: 0 0 5px #fbbf24; border-color: #fbbf24; } 50% { box-shadow: 0 0 20px #fbbf24; border-color: #fff; } 100% { box-shadow: 0 0 5px #fbbf24; border-color: #fbbf24; } }
+        .anim-success { animation: flashSuccess 0.2s ease-out; }
+        .anim-fail { animation: flashFail 0.2s ease-out; }
+        .anim-loading { filter: brightness(1.3); transform: scale(0.97); transition: 0.05s; }
+        .hunt-active { animation: breathing 1.5s infinite ease-in-out; background: rgba(217, 119, 6, 0.5) !important; border: 2px solid #fff !important; }
         
-        .anim-success { animation: flashSuccess 0.3s ease-out; }
-        .anim-fail { animation: flashFail 0.3s ease-out; }
-        .anim-loading { filter: brightness(1.5); transform: scale(0.95); transition: 0.1s; }
-        .hunt-active { animation: breathing 1.5s infinite ease-in-out; background: rgba(217, 119, 6, 0.45) !important; border: 2px solid #fff !important; }
+        .action-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; transition: transform 0.05s; }
+        .action-btn:active { transform: scale(0.90); }
         
-        .action-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; transition: transform 0.1s; }
-        .action-btn:active { transform: scale(0.92); }
-        
-        .glass-panel { background: rgba(15, 20, 25, 0.3); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
-        .img-box-gear { width: 60px; height: 60px; background: rgba(0,0,0,0.4); border: 1px solid rgba(197,160,89,0.5); border-radius: 10px; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        /* 🚨 UI 가독성 극대화: 패널 베이스 컬러를 다크 네이비로 설정하여 완벽한 대비 효과 */
+        .glass-panel { background: rgba(15, 18, 25, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        .img-box-gear { width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 1px solid rgba(197,160,89,0.5); border-radius: 10px; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         .img-box-gear img { width: 85%; height: 85%; object-fit: contain; }
         
         @media (max-width: 768px) {
@@ -257,31 +262,28 @@ export default function App() {
 
       <div style={{ width: '100%', maxWidth: '850px', padding: '10px 10px 80px 10px' }}>
         
-        {/* 💰 코어 자산 수확 대시보드 */}
-        <div className="glass-panel" style={{ textAlign: 'center', padding: '20px', border: '2px solid #fbbf24' }}>
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        {/* 코어 자산 수확 대시보드 */}
+        <div className="glass-panel" style={{ textAlign: 'center', padding: '20px', border: '2px solid #fbbf24', background: 'rgba(20,24,32,0.9)' }}>
+          <div style={{ background: 'rgba(0,0,0,0.6)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', marginBottom: '10px' }}>
               <span style={{ color: '#06b6d4' }}>미수확: +{Math.floor(state.pendingGOU).toLocaleString()} GOU</span>
-              <span style={{ color: state.unclaimedTime >= 43200 ? '#ef4444' : '#e6d5b8' }}>
-                {state.unclaimedTime >= 43200 ? "MAX (수확 요망)" : formatTime(state.unclaimedTime) + " / 12:00:00"}
-              </span>
+              <span style={{ color: state.unclaimedTime >= 43200 ? '#ef4444' : '#e6d5b8' }}>{state.unclaimedTime >= 43200 ? "MAX (수확 요망)" : formatTime(state.unclaimedTime) + " / 12:00:00"}</span>
             </div>
             <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '5px', overflow: 'hidden', marginBottom: '15px' }}>
               <div style={{ width: `${timeProgress}%`, height: '100%', background: state.unclaimedTime >= 43200 ? '#ef4444' : '#06b6d4', transition: 'width 1s linear' }}></div>
             </div>
-            <button className={`action-btn ${anims['claim'] ? `anim-${anims['claim']}` : ''}`} onClick={claimGOU} style={{ width: '100%', background: 'linear-gradient(90deg, #fbbf24, #d97706)', color: '#000', padding: '16px 0', fontSize: '18px', fontWeight: '900', boxShadow: '0 4px 15px rgba(217,119,6,0.4)' }}>
-              🚀 영지 수확하기
-            </button>
+            <button className={`action-btn ${anims['claim'] ? `anim-${anims['claim']}` : ''}`} onClick={claimGOU} style={{ width: '100%', background: 'linear-gradient(90deg, #fbbf24, #d97706)', color: '#000', padding: '16px 0', fontSize: '18px', fontWeight: '900', boxShadow: '0 4px 15px rgba(217,119,6,0.4)' }}>🚀 영지 수확하기</button>
           </div>
-
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
             <button className="action-btn" onClick={() => alert('스마트 컨트랙트 입금 준비 중')} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid #10b981' }}>📥 입금하기</button>
             <button className="action-btn" onClick={() => alert('스마트 컨트랙트 출금 준비 중')} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid #ef4444' }}>📤 출금하기</button>
           </div>
         </div>
 
-        {/* 📈 스탯 보너스 패널 */}
+        {/* 📈 스탯 보너스 및 🎯 마일스톤 UI (분리 및 신설) */}
         <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row' }}>
+          
+          {/* 일일 획득량 블록 */}
           <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0 }}>
             <div style={{ color: '#06b6d4', fontWeight: 'bold', fontSize: '12px' }}>📈 일일 총 획득 속도</div>
             <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '20px', margin: '5px 0' }}>+{dailyGainDisplay.toLocaleString()} GOU</div>
@@ -289,25 +291,43 @@ export default function App() {
               {state.isAdActive ? `⏳ 버프 적용 중 (${formatTime(state.adTimeLeft)})` : "📺 광고 보고 획득량 2배 (1시간)"}
             </button>
           </div>
-          <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0 }}>
-            <div style={{ color: '#c5a059', fontWeight: 'bold', fontSize: '12px' }}>⚔️ 통합 보너스 수치</div>
-            <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '20px', margin: '5px 0' }}>+{totalBonusPct}%</div>
-            <div style={{ fontSize: '11px', color: '#ccc', lineHeight: '1.4' }}>• 합산 {totalGearLevel}강: <span style={{color: '#fff'}}>+{setBonus}%</span><br/>• 장화: <span style={{color: '#fff'}}>+{gears[4].lvl * gears[4].base}%</span> | 신수/성: <span style={{color: '#fff'}}>+{petBonus + castleBonus}%</span></div>
+
+          {/* 통합 보너스 수치 블록 (분리형) */}
+          <div className="glass-panel" style={{ flex: 1.2, padding: '15px', margin: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ color: '#c5a059', fontWeight: 'bold', fontSize: '12px' }}>⚔️ 통합 보너스 수치</div>
+                <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '20px', margin: '5px 0' }}>+{totalBonusPct}%</div>
+                <div style={{ fontSize: '11px', color: '#ccc', lineHeight: '1.4' }}>
+                  • 장비 시너지: <span style={{color: '#fff'}}>+{setBonus + (gears[4].lvl * gears[4].base)}%</span><br/>
+                  • 신수(펫): <span style={{color: '#fff'}}>+{petBonus}%</span> | 영지(성): <span style={{color: '#fff'}}>+{castleBonus}%</span>
+                </div>
+              </div>
+              
+              {/* 🚨 사령관님 지시: 우측 빈칸 활용 마일스톤 혜택표 신설 */}
+              <div style={{ background: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', minWidth: '130px' }}>
+                <div style={{ color: '#fbbf24', fontSize: '10px', fontWeight: 'bold', marginBottom: '6px', textAlign: 'center' }}>🎯 다음 목표 혜택</div>
+                <div style={{ fontSize: '9px', color: '#aaa', display: 'grid', gap: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>ALL 10강</span><span style={{color:'#fff'}}>+100%</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>ALL 20강</span><span style={{color:'#fff'}}>+300%</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>ALL 30강</span><span style={{color:'#fbbf24', fontWeight:'bold'}}>+1000%</span></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* 🗺️ 사냥터 UI 가독성 개편 (네온 불빛 점등 및 스탯 복구) */}
+        {/* 🗺️ 사냥터 UI 가독성 개편 (스탯 완벽 복구) */}
         <h3 style={{ color: '#fbbf24', margin: '15px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>🗺️ 점령 영지 현황 (전투력 매칭)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginBottom: '25px' }} className="grid-hunts">
           {hunts.map(h => {
             const isActive = !currentHuntData.isSpecial && currentHuntData.name === h.name;
             const isUnlocked = totalGearLevel >= h.reqSum;
             return (
-              <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ background: 'rgba(0,0,0,0.4)', border: `1px solid ${isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', opacity: isUnlocked ? 1 : 0.5 }}>
+              <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ background: 'rgba(15, 18, 25, 0.8)', border: `1px solid ${isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', opacity: isUnlocked ? 1 : 0.4 }}>
                 <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '12px', marginBottom: '5px' }}>{isActive ? '⚔️ ' : ''}{h.name}</b>
-                {/* 🚨 공/체/방/명 완벽 복구 */}
                 {h.name !== '초원 영지' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', background: 'rgba(0,0,0,0.5)', padding: '4px', borderRadius: '4px', fontSize: '10px', color: '#ccc', marginBottom: '5px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', background: 'rgba(0,0,0,0.6)', padding: '4px', borderRadius: '4px', fontSize: '10px', color: '#ccc', marginBottom: '5px' }}>
                     <div>공 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444'}}>{h.req.atk}</span></div>
                     <div>체 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444'}}>{h.req.hp}</span></div>
                     <div>방 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444'}}>{h.req.def}</span></div>
@@ -323,7 +343,7 @@ export default function App() {
           })}
         </div>
 
-        {/* ⚔️ 장비 무기고 (딜레이 없는 낙관적 UI 적용) */}
+        {/* ⚔️ 장비 무기고 */}
         <h3 style={{ color: '#fbbf24', margin: '20px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>⚔️ 왕실 무기고 강화 (총합: <span style={{color: '#fff'}}>{totalGearLevel}강</span>)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }} className="gears-grid">
           {gears.map((g) => {
@@ -336,11 +356,10 @@ export default function App() {
                 <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
                 <div style={{ fontSize: '14px', fontWeight: 'bold', margin: '4px 0', color: '#fff' }}>{g.name} <span style={{ color: '#fbbf24' }}>+{g.lvl}</span></div>
                 <div style={{ color: '#ccc', fontSize: '11px', lineHeight: '1.4', textAlign: 'center' }}>
-                  확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `${(getRate(g.lvl, gears[6].lvl)*100).toFixed(1)}%`}</span><br/>
+                  확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `80.0%`}</span><br/>
                   비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '10px' }}>
-                  {/* 🚨 isWaiting 제한을 해제하여 연타 허용 */}
                   <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
                   <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: state.autoTimers[g.id] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[g.id] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[g.id] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[g.id] ? 'STOP' : 'AUTO'}</button>
                 </div>
@@ -349,21 +368,20 @@ export default function App() {
           })}
         </div>
 
-        {/* 🐉 펫/성 비활성화 모드 복구 및 12시간 특수 사냥터 탑재 */}
+        {/* 🐉 펫/성 비활성화 모드 복구 */}
         {['pet', 'castle'].map(type => {
           const isPet = type === 'pet'; 
           const isUnlocked = isPet ? isPetUnlocked : isCastleUnlocked; 
           const lvl = isPet ? state.petLevel : state.castleLevel; const name = isPet ? state.petName : state.castleName;
           const isMax = lvl >= 50; const cost = isPet ? getPetCost(lvl, gears[5].lvl) : getCastleCost(lvl, gears[5].lvl);
-          const rate = isPet ? getPetRate(lvl, gears[6].lvl) : getRate(lvl, gears[6].lvl);
           const huntEndTime = isPet ? state.petHuntEndTime : state.castleHuntEndTime;
           const isHunting = huntEndTime > Date.now();
 
           return (
             <div key={type} className={`glass-panel ${anims[type] ? `anim-${anims[type]}` : ''}`} style={{ position: 'relative', overflow: 'hidden', padding: '20px', marginTop: '15px', marginBottom: 0 }}>
               {!isUnlocked && (
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(5px)', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-                  <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px', padding: '10px 20px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.8)' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(5px)', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                  <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px', padding: '10px 20px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)' }}>
                     🔒 {isPet ? '장비 총합 210강 달성 시 개방' : '펫 50강 달성 시 개방'}
                   </div>
                 </div>
@@ -376,7 +394,7 @@ export default function App() {
                   <h3 style={{ color: '#fbbf24', margin: 0, fontSize: '18px' }}>{name} <span style={{ color: '#fff', fontSize: '14px' }}>Lv.{lvl}</span></h3>
                   <div style={{ fontSize: '12px', color: '#ccc', margin: '5px 0', lineHeight: '1.4' }}>
                     수익 보너스: <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>+{isPet ? getPetBonus(lvl) : getCastleBonus(lvl)}%</span><br/>
-                    확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `${(rate*100).toFixed(1)}%`}</span> | 비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : cost.toLocaleString()}</span>
+                    확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `80.0%`}</span> | 비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : cost.toLocaleString()}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                     <button onClick={() => handleUpgrade(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
@@ -395,7 +413,7 @@ export default function App() {
         })}
       </div>
 
-      {/* 🏆 랭킹 리스트 완벽 보존 */}
+      {/* 🏆 랭킹 리스트 */}
       {state.isRankingOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
           <div style={{ background: 'rgba(20,20,25,0.95)', border: '2px solid #fbbf24', padding: '30px 20px', borderRadius: '15px', width: '95%', maxWidth: '420px', boxShadow: '0 0 30px rgba(251,191,36,0.3)' }}>
