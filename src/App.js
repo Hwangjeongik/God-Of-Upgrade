@@ -167,16 +167,8 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-  const initFirebaseData = async (tgUser) => {
-      const uId = tgUser.id.toString(); 
-      const uName = tgUser.first_name || "사령관";
-      setState(s => ({ ...s, userName: uName, userId: uId }));
-      
-      const userRef = doc(db, "users", uId);
-      const userSnap = await getDoc(userRef);
-
-const initFirebaseData = async (tgUser) => {
+useEffect(() => {
+    const initFirebaseData = async (tgUser) => {
       const uId = tgUser.id.toString(); 
       const uName = tgUser.first_name || "사령관";
       
@@ -251,6 +243,7 @@ const initFirebaseData = async (tgUser) => {
       }
     };
 
+    // 🚨 복구된 핵심 라인: 이 문이 유실되어 에러가 났던 것입니다!
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp; 
       tg.ready(); 
