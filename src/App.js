@@ -168,25 +168,28 @@ export default function App() {
   };
 
   useEffect(() => {
-    const initFirebaseData = async (tgUser, inviterId) => {
-      const uId = tgUser.id.toString(); const uName = tgUser.first_name || "사령관";
+  const initFirebaseData = async (tgUser) => {
+      const uId = tgUser.id.toString(); 
+      const uName = tgUser.first_name || "사령관";
       setState(s => ({ ...s, userName: uName, userId: uId }));
+      
       const userRef = doc(db, "users", uId);
       const userSnap = await getDoc(userRef);
 
-      if (!userSnap.exists()) {
-        alert(`🎉 사전예약 환영합니다!\n보상으로 500,000 GOU가 지급되었습니다.`);
-        await setDoc(userRef, { name: uName, joinedAt: new Date(), invitedBy: inviterId || "none", inviteCount: 0, balance: 500000 });
-        setState(s => ({ ...s, balance: 500000 }));
-        if (inviterId && inviterId !== uId) {
-          try { await updateDoc(doc(db, "users", inviterId), { balance: increment(500000), inviteCount: increment(1) }); } catch(e) { console.log(e); }
-        }
-      } else {
+      if (userSnap.exists()) {
         const data = userSnap.data();
-        setState(s => ({...s, inviteCount: data.inviteCount || 0, balance: data.balance || 500000}));
+        setState(s => ({
+          ...s, 
+          inviteCount: data.inviteCount || 0, 
+          balance: data.balance || 0 // DB에 저장된 실제 잔고를 불러옵니다.
+        }));
+      } else {
+        // 데이터가 없으면 처음 접속한 유저이므로,
+        // 나중에 서버에서 가입 보상 지급 API를 호출하게 될 것입니다.
+        setState(s => ({ ...s, balance: 0 }));
+        alert("사령관님, 영지에 오신 것을 환영합니다! 서버에서 보상을 준비 중입니다.");
       }
     };
-
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp; tg.ready(); tg.expand(); 
       if (tg.initDataUnsafe?.user) { initFirebaseData(tg.initDataUnsafe.user, tg.initDataUnsafe.start_param); }
