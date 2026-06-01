@@ -20,9 +20,9 @@ export default function App() {
     pendingGOU: 0, unclaimedTime: 0, 
     autoTimers: {}, userName: "사령관", userTitle: "견습 기사", isRankingOpen: false,
     petLevel: 49, castleLevel: 0,
-    petHuntEndTime: 0, castleHuntEndTime: 0, // 🚨 특수 사냥터 타이머 복구
+    petHuntEndTime: 0, castleHuntEndTime: 0, 
     isAdActive: false, adTimeLeft: 0,
-    isWaiting: false // 낙관적 UI 락킹 방지
+    isWaiting: false 
   });
 
   const [gears, setGears] = useState([
@@ -46,7 +46,6 @@ export default function App() {
   const totalGearLevel = gears.reduce((a, b) => a + b.lvl, 0); 
   const setBonus = totalGearLevel >= 210 ? 1000 : totalGearLevel >= 140 ? 300 : totalGearLevel >= 70 ? 100 : 0;
 
-  // 🚨 펫과 성의 개방 여부 실시간 판단 로직
   const isPetUnlocked = totalGearLevel >= 210;
   const isCastleUnlocked = state.petLevel >= 50;
 
@@ -57,13 +56,18 @@ export default function App() {
     { rank: 4, name: state.userName, title: state.userTitle, power: totalGearLevel, isMe: true }
   ], [state.userName, state.userTitle, totalGearLevel]);
 
+  const currentStats = useMemo(() => ({
+    atk: gears[0].lvl * gears[0].base, hp: gears[1].lvl * gears[1].base,
+    def: gears[2].lvl * gears[2].base, acc: gears[3].lvl * gears[3].base,
+    sum: totalGearLevel
+  }), [gears, totalGearLevel]);
+
   const getPetBonus = useCallback((lvl) => { let b = 100 + (lvl * 2); if (lvl >= 10) b += 30; if (lvl >= 20) b += 50; if (lvl >= 30) b += 100; if (lvl >= 40) b += 200; if (lvl >= 50) b += 500; return b; }, []);
   const getCastleBonus = useCallback((lvl) => { let b = 200 + (lvl * 5); if (lvl >= 10) b += 50; if (lvl >= 20) b += 100; if (lvl >= 30) b += 200; if (lvl >= 40) b += 500; if (lvl >= 50) b += 1500; return b; }, []);
 
   const petBonus = isPetUnlocked ? getPetBonus(state.petLevel) : 0;
   const castleBonus = isCastleUnlocked ? getCastleBonus(state.castleLevel) : 0;
   
-  // 🚨 성 보너스까지 완벽하게 통합 완료
   const totalBonusPct = (gears[4].lvl * gears[4].base) + setBonus + petBonus + castleBonus; 
 
   const isHalving = state.burned >= HALVING_BURN_THRESHOLD;
@@ -76,7 +80,6 @@ export default function App() {
   const getRate = useCallback((lvl, rLvl) => Math.min(0.99, ((lvl < 5 ? 1.0 : lvl < 10 ? 0.7 : lvl < 15 ? 0.6 : lvl < 20 ? 0.5 : [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][lvl - 20]) + (rLvl * 0.001))), []);
   const getPetRate = useCallback((lvl, ringLvl) => Math.min(0.99, (lvl < 5 ? 1.0 : lvl < 10 ? 0.7 : lvl < 15 ? 0.65 : lvl < 20 ? 0.6 : lvl < 25 ? 0.55 : lvl < 30 ? 0.5 : lvl < 35 ? 0.45 : lvl < 40 ? 0.4 : [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 41] || 0.1) + (ringLvl * 0.001)), []);
 
-  // 🚨 [복구] 특수 사냥터 진입 로직 반영
   const checkHunt = useCallback((now) => {
     if (state.castleHuntEndTime > now) return { name: '🏰 제국의 심장 (특수)', mult: 50, isSpecial: true };
     if (state.petHuntEndTime > now) return { name: '🐉 신수의 둥지 (특수)', mult: 30, isSpecial: true };
@@ -95,7 +98,6 @@ export default function App() {
 
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
-  // 🚀 [반응 속도 패치] 누르는 즉시 낙관적 업데이트 수행
   const claimGOU = async () => {
     const estimatedGain = Math.floor(state.pendingGOU);
     if (estimatedGain < 10) return alert("최소 10 GOU 이상부터 수확 가능합니다.");
@@ -118,7 +120,6 @@ export default function App() {
 
     if (state.balance < cost) return alert("GOU 잔고가 부족합니다.");
 
-    // 낙관적 UI: 돈부터 즉각 차감하고 통신 시작
     setState(s => ({ ...s, balance: s.balance - cost, isWaiting: true }));
     triggerAnim(id || type, 'loading'); 
 
@@ -138,12 +139,28 @@ export default function App() {
         else if (type === 'castle') setState(s => ({ ...s, castleLevel: Math.max(0, s.castleLevel - 1) }));
       }
     } catch (error) { 
-        setState(s => ({ ...s, balance: s.balance + cost })); // 에러 시 잔고 롤백
+        setState(s => ({ ...s, balance: s.balance + cost })); 
         alert(`강화 실패: ${error.message}`); 
     }
     setState(s => ({ ...s, isWaiting: false }));
   };
 
+  // 🚨 [복구 완수] AUTO 토글 버튼 로직 완벽 이식
+  const toggleAuto = (type, id = null) => {
+    const timerKey = id || type;
+    setState(s => {
+      const newAuto = { ...s.autoTimers };
+      if (newAuto[timerKey]) { 
+        clearInterval(newAuto[timerKey]); 
+        delete newAuto[timerKey]; 
+      } else { 
+        newAuto[timerKey] = setInterval(() => handleUpgrade(type, id), 2000); 
+      }
+      return { ...s, autoTimers: newAuto };
+    });
+  };
+
+  // 🚨 [복구 완수] 12시간 특수 사냥터 진입 버튼 로직 완벽 이식
   const startSpecialHunt = (type) => {
     const duration = 12 * 60 * 60 * 1000;
     const now = Date.now();
@@ -362,7 +379,6 @@ export default function App() {
                     <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax || state.isWaiting} className="action-btn" style={{ background: state.autoTimers[type] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[type] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[type] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[type] ? 'STOP' : 'AUTO'}</button>
                   </div>
                   
-                  {/* 🚨 12시간 특수 사냥터 버튼 완벽 복원 */}
                   {isMax && (
                     <button onClick={() => startSpecialHunt(type)} disabled={isHunting} className="action-btn" style={{ width: '100%', marginTop: '8px', background: isHunting ? '#333' : 'rgba(147,51,234,0.3)', color: isHunting ? '#888' : '#a855f7', border: `1px solid ${isHunting ? '#444' : '#a855f7'}` }}>
                       {isHunting ? '특수 사냥 진행 중 ⚔️' : `${isPet ? '🐉 둥지 사냥 (12h / X30)' : '🏰 천공 사냥 (12h / X50)'}`}
