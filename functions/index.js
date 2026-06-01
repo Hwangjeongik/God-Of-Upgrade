@@ -9,52 +9,81 @@ const IS_TEST_MODE = false;
 // 💰 1. 수확(Claim) API 서버 로직
 // ==========================================
 exports.claimGOU = functions.https.onCall(async (data, context) => {
-    // 텔레그램 환경에 맞게 프론트엔드가 보내준 userId를 신분증으로 사용
-    const uid = data.userId;
-    if (!uid) {
-        throw new functions.https.HttpsError('invalid-argument', '유저 ID(신분증)가 없습니다.');
-    }
-
-    const db = admin.firestore();
-    const userRef = db.collection('users').doc(uid);
-
-    return db.runTransaction(async (transaction) => {
-        const userDoc = await transaction.get(userRef);
-        if (!userDoc.exists) {
-            throw new functions.https.HttpsError('not-found', '유저 데이터가 존재하지 않습니다.');
+    try {
+        // 1. 요청 데이터 안전장치
+        if (!data) {
+            throw new functions.https.HttpsError('invalid-argument', '요청 데이터가 비어있습니다.');
         }
 
-        const userData = userDoc.data();
-        const serverNow = Date.now(); 
-        const lastClaimTime = userData.lastClaimTime || serverNow;
-
-        const maxMiningDuration = 12 * 60 * 60 * 1000; 
-        let elapsedMs = serverNow - lastClaimTime;
-        
-        if (elapsedMs < 0) elapsedMs = 0;
-        if (elapsedMs > maxMiningDuration) elapsedMs = maxMiningDuration;
-
-        if (elapsedMs < 10000) {
-            return { success: false, message: '아직 수확할 GOU가 부족합니다. (최소 10초 대기)' };
+        const uid = data.userId;
+        if (!uid) {
+            throw new functions.https.HttpsError('invalid-argument', '유저 ID(신분증)가 없습니다.');
         }
 
-        const baseGOUPerSec = 300000 / 86400; 
-        const multiplier = data.currentMultiplier || 1.0; 
-        const harvestedGOU = (elapsedMs / 1000) * baseGOUPerSec * multiplier;
+        const db = admin.firestore();
+        const userRef = db.collection('users').doc(uid);
 
-        transaction.update(userRef, {
-            balance: admin.firestore.FieldValue.increment(harvestGOU),
-            lastClaimTime: serverNow
+        return await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists) {
+                throw new functions.https.HttpsError('not-found', '유저 데이터가 존재하지 않습니다.');
+            }
+
+            const userData = userDoc.data();
+            const serverNow = Date.now(); 
+
+            // 2. 🔥 [범인 검거 및 완벽 방어] 타임스탬프 vs 숫자 포맷 정밀 변환
+            let lastClaimTime = serverNow;
+            if (userData.lastClaimTime) {
+                if (typeof userData.lastClaimTime.toMillis === 'function') {
+                    // 데이터베이스에 타임스탬프 객체로 저장되어 있던 경우 ms 숫자로 강제 변환
+                    lastClaimTime = userData.lastClaimTime.toMillis();
+                } else {
+                    // 일반 숫자이거나 기타 포맷인 경우
+                    lastClaimTime = Number(userData.lastClaimTime) || serverNow;
+                }
+            }
+
+            let elapsedMs = serverNow - lastClaimTime;
+            if (elapsedMs < 0) elapsedMs = 0;
+
+            const maxMiningDuration = 12 * 60 * 60 * 1000; 
+            if (elapsedMs > maxMiningDuration) elapsedMs = maxMiningDuration;
+
+            if (elapsedMs < 10000) {
+                return { success: false, message: '아직 수확할 GOU가 부족합니다. (최소 10초 대기)' };
+            }
+
+            const baseGOUPerSec = 300000 / 86400; 
+            const multiplier = Number(data.currentMultiplier) || 1.0; 
+            
+            // 3. 혹시 모를 NaN 발생 최종 차단막
+            let harvestedGOU = (elapsedMs / 1000) * baseGOUPerSec * multiplier;
+            if (isNaN(harvestedGOU) || harvestedGOU < 0) {
+                harvestedGOU = 0;
+            }
+
+            transaction.update(userRef, {
+                balance: admin.firestore.FieldValue.increment(harvestedGOU),
+                lastClaimTime: serverNow
+            });
+
+            return { 
+                success: true, 
+                harvestedAmount: harvestedGOU, 
+                message: `${Math.floor(harvestGOU).toLocaleString()} GOU를 획득했습니다!` 
+            };
         });
-
-        return { 
-            success: true, 
-            harvestedAmount: harvestedGOU, 
-            message: `${Math.floor(harvestGOU).toLocaleString()} GOU를 획득했습니다!` 
-        };
-    });
+    } catch (error) {
+        // 4. 🔥 [구글 가면 벗기기] 서버 내부에서 터진 진짜 에러 원인을 긁어다가 프론트엔드로 직송합니다.
+        console.error("claimGOU 실행 중 에러 발생:", error);
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        // 일반 에러가 나면 숨기지 않고 메시지에 진짜 범인의 이름을 박아서 던집니다.
+        throw new functions.https.HttpsError('internal', `서버 리얼 버그: ${error.message}`);
+    }
 });
-
 // ==========================================
 // 🎲 2. 장비 강화 및 자원 분배 API 서버 로직
 // ==========================================
