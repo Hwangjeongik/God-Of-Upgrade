@@ -358,7 +358,7 @@ if (state.screen === 'wallet') {
           내 초대 링크 복사하기 🔗
         </button>
 
-  {/* 🔥 사령관님의 웅장한 백서 창 (대기실 전용) */}
+        {/* 🔥 사령관님의 웅장한 백서 창 (대기실 전용) */}
         {modals.guide && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
             <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', padding: '30px', background: 'rgba(15, 15, 20, 0.98)', border: '2px solid #fbbf24', borderRadius: '12px', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 0 30px rgba(251, 191, 36, 0.2)' }}>
@@ -439,6 +439,9 @@ if (state.screen === 'wallet') {
             </div>
           </div>
         )}
+      </div>  {/* 🔒 잃어버렸던 대기실 Div 문짝 봉합! */}
+    );    {/* 🔒 대기실 리턴 구문 안전 종료! */}
+  }      {/* 🔒 대기실 조건문 블록 최종 차단! */}
   // ---------------- 본 게임 화면 ----------------
   return (
     <div style={{ background: '#111', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '80px' }}>
