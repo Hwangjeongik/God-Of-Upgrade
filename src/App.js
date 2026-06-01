@@ -434,14 +434,15 @@ if (state.screen === 'wallet') {
               </div>
               
               <button onClick={() => setModals(m => ({ ...m, guide: false }))} style={{ background: 'linear-gradient(to right, #fbbf24, #f59e0b)', color: '#000', border: 'none', padding: '15px', width: '100%', borderRadius: '8px', marginTop: '30px', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px', textShadow: '0 1px 2px rgba(255,255,255,0.3)' }}>
-                백서 닫기 및 생태계 합류 준비
+                 백서 닫기 및 생태계 합류 준비
               </button>
             </div>
           </div>
         )}
-      </div>  {/* 🔒 잃어버렸던 대기실 Div 문짝 봉합! */}
-    );    {/* 🔒 대기실 리턴 구문 안전 종료! */}
-  }      {/* 🔒 대기실 조건문 블록 최종 차단! */}
+      </div>
+    );
+  }
+
   // ---------------- 본 게임 화면 ----------------
   return (
     <div style={{ background: '#111', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '80px' }}>
