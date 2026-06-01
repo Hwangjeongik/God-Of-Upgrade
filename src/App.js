@@ -63,12 +63,9 @@ export default function App() {
   useEffect(() => { gearsRef.current = gears; }, [gears]);
   useEffect(() => { miniGameRef.current = miniGame; }, [miniGame]);
 
-  const [imageErrors, setImageErrors] = useState({});
+ const [imageErrors, setImageErrors] = useState({});
   const handleImgError = (id) => setImageErrors(prev => ({ ...prev, [id]: true }));
-  {/* 공지사항(백서) 버튼 */}
-        <button onClick={() => setModals(m => ({ ...m, guide: true }))} style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid #fbbf24', color: '#fbbf24', padding: '12px', width: '100%', maxWidth: '400px', borderRadius: '8px', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', marginBottom: '15px' }}>
-          📜 게임 백서 및 시스템 가이드 보기
-        </button> = useState({ rank: false, prob: false, token: false, wallet: false, game: false });
+  const [modals, setModals] = useState({ rank: false, prob: false, token: false, wallet: false, game: false, guide: false });
   const [anims, setAnims] = useState({});
   const [timeLeftStr, setTimeLeftStr] = useState("12:00:00");
 
@@ -112,7 +109,7 @@ export default function App() {
     return { pool: cost * r.pool, burn: cost * r.burn, jackpot: cost * r.jackpot, lp: cost * r.lp, reserve: cost * r.reserve };
   }, [hState]);
 
-// 🔥 사령관님의 10단위 계단식 마스터 공식
+  // 🔥 사령관님의 10단위 계단식 마스터 공식
   const calculateBaseCost = (lvl, startBase) => {
     const effectiveLvl = Math.max(1, lvl + 1); 
     const tier = Math.floor((effectiveLvl - 1) / 10); 
