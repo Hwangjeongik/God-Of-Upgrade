@@ -176,18 +176,19 @@ export default function App() {
       const userRef = doc(db, "users", uId);
       const userSnap = await getDoc(userRef);
 
+const initFirebaseData = async (tgUser) => {
+      // 🚨 강제 테스트: 텔레그램 ID 대신 방금 만든 12345 ID를 사용
+      const uId = tgUser.id.toString(); 
+      
+      const userRef = doc(db, "users", uId);
+      const userSnap = await getDoc(userRef);
+
       if (userSnap.exists()) {
         const data = userSnap.data();
-        setState(s => ({
-          ...s, 
-          inviteCount: data.inviteCount || 0, 
-          balance: data.balance || 0 // DB에 저장된 실제 잔고를 불러옵니다.
-        }));
+        console.log("DB 데이터 로드 성공:", data); // F12 콘솔에서 확인 가능
+        setState(s => ({ ...s, balance: data.balance, userId: uId }));
       } else {
-        // 데이터가 없으면 처음 접속한 유저이므로,
-        // 나중에 서버에서 가입 보상 지급 API를 호출하게 될 것입니다.
-        setState(s => ({ ...s, balance: 0 }));
-        alert("사령관님, 영지에 오신 것을 환영합니다! 서버에서 보상을 준비 중입니다.");
+        console.error("문서를 찾을 수 없습니다!");
       }
     };
     if (window.Telegram && window.Telegram.WebApp) {
