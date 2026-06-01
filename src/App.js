@@ -2,15 +2,17 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { db } from './firebase'; 
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore'; 
 import { TonConnectButton } from '@tonconnect/ui-react';
+import './App.css'; 
 
 /**
  * GOU: THE KNIGHT'S TALE - PRE-REGISTRATION & UI POLISHED (v9.3.0)
  */
 
 // 🔥 [사전등록 스위치] true로 두면 본 게임은 잠기고 '사전예약 대기실'만 뜹니다!
-// 정식 오픈 시 이 값을 false로 바꾸고 재배포하시면 1초 만에 본 게임이 열립니다.
 const IS_PRE_REGISTRATION = true; 
-const MAX_SUPPLY = 10000000000; 
+
+// 🪙 토큰노믹스 총 발행량 10조 개 (사령관님 백서 기준 반영 완료!)
+const MAX_SUPPLY = 10000000000000; 
 
 export default function App() {
   const hunts = useMemo(() => [
@@ -58,7 +60,6 @@ export default function App() {
     { id: 'ring', name: '행운의 반지', lvl: 0, stat: '강화성공확률', base: 0.1, unit: '%', imgFile: '/ring.png', emoji: '💍' }
   ]);
 
-  // 필터 우회를 위해 변수명 건전하게 변경 (betSize -> tradeAmt, prediction -> forecast)
   const [miniGame, setMiniGame] = useState({
     active: false, timer: 60, tradeAmt: 1000000, forecast: null, chartData: [], startPrice: 92000, status: 'ready'
   });
@@ -68,7 +69,7 @@ export default function App() {
   useEffect(() => { gearsRef.current = gears; }, [gears]);
   useEffect(() => { miniGameRef.current = miniGame; }, [miniGame]);
 
- const [imageErrors, setImageErrors] = useState({});
+  const [imageErrors, setImageErrors] = useState({});
   const handleImgError = (id) => setImageErrors(prev => ({ ...prev, [id]: true }));
   const [modals, setModals] = useState({ rank: false, prob: false, token: false, wallet: false, game: false, guide: false });
   const [anims, setAnims] = useState({});
@@ -114,7 +115,6 @@ export default function App() {
     return { pool: cost * r.pool, burn: cost * r.burn, jackpot: cost * r.jackpot, lp: cost * r.lp, reserve: cost * r.reserve };
   }, [hState]);
 
-  // 🔥 사령관님의 10단위 계단식 마스터 공식
   const calculateBaseCost = (lvl, startBase) => {
     const effectiveLvl = Math.max(1, lvl + 1); 
     const tier = Math.floor((effectiveLvl - 1) / 10); 
@@ -125,34 +125,26 @@ export default function App() {
   const getCost = useCallback((lvl, nLvl, mult = hState.mult) => { return Math.floor(calculateBaseCost(lvl, 1000) * (1 - (nLvl * 0.005)) * mult); }, [hState.mult]);
   const getPetCost = useCallback((lvl, nLvl, mult = hState.mult) => { return Math.floor(calculateBaseCost(lvl, 1000) * (1 - (nLvl * 0.005)) * mult); }, [hState.mult]);
   const getCastleCost = useCallback((lvl, nLvl, mult = hState.mult) => { return Math.floor(calculateBaseCost(lvl, 10000) * (1 - (nLvl * 0.005)) * mult); }, [hState.mult]);
+
   // 🚨 [사령관 전용 마스터 스위치] 
-  // true = 테스트 모드 (모든 장비/펫/성 90% 성공)
-  // false = 라이브 모드 (원래의 빡센 밸런스 공식 적용)
   const IS_TEST_MODE = true;
 
-  // 1. 일반 장비 확률
   const getRate = useCallback((lvl, rLvl) => {
     if (IS_TEST_MODE) return 0.9;
-
     if (lvl < 5) return 1.0; let baseRate = 0;
     if (lvl < 10) baseRate = 0.7; else if (lvl < 15) baseRate = 0.6; else if (lvl < 20) baseRate = 0.5; else baseRate = [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][lvl - 20] || 0.1;
     return Math.min(0.99, baseRate + (rLvl * 0.001));
   }, []);
 
-  // 2. 펫(Pet) 확률
   const getPetRate = useCallback((lvl, ringLvl) => {
     if (IS_TEST_MODE) return 0.9;
-
     if (lvl < 5) return 1.0; let baseRate = 0;
     if (lvl < 10) baseRate = 0.7; else if (lvl < 15) baseRate = 0.65; else if (lvl < 20) baseRate = 0.6; else if (lvl < 25) baseRate = 0.55; else if (lvl < 30) baseRate = 0.5; else if (lvl < 35) baseRate = 0.45; else if (lvl < 40) baseRate = 0.4; else baseRate = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 40] || 0.1;
     return Math.min(0.99, baseRate + (ringLvl * 0.001));
   }, []);
 
- // 3. 🏰 성(Castle) 전용 확률 (펫과 100% 동일하게 동기화 완료)
   const getCastleRate = useCallback((lvl, ringLvl) => {
     if (IS_TEST_MODE) return 0.9;
-
-    // 🔒 [밸런스 조정] 펫(Pet) 공식과 완벽하게 일치하는 계단식 확률 구조
     if (lvl < 5) return 1.0; let baseRate = 0;
     if (lvl < 10) baseRate = 0.7; 
     else if (lvl < 15) baseRate = 0.65; 
@@ -162,7 +154,6 @@ export default function App() {
     else if (lvl < 35) baseRate = 0.45; 
     else if (lvl < 40) baseRate = 0.4; 
     else baseRate = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][lvl - 40] || 0.1;
-
     return Math.min(0.99, baseRate + (ringLvl * 0.001));
   }, []);
 
