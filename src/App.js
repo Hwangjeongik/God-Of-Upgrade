@@ -351,6 +351,7 @@ if (state.screen === 'wallet') {
   }
 
   // 🔥 사전등록 대기실 UI (배경화면 및 텍스트 완벽 수정)
+ // 🔥 사전등록 대기실 UI 
   if (state.screen === 'pre_reg') {
     return (
       <div style={{ backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.8), rgba(26, 15, 20, 0.95)), url("/background.jpg")`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '50px 20px', color: '#e6d5b8' }}>
@@ -362,55 +363,49 @@ if (state.screen === 'wallet') {
           <div style={{ fontSize: '38px', fontWeight: 'bold', color: '#fbbf24', margin: '15px 0' }}>
             {Math.floor(state.balance).toLocaleString()} <span style={{fontSize: '18px', color: '#fff'}}>GOU</span>
           </div>
-          
           <div style={{ background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '8px', fontSize: '13px', color: '#aaa', textAlign: 'left', lineHeight: '1.8' }}>
             ✔️ 가입 기본 보상 : <span style={{color: '#fff', fontWeight: 'bold'}}>100,000 GOU</span><br/>
             ✔️ 친구 초대 보상 : <span style={{color: '#fff', fontWeight: 'bold'}}>1명당 100,000 GOU</span>
           </div>
-          {/* 💎 톤(TON) 지갑 및 자산 관리 중앙 통제소 */}
-          <div style={{ background: 'rgba(15, 15, 20, 0.9)', padding: '20px', borderRadius: '12px', border: '1px solid #fbbf24', marginBottom: '25px', boxShadow: '0 0 15px rgba(251, 191, 36, 0.1)' }}>
-            
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-              <TonConnectButton />
-            </div>
-            
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-              <button onClick={() => alert('🚨 [테스트넷 알림] 입금 스마트 컨트랙트 연결 대기 중입니다!')} style={{ flex: 1, background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
-                📥 GOU 입금하기
-              </button>
-              <button onClick={() => alert('🚨 [테스트넷 알림] 출금 스마트 컨트랙트 연결 대기 중입니다!')} style={{ flex: 1, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
-                📤 GOU 출금하기
-              </button>
-            </div>
+        </div>
+
+        {/* 💎 톤(TON) 지갑 및 자산 관리 중앙 통제소 */}
+        <div style={{ background: 'rgba(15, 15, 20, 0.9)', padding: '20px', borderRadius: '12px', border: '1px solid #fbbf24', marginBottom: '25px', width: '100%', maxWidth: '400px', boxShadow: '0 0 15px rgba(251, 191, 36, 0.1)' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <TonConnectButton />
           </div>
-   {/* 🤝 바이럴 마케팅의 심장 : 초대 시스템 구역 */}
-          <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)', marginTop: '20px', textAlign: 'center' }}>
-            <div style={{ fontSize: '15px', color: '#eee', marginBottom: '15px' }}>
-              현재 내 초대로 가입한 인원 : <span style={{color: '#06b6d4', fontWeight: 'bold', fontSize: '20px'}}>{state.inviteCount}명</span>
-            </div>
-            <button onClick={() => {
-              // 봇 주소 뒤에 유저의 고유 코드가 붙어서 복사되도록 하는 마법의 기능입니다.
-              navigator.clipboard.writeText('https://t.me/god_of_upgrade_bot?start=MY_INVITE_CODE');
-              alert('🔗 초대 링크가 복사되었습니다! 텔레그램 방에 공유하여 GOU 생태계를 확장하십시오!');
-            }} style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)', color: '#fff', border: 'none', padding: '12px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', width: '100%', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
-              🔗 내 전용 초대 링크 복사하기
+          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+            <button onClick={() => alert('🚨 [테스트넷 알림] 입금 스마트 컨트랙트 연결 대기 중입니다!')} style={{ flex: 1, background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
+              📥 GOU 입금하기
             </button>
-            <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '10px', marginBottom: 0 }}>
-              * 친구가 내 링크로 접속하면 강력한 추가 혜택이 주어집니다. (예정)
-            </p>
+            <button onClick={() => alert('🚨 [테스트넷 알림] 출금 스마트 컨트랙트 연결 대기 중입니다!')} style={{ flex: 1, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
+              📤 GOU 출금하기
+            </button>
           </div>
+        </div>
+
+        {/* 🤝 바이럴 마케팅의 심장 : 초대 시스템 구역 */}
+        <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)', marginBottom: '20px', textAlign: 'center', width: '100%', maxWidth: '400px' }}>
+          <div style={{ fontSize: '15px', color: '#eee', marginBottom: '15px' }}>
+            현재 내 초대로 가입한 인원 : <span style={{color: '#06b6d4', fontWeight: 'bold', fontSize: '20px'}}>{state.inviteCount}명</span>
+          </div>
+          <button onClick={() => {
+            navigator.clipboard.writeText('https://t.me/god_of_upgrade_bot?start=MY_INVITE_CODE');
+            alert('🔗 초대 링크가 복사되었습니다! 텔레그램 방에 공유하여 GOU 생태계를 확장하십시오!');
+          }} style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)', color: '#fff', border: 'none', padding: '12px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', width: '100%', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
+            🔗 내 전용 초대 링크 복사하기
+          </button>
+          <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '10px', marginBottom: 0 }}>
+            * 친구가 내 링크로 접속하면 강력한 추가 혜택이 주어집니다. (예정)
+          </p>
+        </div>
         
         {/* 공지사항(백서) 버튼 */}
         <button onClick={() => setModals(m => ({ ...m, guide: true }))} style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid #fbbf24', color: '#fbbf24', padding: '12px', width: '100%', maxWidth: '400px', borderRadius: '8px', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', marginBottom: '15px' }}>
           📜 게임 백서 및 시스템 가이드 보기
         </button>
 
- {/* 초대 링크 복사 버튼 */}
-        <button onClick={copyReferralLink} style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '15px', width: '100%', maxWidth: '400px', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
-          내 초대 링크 복사하기 🔗
-        </button>
-
-  {/* 🔥 사령관님의 웅장한 백서 창 (대기실 전용) */}
+        {/* 🔥 사령관님의 웅장한 백서 창 (대기실 전용) */}
         {modals.guide && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
             <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', padding: '30px', background: 'rgba(15, 15, 20, 0.98)', border: '2px solid #fbbf24', borderRadius: '12px', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 0 30px rgba(251, 191, 36, 0.2)' }}>
@@ -468,7 +463,6 @@ if (state.screen === 'wallet') {
                 </div>
               </div>
 
-          {/* 4. 시즌 보상 분배 시스템 */}
               <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#fbbf24', margin: '0 0 10px 0', fontSize: '18px' }}>
                   🏆 공정 분배형 주간 시즌 보상 (Season Rewards)
@@ -504,10 +498,13 @@ if (state.screen === 'wallet') {
             </div>
           </div>
         )}
+
       </div>
     );
   }
 
+  // 🔥 (경고: 이 아래는 본 게임(game) 렌더링 코드여야 합니다. 
+  // 만약 이 밑에 코드가 아예 없다면, 본 게임 코드가 통째로 날아간 것입니다!)
   // ---------------- 본 게임 화면 ----------------
   return (
     <div style={{ background: '#111', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '80px' }}>
@@ -674,7 +671,7 @@ if (state.screen === 'wallet') {
           </div>
         </div>
       )}
-     {/* 📜 사령관님의 시스템 가이드 (게임 백서) */}
+      {/* 📜 사령관님의 시스템 가이드 (게임 백서) */}
       {modals.guide && (
         <div className="modal-overlay" style={{ overflowY: 'auto' }}>
           <div className="glass-panel" style={{ width: '100%', maxWidth: '900px', padding: '25px', background: 'rgba(15, 15, 20, 0.98)', border: '2px solid #fbbf24', margin: 'auto', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -684,23 +681,11 @@ if (state.screen === 'wallet') {
             <div style={{ background: 'rgba(6, 182, 212, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid #06b6d4', marginBottom: '20px' }}>
               <h3 style={{ color: '#06b6d4', margin: '0 0 10px 0' }}>💎 토큰 노믹스</h3>
               <p style={{ fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                • <b>총 발행량:</b> 10,000,000,000,000 (10조) GOU<br/>
+                • <b>총 발행량:</b> 10,000,000,000 (100억) GOU<br/>
                 • <b>운영비:</b> 10% 배정<br/>
                 • 생태계 투명성을 위해 정식 오픈 시 <b>운영, 잭팟, 소각 지갑 주소를 모두 공개</b>합니다.
               </p>
             </div>
-
-            <button onClick={() => setModals(m => ({ ...m, guide: false }))} className="btn-neon" style={{ marginTop: '20px', padding: '15px', fontSize: '16px', fontWeight: 'bold' }}>
-              백서 닫기
-            </button>
-            
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div>
