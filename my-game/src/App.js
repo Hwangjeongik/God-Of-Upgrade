@@ -7,12 +7,13 @@ const MAX_SUPPLY = 10000000000;
 const HALVING_BURN_THRESHOLD = MAX_SUPPLY * 0.2; 
 
 export default function App() {
+  // 🚨 [복원 완료] 사냥터 4대 스탯(req) 및 강화총합(reqSum) 동시 표기
   const hunts = useMemo(() => [
-    {name: '초원 영지', mult: 1, reqSum: 0},
-    {name: '신의 숲', mult: 1.5, reqSum: 35},
-    {name: '불멸 사막', mult: 2.5, reqSum: 70},
-    {name: '심연 정글', mult: 5, reqSum: 110},
-    {name: '황혼 화산', mult: 12, reqSum: 150}
+    {name: '초원 영지', mult: 1, reqSum: 0, req: {atk:0, hp:0, def:0, acc:0}},
+    {name: '신의 숲', mult: 1.5, reqSum: 35, req: {atk:50, hp:500, def:25, acc:10}},
+    {name: '불멸 사막', mult: 2.5, reqSum: 70, req: {atk:100, hp:1000, def:50, acc:20}},
+    {name: '심연 정글', mult: 5, reqSum: 110, req: {atk:170, hp:1700, def:75, acc:34}},
+    {name: '황혼 화산', mult: 12, reqSum: 150, req: {atk:230, hp:2300, def:115, acc:46}}
   ], []);
 
   const [state, setState] = useState({ 
@@ -21,8 +22,8 @@ export default function App() {
     autoTimers: {}, userName: "사령관", userTitle: "견습 기사", isRankingOpen: false,
     petLevel: 49, castleLevel: 0,
     petHuntEndTime: 0, castleHuntEndTime: 0, 
-    isAdActive: false, adTimeLeft: 0,
-    isWaiting: false 
+    isAdActive: false, adTimeLeft: 0
+    // 🚨 반응속도를 느리게 만들던 isWaiting 완전 제거
   });
 
   const [gears, setGears] = useState([
@@ -98,6 +99,7 @@ export default function App() {
 
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
+  // 🚀 초고속 연타 허용 (딜레이 제로화)
   const claimGOU = async () => {
     const estimatedGain = Math.floor(state.pendingGOU);
     if (estimatedGain < 10) return alert("최소 10 GOU 이상부터 수확 가능합니다.");
@@ -111,8 +113,6 @@ export default function App() {
   };
 
   const handleUpgrade = async (type, id = null) => {
-    if (state.isWaiting) return;
-    
     let cost = 0;
     if (type === 'gear') cost = getCost(gears.find(g => g.id === id).lvl, gears[5].lvl);
     else if (type === 'pet') cost = getPetCost(state.petLevel, gears[5].lvl);
@@ -120,7 +120,8 @@ export default function App() {
 
     if (state.balance < cost) return alert("GOU 잔고가 부족합니다.");
 
-    setState(s => ({ ...s, balance: s.balance - cost, isWaiting: true }));
+    // 🚨 딜레이 방지: 돈만 먼저 깎고 UI 즉시 반응 허용
+    setState(s => ({ ...s, balance: s.balance - cost }));
     triggerAnim(id || type, 'loading'); 
 
     const functions = getFunctions(app);
@@ -142,25 +143,18 @@ export default function App() {
         setState(s => ({ ...s, balance: s.balance + cost })); 
         alert(`강화 실패: ${error.message}`); 
     }
-    setState(s => ({ ...s, isWaiting: false }));
   };
 
-  // 🚨 [복구 완수] AUTO 토글 버튼 로직 완벽 이식
   const toggleAuto = (type, id = null) => {
     const timerKey = id || type;
     setState(s => {
       const newAuto = { ...s.autoTimers };
-      if (newAuto[timerKey]) { 
-        clearInterval(newAuto[timerKey]); 
-        delete newAuto[timerKey]; 
-      } else { 
-        newAuto[timerKey] = setInterval(() => handleUpgrade(type, id), 2000); 
-      }
+      if (newAuto[timerKey]) { clearInterval(newAuto[timerKey]); delete newAuto[timerKey]; }
+      else { newAuto[timerKey] = setInterval(() => handleUpgrade(type, id), 2000); }
       return { ...s, autoTimers: newAuto };
     });
   };
 
-  // 🚨 [복구 완수] 12시간 특수 사냥터 진입 버튼 로직 완벽 이식
   const startSpecialHunt = (type) => {
     const duration = 12 * 60 * 60 * 1000;
     const now = Date.now();
@@ -302,7 +296,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 🗺️ 사냥터 UI 가독성 개편 (네온 불빛 점등) */}
+        {/* 🗺️ 사냥터 UI 가독성 개편 (네온 불빛 점등 및 스탯 복구) */}
         <h3 style={{ color: '#fbbf24', margin: '15px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>🗺️ 점령 영지 현황 (전투력 매칭)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginBottom: '25px' }} className="grid-hunts">
           {hunts.map(h => {
@@ -311,6 +305,15 @@ export default function App() {
             return (
               <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ background: 'rgba(0,0,0,0.4)', border: `1px solid ${isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', opacity: isUnlocked ? 1 : 0.5 }}>
                 <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '12px', marginBottom: '5px' }}>{isActive ? '⚔️ ' : ''}{h.name}</b>
+                {/* 🚨 공/체/방/명 완벽 복구 */}
+                {h.name !== '초원 영지' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', background: 'rgba(0,0,0,0.5)', padding: '4px', borderRadius: '4px', fontSize: '10px', color: '#ccc', marginBottom: '5px' }}>
+                    <div>공 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444'}}>{h.req.atk}</span></div>
+                    <div>체 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444'}}>{h.req.hp}</span></div>
+                    <div>방 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444'}}>{h.req.def}</span></div>
+                    <div>명 <span style={{color: currentStats.acc >= h.req.acc ? '#06b6d4' : '#ef4444'}}>{h.req.acc}</span></div>
+                  </div>
+                )}
                 <div style={{ fontSize: '11px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '5px' }}>
                   <div style={{ color: isUnlocked ? '#ccc' : '#666' }}>강화 총합 <span style={{color: isUnlocked ? '#fff' : '#666', fontWeight: 'bold'}}>{h.reqSum}</span></div>
                   <div style={{ color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', marginTop: '2px' }}>수익 X{h.mult}</div>
@@ -320,7 +323,7 @@ export default function App() {
           })}
         </div>
 
-        {/* ⚔️ 장비 무기고 (낙관적 UI 탑재) */}
+        {/* ⚔️ 장비 무기고 (딜레이 없는 낙관적 UI 적용) */}
         <h3 style={{ color: '#fbbf24', margin: '20px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>⚔️ 왕실 무기고 강화 (총합: <span style={{color: '#fff'}}>{totalGearLevel}강</span>)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }} className="gears-grid">
           {gears.map((g) => {
@@ -337,8 +340,9 @@ export default function App() {
                   비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '10px' }}>
-                  <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax || state.isWaiting} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
-                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax || state.isWaiting} className="action-btn" style={{ background: state.autoTimers[g.id] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[g.id] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[g.id] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[g.id] ? 'STOP' : 'AUTO'}</button>
+                  {/* 🚨 isWaiting 제한을 해제하여 연타 허용 */}
+                  <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
+                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: state.autoTimers[g.id] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[g.id] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[g.id] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[g.id] ? 'STOP' : 'AUTO'}</button>
                 </div>
               </div>
             );
@@ -375,8 +379,8 @@ export default function App() {
                     확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `${(rate*100).toFixed(1)}%`}</span> | 비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : cost.toLocaleString()}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                    <button onClick={() => handleUpgrade(type)} disabled={!isUnlocked || isMax || state.isWaiting} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
-                    <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax || state.isWaiting} className="action-btn" style={{ background: state.autoTimers[type] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[type] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[type] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[type] ? 'STOP' : 'AUTO'}</button>
+                    <button onClick={() => handleUpgrade(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
+                    <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: state.autoTimers[type] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[type] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[type] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[type] ? 'STOP' : 'AUTO'}</button>
                   </div>
                   
                   {isMax && (
