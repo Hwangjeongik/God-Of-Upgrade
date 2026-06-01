@@ -533,15 +533,7 @@ if (state.screen === 'wallet') {
           <button onClick={claimGOU} className="btn-neon" style={{ background: '#fbbf24', color: '#000' }}>획득하기</button>
         </div>
 
-        {/* 1분봉 크립토 UP & DOWN */}
-        <div className="glass-panel" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div>
-            <div style={{ color: '#a855f7', fontWeight: 'bold' }}>📈 1분봉 크립토 UP & DOWN</div>
-            <div style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>계약금: <span style={{color:'#fff'}}>{currentTradeAmt.toLocaleString()} GOU</span> | 🎫 티켓: {state.gameTickets}/5</div>
-          </div>
-          <button onClick={() => setModals(m => ({ ...m, game: true }))} style={{ background: '#a855f7', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px' }}>입장</button>
-        </div>
-        
+ 
         {/* 장비 그리드 */}
         <div className="gears-grid">
           {gears.map((g, index) => {
