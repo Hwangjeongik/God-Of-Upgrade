@@ -161,12 +161,16 @@ export default function App() {
       } else {
         alert(`🚨 수확 거부됨: ${data.message}`);
       }
-    } catch (error) {
-      console.error("서버 통신 에러:", error);
-      alert("서버와 통신하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-    }
-  };
-
+// ... 기존 획득하기 요청 코드들 ...
+    
+    alert("🎉 GOU 획득 완료!");
+  } catch (error) {
+    console.error("서버 통신 오류:", error);
+    
+    // 🚨 기존의 무조건 뿜던 안내창을 지우고, 아래 코드로 교체하십시오!
+    alert(`❌ 서버가 거절함!\n에러 코드: ${error.code}\n메시지: ${error.message}`);
+  }
+};
 useEffect(() => {
     const initFirebaseData = async (tgUser) => {
       const uId = tgUser.id.toString(); 
