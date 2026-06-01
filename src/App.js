@@ -674,7 +674,7 @@ if (state.screen === 'wallet') {
           </div>
         </div>
       )}
-      {/* 📜 사령관님의 시스템 가이드 (게임 백서) */}
+     {/* 📜 사령관님의 시스템 가이드 (게임 백서) */}
       {modals.guide && (
         <div className="modal-overlay" style={{ overflowY: 'auto' }}>
           <div className="glass-panel" style={{ width: '100%', maxWidth: '900px', padding: '25px', background: 'rgba(15, 15, 20, 0.98)', border: '2px solid #fbbf24', margin: 'auto', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -684,11 +684,23 @@ if (state.screen === 'wallet') {
             <div style={{ background: 'rgba(6, 182, 212, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid #06b6d4', marginBottom: '20px' }}>
               <h3 style={{ color: '#06b6d4', margin: '0 0 10px 0' }}>💎 토큰 노믹스</h3>
               <p style={{ fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                • <b>총 발행량:</b> 10,000,000,000 (100억) GOU<br/>
+                • <b>총 발행량:</b> 10,000,000,000,000 (10조) GOU<br/>
                 • <b>운영비:</b> 10% 배정<br/>
                 • 생태계 투명성을 위해 정식 오픈 시 <b>운영, 잭팟, 소각 지갑 주소를 모두 공개</b>합니다.
               </p>
             </div>
+
+            <button onClick={() => setModals(m => ({ ...m, guide: false }))} className="btn-neon" style={{ marginTop: '20px', padding: '15px', fontSize: '16px', fontWeight: 'bold' }}>
+              백서 닫기
+            </button>
+            
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div>
