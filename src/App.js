@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { db } from './firebase'; 
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore'; 
+import { TonConnectButton } from '@tonconnect/ui-react';
 
 /**
  * GOU: THE KNIGHT'S TALE - PRE-REGISTRATION & UI POLISHED (v9.3.0)
@@ -342,7 +343,10 @@ if (state.screen === 'wallet') {
             ✔️ 가입 기본 보상 : <span style={{color: '#fff', fontWeight: 'bold'}}>100,000 GOU</span><br/>
             ✔️ 친구 초대 보상 : <span style={{color: '#fff', fontWeight: 'bold'}}>1명당 100,000 GOU</span>
           </div>
-
+          {/* 💎 톤(TON) 지갑 연결 버튼 */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', marginTop: '10px' }}>
+            <TonConnectButton />
+          </div>
    <div style={{ fontSize: '15px', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
             현재 내 초대로 가입한 인원 : <span style={{color: '#06b6d4', fontWeight: 'bold', fontSize: '18px'}}>{state.inviteCount}명</span>
           </div>
