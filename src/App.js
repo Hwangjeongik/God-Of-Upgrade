@@ -416,23 +416,32 @@ if (state.screen === 'wallet') {
                 </div>
               </div>
 
-              <div style={{ marginBottom: '5px' }}>
+          {/* 4. 시즌 보상 분배 시스템 */}
+              <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ color: '#fbbf24', margin: '0 0 10px 0', fontSize: '18px' }}>
                   🏆 공정 분배형 주간 시즌 보상 (Season Rewards)
                 </h3>
                 <div style={{ background: 'rgba(251, 191, 36, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(251, 191, 36, 0.5)', fontSize: '14px', lineHeight: '1.7', color: '#eee' }}>
                   특정 고래 유저의 독점을 막고 기여한 만큼 가져가는 <b>상생형 균등 분배(1/N) 시스템</b>을 채택합니다. 누적된 주간 보상 풀은 매주 정밀 정산됩니다.<br/><br/>
+                  
                   🥇 <b>1순위 [최상위 성주 그룹]</b>
                   <div style={{ paddingLeft: '15px', color: '#ccc', marginBottom: '10px' }}>
                     • 해당 주차에 <b>성 50강화</b>를 달성·유지한 모든 인원이 전체 보상 풀을 <b>정확히 1/N로 나누어 수령</b>합니다.<br/>
                     <span style={{fontSize: '12px', color: '#fbbf24'}}>(예시: 성 50강 달성자가 4명일 경우, 각각 보상 풀의 25%씩 공평하게 분배)</span>
                   </div>
+                  
                   🥈 <b>2순위 [성주 부재 시 대체 그룹]</b>
-                  <div style={{ paddingLeft: '15px', color: '#ccc' }}>
-                    • 만약 해당 주차에 성 50강 달성자가 단 한 명도 존재하지 않을 경우, 보상의 자격은 차상위인 <b>펫 50강화 달성 인원들에게 넘어가며, 이들이 1/N로 보상 풀을 균등 분배</b>합니다.
+                  <div style={{ paddingLeft: '15px', color: '#ccc', marginBottom: '10px' }}>
+                    • 만약 성 50강 달성자가 단 한 명도 존재하지 않을 경우, 보상의 자격은 차상위인 <b>펫 50강화 달성 인원들에게 넘어가며, 이들이 1/N로 보상 풀을 균등 분배</b>합니다.
                   </div>
+
+                  🥉 <b>3순위 [최후의 개척자 그룹]</b>
+                  <div style={{ paddingLeft: '15px', color: '#ccc' }}>
+                    • 성 50강, 펫 50강 달성자가 모두 부재할 경우, 생태계 기반을 다진 <b>장비 ALL 30강화 달성 유저들이 보상 풀을 1/N로 나누어 수령</b>합니다.
+                  </div>
+
                   <p style={{ color: '#ef4444', marginTop: '15px', marginBottom: 0, fontWeight: 'bold', textAlign: 'center', fontSize: '13px' }}>
-                    ※ 모든 조건 달성자가 없을 경우 보상 풀은 다음 주차로 전액 이월됩니다.
+                    ※ 3순위 조건 달성자마저 없을 경우, 보상 풀은 다음 주차로 전액 이월되어 상금 규모는 끝없이 커집니다.
                   </p>
                 </div>
               </div>
