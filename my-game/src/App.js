@@ -139,12 +139,18 @@ export default function App() {
     return { ...(found || hunts[0]), special: false };
   }, [hunts]);
 
- const claimGOU = async () => {
+const claimGOU = async () => {
     const functions = getFunctions();
     const claimGOUFunction = httpsCallable(functions, 'claimGOU');
 
     try {
+      // 🚨 텔레그램 신분증(userId) 강제 발급!
+      const tg = window.Telegram?.WebApp;
+      const tgUserId = tg?.initDataUnsafe?.user?.id ? String(tg.initDataUnsafe.user.id) : "test_user_123";
+
+      // 🚀 신분증 지참해서 서버로 출발!
       const result = await claimGOUFunction({ 
+        userId: tgUserId,          // <== 신분증 지참 완료!
         currentMultiplier: 1.0 
       }); 
       
@@ -157,19 +163,15 @@ export default function App() {
           pendingGOU: 0, 
           lastClaimTime: Date.now() 
         }));
-        alert(`💰 ${data.message}`);
+        alert(`🎉 GOU 획득 완료!\n${data.message}`);
       } else {
         alert(`🚨 수확 거부됨: ${data.message}`);
       }
-// ... 기존 획득하기 요청 코드들 ...
-    
-    alert("🎉 GOU 획득 완료!");
-  } catch (error) {
-    console.error("서버 통신 오류:", error);
-    
-    // 🚨 기존의 무조건 뿜던 안내창을 지우고, 아래 코드로 교체하십시오!
-    alert(`❌ 서버가 거절함!\n에러 코드: ${error.code}\n메시지: ${error.message}`);
-  }
+    } catch (error) {
+      console.error("서버 통신 오류:", error);
+      // 구글의 진짜 에러를 잡아내는 방어막
+      alert(`❌ 서버가 거절함!\n에러 코드: ${error?.code}\n메시지: ${error?.message}`);
+    }
 };
 useEffect(() => {
     const initFirebaseData = async (tgUser) => {
