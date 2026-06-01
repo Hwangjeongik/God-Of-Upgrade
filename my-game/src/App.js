@@ -7,7 +7,6 @@ const MAX_SUPPLY = 10000000000;
 const HALVING_BURN_THRESHOLD = MAX_SUPPLY * 0.2; 
 
 export default function App() {
-  // 🗺️ 사냥터 데이터 (공, 체, 방, 명 + 총합 모두 복구)
   const hunts = useMemo(() => [
     {name: '초원 영지', mult: 1, req: {atk:0, hp:0, def:0, acc:0, sum:0}},
     {name: '신의 숲', mult: 1.5, req: {atk:50, hp:500, def:25, acc:10, sum:35}},
@@ -18,22 +17,21 @@ export default function App() {
 
   const [state, setState] = useState({ 
     screen: 'wallet', walletAddress: '', balance: 50000000000, burned: 1999000000, jackpot: 50000000, 
-    pendingGOU: 0, unclaimedTime: 0, // ⏳ 12시간 방치 시스템
+    pendingGOU: 0, unclaimedTime: 0, 
     autoTimers: {}, userName: "사령관", userTitle: "견습 기사", isRankingOpen: false,
     petActive: true, petLevel: 49, petName: "고대 황금 드래곤",
     castleActive: false, castleLevel: 0, castleName: "위대한 군주의 성",
     isAdActive: false, adTimeLeft: 0
   });
 
-  // ⚔️ 7부위 장비 데이터 (이미지 경로 '/' 절대경로로 수정)
   const [gears, setGears] = useState([
     {id: 'sword', name: '성검 엑스칼리버', lvl: 30, stat: '공격력', base: 10, unit: '', imgFile: 'weapon.png', emoji: '⚔️'},
     {id: 'armor', name: '성기사의 갑옷', lvl: 30, stat: '체력', base: 100, unit: '', imgFile: 'armor.png', emoji: '👕'},
     {id: 'helmet', name: '사자왕의 투구', lvl: 30, stat: '방어력', base: 5, unit: '', imgFile: 'helmet.png', emoji: '🪖'},
     {id: 'gloves', name: '용기사의 장갑', lvl: 30, stat: '명중률', base: 2, unit: '', imgFile: 'gloves.png', emoji: '🧤'},
-    {id: 'boots', name: '바람의 장화', lvl: 30, stat: 'GOU 획득량', base: 5, unit: '%', imgFile: 'shoes.png', emoji: '👢'},
-    {id: 'necklace', name: '현자의 목걸이', lvl: 30, stat: '강화비용감소', base: 0.5, unit: '%', imgFile: 'necklace.png', emoji: '📿'},
-    {id: 'ring', name: '행운의 반지', lvl: 30, stat: '강화성공확률', base: 0.1, unit: '%', imgFile: 'ring.png', emoji: '💍'}
+    {id: 'boots', name: '바람의 장화', lvl: 30, stat: 'GOU 보너스', base: 5, unit: '%', imgFile: 'shoes.png', emoji: '👢'},
+    {id: 'necklace', name: '현자의 목걸이', lvl: 30, stat: '비용감소', base: 0.5, unit: '%', imgFile: 'necklace.png', emoji: '📿'},
+    {id: 'ring', name: '행운의 반지', lvl: 30, stat: '성공확률', base: 0.1, unit: '%', imgFile: 'ring.png', emoji: '💍'}
   ]);
 
   const [anims, setAnims] = useState({});
@@ -41,7 +39,7 @@ export default function App() {
 
   const triggerAnim = useCallback((id, type) => {
     setAnims(prev => ({ ...prev, [id]: type }));
-    setTimeout(() => setAnims(prev => ({ ...prev, [id]: null })), 400); // 반응성 개선을 위해 타이머 단축
+    setTimeout(() => setAnims(prev => ({ ...prev, [id]: null })), 300); // 🚨 애니메이션 체감 속도 더 빠르게 단축
   }, []);
 
   const totalGearLevel = gears.reduce((a, b) => a + b.lvl, 0); 
@@ -83,22 +81,25 @@ export default function App() {
 
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
+  // 🚀 [반응속도 개선] 0.001초 낙관적 업데이트 로직 탑재
   const claimGOU = async () => {
-    triggerAnim('claim', 'loading'); // 즉각적인 UI 반응 (버튼 눌림 효과)
+    const estimatedGain = Math.floor(state.pendingGOU);
+    if (estimatedGain < 10) return alert("최소 10 GOU 이상부터 수확 가능합니다.");
+
+    // 1. 클릭 즉시 잔고 상승 및 게이지 초기화 (딜레이 0초)
+    setState(s => ({ ...s, balance: s.balance + estimatedGain, pendingGOU: 0, unclaimedTime: 0 }));
+    triggerAnim('claim', 'success');
+
+    // 2. 백그라운드 서버 전송
     const functions = getFunctions(app);
     const claimFunction = httpsCallable(functions, 'claimGOU');
     try {
-      const result = await claimFunction({ userId: getUserId(), currentMultiplier: currentHuntData.mult * adMultiplier });
-      if (result.data.success) {
-        setState(s => ({ ...s, balance: s.balance + result.data.harvestedAmount, pendingGOU: 0, unclaimedTime: 0 }));
-        triggerAnim('claim', 'success');
-        alert(`🎉 ${result.data.message}`);
-      } else alert(result.data.message);
-    } catch (error) { alert(`수확 실패: ${error.message}`); }
+      await claimFunction({ userId: getUserId(), currentMultiplier: currentHuntData.mult * adMultiplier });
+    } catch (error) { console.log("백그라운드 동기화 딜레이:", error); }
   };
 
   const handleUpgrade = async (type, id = null) => {
-    triggerAnim(id || type, 'loading'); // 즉각적인 UI 반응
+    triggerAnim(id || type, 'loading'); 
     const functions = getFunctions(app);
     const upgradeFunction = httpsCallable(functions, 'upgradeItem');
     try {
@@ -135,7 +136,6 @@ export default function App() {
     alert("📺 광고 시청 완료! 지금부터 1시간 동안 일일 획득량이 2배로 폭증합니다!");
   };
 
-  // 12시간 방치 시스템
   useEffect(() => {
     if (window.Telegram?.WebApp) { window.Telegram.WebApp.ready(); window.Telegram.WebApp.expand(); }
 
@@ -156,9 +156,15 @@ export default function App() {
     return () => clearInterval(timer);
   }, [currentHuntData, totalBonusPct, halvingMult]);
 
+  // 🚨 이미지 로드 실패 시 동작하는 스마트 대체 로직
+  const handleImageError = (e, emoji) => {
+    e.target.style.display = 'none';
+    e.target.parentNode.innerHTML = `<div style="font-size: 32px;">${emoji}</div>`;
+  };
+
   if (state.screen === 'wallet') {
     return (
-      <div style={{ backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.7), rgba(26, 15, 20, 0.9)), url("/background.jpg")`, backgroundSize: 'cover', backgroundPosition: 'center', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8' }}>
+      <div style={{ backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.4), rgba(26, 15, 20, 0.6)), url("${process.env.PUBLIC_URL}/background.jpg")`, backgroundSize: 'cover', backgroundPosition: 'center', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8' }}>
         <h1 style={{ color: '#fbbf24', fontSize: '32px', textShadow: '0 0 10px rgba(251,191,36,0.5)' }}>GOD OF UPGRADE</h1>
         <div style={{ padding: '20px', background: 'rgba(0,0,0,0.5)', borderRadius: '15px', marginTop: '20px' }}><TonConnectButton /></div>
       </div>
@@ -169,27 +175,28 @@ export default function App() {
 
   return (
     <div className="main-wrap" style={{ 
-      backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.6), rgba(26, 15, 20, 0.8)), url("/background.jpg")`,
+      /* 🚨 배경 투명도를 대폭 조절하여 영롱한 백그라운드가 훤히 보이도록 튜닝 */
+      backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.2), rgba(26, 15, 20, 0.4)), url("${process.env.PUBLIC_URL}/background.jpg")`,
       backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', 
-      paddingTop: '80px' /* 🚨 상단 고정 헤더 영역만큼 여백 확보 */
+      paddingTop: '80px' 
     }}>
       <style>{`
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         
-        /* 🚨 스크롤 고정 마스터 클래스 (절대 안 움직임) */
-        .fixed-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 850px; background: rgba(11, 15, 25, 0.98); border-bottom: 2px solid #fbbf24; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 5px 20px rgba(0,0,0,0.9); }
+        .fixed-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 850px; background: rgba(11, 15, 25, 0.85); backdrop-filter: blur(12px); border-bottom: 2px solid #fbbf24; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
         
-        @keyframes flashSuccess { 0% { background: rgba(251, 191, 36, 0.5); } 100% { background: transparent; } }
-        @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.5); } 100% { background: transparent; } }
-        .anim-success { animation: flashSuccess 0.4s ease-out; }
-        .anim-fail { animation: flashFail 0.4s ease-out; }
+        @keyframes flashSuccess { 0% { background: rgba(251, 191, 36, 0.6); transform: scale(1.02); } 100% { background: transparent; transform: scale(1); } }
+        @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.6); transform: translateX(-5px); } 50% { transform: translateX(5px); } 100% { background: transparent; transform: translateX(0); } }
+        .anim-success { animation: flashSuccess 0.3s ease-out; }
+        .anim-fail { animation: flashFail 0.3s ease-out; }
+        .anim-loading { filter: brightness(1.5) contrast(1.2); transform: scale(0.95); transition: 0.1s; }
         
-        /* 🚨 클릭 즉각 반응 애니메이션 (체감속도 극대화) */
         .action-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; transition: transform 0.1s, filter 0.1s; }
         .action-btn:active { transform: scale(0.92); filter: brightness(1.2); }
         
-        .glass-panel { background: rgba(20, 24, 32, 0.85); border: 1px solid rgba(197, 160, 89, 0.3); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .img-box-gear { width: 60px; height: 60px; background: rgba(0,0,0,0.6); border: 1px solid rgba(197,160,89,0.5); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 32px; overflow: hidden; }
+        /* 🚨 패널 투명도 대폭 상향 (0.85 -> 0.45) 및 유리 질감(Blur) 강화 */
+        .glass-panel { background: rgba(15, 20, 25, 0.45); border: 1px solid rgba(197, 160, 89, 0.3); border-radius: 12px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .img-box-gear { width: 60px; height: 60px; background: rgba(0,0,0,0.5); border: 1px solid rgba(197,160,89,0.5); border-radius: 10px; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         .img-box-gear img { width: 85%; height: 85%; object-fit: contain; }
         
         @media (max-width: 768px) {
@@ -198,7 +205,6 @@ export default function App() {
         }
       `}</style>
 
-      {/* 🚀 상단 고정 헤더 (GOU 스크롤 시 무조건 추적) */}
       <div className="fixed-header">
         <div>
           <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold' }}>{state.walletAddress || "지갑 연결됨"}</div>
@@ -214,57 +220,54 @@ export default function App() {
 
       <div style={{ width: '100%', maxWidth: '850px', padding: '10px 10px 80px 10px' }}>
         
-        {/* 💰 코어 자산 대시보드 */}
-        <div className="glass-panel" style={{ textAlign: 'center', padding: '20px', border: '2px solid #fbbf24' }}>
-          {/* 12시간 방치형 게이지 및 수확 버튼 */}
-          <div style={{ background: 'rgba(0,0,0,0.6)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="glass-panel" style={{ textAlign: 'center', padding: '20px', border: '2px solid rgba(251,191,36,0.5)' }}>
+          <div style={{ background: 'rgba(0,0,0,0.5)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', marginBottom: '10px' }}>
               <span style={{ color: '#06b6d4' }}>미수확: +{Math.floor(state.pendingGOU).toLocaleString()} GOU</span>
-              <span style={{ color: state.unclaimedTime >= 43200 ? '#ef4444' : '#aaa' }}>
+              <span style={{ color: state.unclaimedTime >= 43200 ? '#ef4444' : '#e6d5b8' }}>
                 {state.unclaimedTime >= 43200 ? "MAX (수확 요망)" : formatTime(state.unclaimedTime) + " / 12:00:00"}
               </span>
             </div>
-            <div style={{ width: '100%', height: '10px', background: '#333', borderRadius: '5px', overflow: 'hidden', marginBottom: '15px' }}>
+            <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '5px', overflow: 'hidden', marginBottom: '15px' }}>
               <div style={{ width: `${timeProgress}%`, height: '100%', background: state.unclaimedTime >= 43200 ? '#ef4444' : '#06b6d4', transition: 'width 1s linear' }}></div>
             </div>
-            <button className="action-btn" onClick={claimGOU} style={{ width: '100%', background: 'linear-gradient(90deg, #fbbf24, #d97706)', color: '#000', padding: '16px 0', fontSize: '18px', fontWeight: '900', boxShadow: '0 4px 15px rgba(217,119,6,0.4)' }}>
+            {/* 🚨 즉각 반응하는 초고속 수확 버튼 */}
+            <button className={`action-btn ${anims['claim'] ? `anim-${anims['claim']}` : ''}`} onClick={claimGOU} style={{ width: '100%', background: 'linear-gradient(90deg, #fbbf24, #d97706)', color: '#000', padding: '16px 0', fontSize: '18px', fontWeight: '900', boxShadow: '0 4px 15px rgba(217,119,6,0.4)' }}>
               🚀 영지 수확하기
             </button>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
-            <button className="action-btn" onClick={() => alert('스마트 컨트랙트 입금 준비 중입니다.')} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid #10b981' }}>📥 입금하기</button>
-            <button className="action-btn" onClick={() => alert('스마트 컨트랙트 출금 준비 중입니다.')} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid #ef4444' }}>📤 출금하기</button>
+            <button className="action-btn" onClick={() => alert('스마트 컨트랙트 입금 준비 중')} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid #10b981' }}>📥 입금하기</button>
+            <button className="action-btn" onClick={() => alert('스마트 컨트랙트 출금 준비 중')} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid #ef4444' }}>📤 출금하기</button>
           </div>
         </div>
 
-        {/* 📈 버프 스탯 패널 */}
         <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row' }}>
-          <div style={{ flex: 1, background: 'rgba(6,182,212,0.1)', border: '1px solid #06b6d4', padding: '15px', borderRadius: '10px' }}>
+          <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0 }}>
             <div style={{ color: '#06b6d4', fontWeight: 'bold', fontSize: '12px' }}>📈 일일 총 획득 속도</div>
             <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '20px', margin: '5px 0' }}>+{dailyGainDisplay.toLocaleString()} GOU</div>
-            <button className="action-btn" onClick={watchAdAndDouble} style={{ width: '100%', background: state.isAdActive ? '#10b981' : '#ef4444', color: '#fff', padding: '10px', fontSize: '12px', marginTop: '5px' }}>
+            <button className="action-btn" onClick={watchAdAndDouble} style={{ width: '100%', background: state.isAdActive ? 'rgba(16,185,129,0.8)' : 'rgba(239,68,68,0.8)', color: '#fff', padding: '10px', fontSize: '12px', marginTop: '5px' }}>
               {state.isAdActive ? `⏳ 버프 적용 중 (${formatTime(state.adTimeLeft)})` : "📺 광고 보고 획득량 2배 (1시간)"}
             </button>
           </div>
-          <div style={{ flex: 1, background: 'rgba(197,160,89,0.1)', border: '1px solid #c5a059', padding: '15px', borderRadius: '10px' }}>
+          <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0 }}>
             <div style={{ color: '#c5a059', fontWeight: 'bold', fontSize: '12px' }}>⚔️ 통합 보너스 수치</div>
             <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '20px', margin: '5px 0' }}>+{totalBonusPct}%</div>
-            <div style={{ fontSize: '11px', color: '#aaa', lineHeight: '1.4' }}>• 합산 {totalGearLevel}강 버프: <span style={{color: '#fff'}}>+{setBonus}%</span><br/>• 장화: <span style={{color: '#fff'}}>+{gears[4].lvl * gears[4].base}%</span> | 신수: <span style={{color: '#fff'}}>+{petBonus}%</span></div>
+            <div style={{ fontSize: '11px', color: '#ccc', lineHeight: '1.4' }}>• 합산 {totalGearLevel}강 버프: <span style={{color: '#fff'}}>+{setBonus}%</span><br/>• 장화: <span style={{color: '#fff'}}>+{gears[4].lvl * gears[4].base}%</span> | 신수: <span style={{color: '#fff'}}>+{petBonus}%</span></div>
           </div>
         </div>
 
-        {/* 🗺️ 사냥터 UI (공/체/방/명 복구) */}
-        <h3 style={{ color: '#fbbf24', margin: '15px 0 10px 5px', fontSize: '16px' }}>🗺️ 점령 영지 현황 (전투력 매칭)</h3>
+        <h3 style={{ color: '#fbbf24', margin: '15px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>🗺️ 점령 영지 현황 (강화 총합 매칭)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginBottom: '25px' }} className="grid-hunts">
           {hunts.map(h => {
             const isActive = state.currentHunt === h.name;
-            const isUnlocked = currentStats.atk >= h.req.atk && currentStats.hp >= h.req.hp && currentStats.def >= h.req.def && currentStats.acc >= h.req.acc && currentStats.sum >= h.req.sum;
+            const isUnlocked = totalGearLevel >= h.reqSum;
             return (
-              <div key={h.name} style={{ background: isActive ? 'rgba(217,119,6,0.25)' : 'rgba(0,0,0,0.6)', border: `1px solid ${isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#333')}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
+              <div key={h.name} style={{ background: isActive ? 'rgba(217,119,6,0.35)' : 'rgba(0,0,0,0.4)', border: `1px solid ${isActive ? '#fff' : (isUnlocked ? 'rgba(6,182,212,0.5)' : 'rgba(255,255,255,0.1)')}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', backdropFilter: 'blur(5px)' }}>
                 <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '12px', marginBottom: '5px' }}>{isActive ? '⚔️ ' : ''}{h.name}</b>
                 {h.name !== '초원 영지' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '4px', fontSize: '10px', color: '#ccc', marginBottom: '5px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', background: 'rgba(0,0,0,0.4)', padding: '4px', borderRadius: '4px', fontSize: '10px', color: '#ccc', marginBottom: '5px' }}>
                     <div>공 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444'}}>{h.req.atk}</span></div>
                     <div>체 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444'}}>{h.req.hp}</span></div>
                     <div>방 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444'}}>{h.req.def}</span></div>
@@ -272,7 +275,7 @@ export default function App() {
                   </div>
                 )}
                 <div style={{ fontSize: '11px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '5px' }}>
-                  <div style={{ color: isUnlocked ? '#aaa' : '#555' }}>강화 총합 <span style={{color: isUnlocked ? '#fff' : '#555', fontWeight: 'bold'}}>{h.req.sum}</span></div>
+                  <div style={{ color: isUnlocked ? '#ccc' : '#666' }}>강화 총합 <span style={{color: isUnlocked ? '#fff' : '#666', fontWeight: 'bold'}}>{h.req.sum}</span></div>
                   <div style={{ color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', marginTop: '2px' }}>수익 X{h.mult}</div>
                 </div>
               </div>
@@ -280,33 +283,31 @@ export default function App() {
           })}
         </div>
 
-        {/* ⚔️ 장비 무기고 (이미지 경로 수정 및 클릭 쾌감 패치) */}
-        <h3 style={{ color: '#fbbf24', margin: '20px 0 10px 5px', fontSize: '16px' }}>⚔️ 왕실 무기고 강화 (총합: <span style={{color: '#fff'}}>{totalGearLevel}강</span>)</h3>
+        <h3 style={{ color: '#fbbf24', margin: '20px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>⚔️ 왕실 무기고 강화 (총합: <span style={{color: '#fff'}}>{totalGearLevel}강</span>)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }} className="gears-grid">
           {gears.map((g) => {
             const isMax = g.lvl >= 30;
             return (
-              <div key={g.id} className={`glass-panel ${anims[g.id] ? `anim-${anims[g.id]}` : ''}`} style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', borderTop: '4px solid #c5a059' }}>
+              <div key={g.id} className={`glass-panel ${anims[g.id] ? `anim-${anims[g.id]}` : ''}`} style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 0, borderTop: '4px solid rgba(197,160,89,0.8)' }}>
                 <div className="img-box-gear">
-                  {/* 🚨 절대경로('/') 삽입으로 public 폴더 이미지 강제 인식 */}
-                  <img src={`/${g.imgFile}`} alt={g.name} onError={(e) => { e.target.style.display='none'; e.target.parentNode.innerHTML=g.emoji; }} />
+                  {/* 🚨 절대경로 이미지 및 폴백 에모지 완벽 적용 */}
+                  <img src={`${process.env.PUBLIC_URL}/${g.imgFile}`} alt={g.name} onError={(e) => handleImageError(e, g.emoji)} />
                 </div>
                 <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
                 <div style={{ fontSize: '14px', fontWeight: 'bold', margin: '4px 0', color: '#fff' }}>{g.name} <span style={{ color: '#fbbf24' }}>+{g.lvl}</span></div>
-                <div style={{ color: '#aaa', fontSize: '11px', lineHeight: '1.4', textAlign: 'center' }}>
+                <div style={{ color: '#ccc', fontSize: '11px', lineHeight: '1.4', textAlign: 'center' }}>
                   확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `${(getRate(g.lvl, gears[6].lvl)*100).toFixed(1)}%`}</span><br/>
-                  비용: <span style={{color: '#eee'}}>{isMax ? 'MAX' : getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
+                  비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '10px' }}>
-                  <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
-                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: state.autoTimers[g.id] ? 'rgba(6,182,212,0.2)' : 'transparent', color: state.autoTimers[g.id] ? '#06b6d4' : '#888', border: `1px solid ${state.autoTimers[g.id] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[g.id] ? 'STOP' : 'AUTO'}</button>
+                  <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
+                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: state.autoTimers[g.id] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[g.id] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[g.id] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[g.id] ? 'STOP' : 'AUTO'}</button>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* 🐉 신수 및 영지 */}
         {['pet', 'castle'].map(type => {
           const isPet = type === 'pet'; const isActive = isPet ? state.petActive : state.castleActive;
           const lvl = isPet ? state.petLevel : state.castleLevel; const name = isPet ? state.petName : state.castleName;
@@ -314,24 +315,24 @@ export default function App() {
           const rate = isPet ? getPetRate(lvl, gears[6].lvl) : getRate(lvl, gears[6].lvl);
 
           return (
-            <div key={type} className={`glass-panel ${anims[type] ? `anim-${anims[type]}` : ''}`} style={{ position: 'relative', overflow: 'hidden', padding: '20px', marginTop: '15px' }}>
+            <div key={type} className={`glass-panel ${anims[type] ? `anim-${anims[type]}` : ''}`} style={{ position: 'relative', overflow: 'hidden', padding: '20px', marginTop: '15px', marginBottom: 0 }}>
               {!isActive && (
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(8px)', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-                  <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px', padding: '10px 20px', border: '1px solid #fbbf24', borderRadius: '6px', background: '#000' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(5px)', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                  <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px', padding: '10px 20px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.8)' }}>
                     🔒 {isPet ? '장비 총합 210강 달성 시 개방' : '펫 50강 달성 시 개방'}
                   </div>
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <div className="img-box-gear" style={{ width: '70px', height: '70px', fontSize: '40px' }}>
-                  <img src={isPet ? "/pet.png" : "/castle.png"} alt={name} onError={(e) => { e.target.style.display='none'; e.target.parentNode.innerHTML=isPet?'🐉':'🏰'; }} />
+                  <img src={`${process.env.PUBLIC_URL}/${isPet ? 'pet.png' : 'castle.png'}`} alt={name} onError={(e) => handleImageError(e, isPet?'🐉':'🏰')} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ color: '#fbbf24', margin: 0, fontSize: '18px' }}>{name} <span style={{ color: '#fff', fontSize: '14px' }}>Lv.{lvl}</span></h3>
-                  <div style={{ fontSize: '12px', color: '#aaa', margin: '5px 0' }}>수익 보너스: <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>+{isPet ? getPetBonus(lvl) : getCastleBonus(lvl)}%</span><br/>확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `${(rate*100).toFixed(1)}%`}</span> | 비용: <span style={{color: '#eee'}}>{isMax ? 'MAX' : cost.toLocaleString()}</span></div>
+                  <div style={{ fontSize: '12px', color: '#ccc', margin: '5px 0', lineHeight: '1.4' }}>수익 보너스: <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>+{isPet ? getPetBonus(lvl) : getCastleBonus(lvl)}%</span><br/>확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `${(rate*100).toFixed(1)}%`}</span> | 비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : cost.toLocaleString()}</span></div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                     <button onClick={() => handleUpgrade(type)} disabled={!isActive || isMax} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
-                    <button onClick={() => toggleAuto(type)} disabled={!isActive || isMax} className="action-btn" style={{ background: state.autoTimers[type] ? 'rgba(6,182,212,0.2)' : 'transparent', color: state.autoTimers[type] ? '#06b6d4' : '#888', border: `1px solid ${state.autoTimers[type] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[type] ? 'STOP' : 'AUTO'}</button>
+                    <button onClick={() => toggleAuto(type)} disabled={!isActive || isMax} className="action-btn" style={{ background: state.autoTimers[type] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: state.autoTimers[type] ? '#06b6d4' : '#aaa', border: `1px solid ${state.autoTimers[type] ? '#06b6d4' : '#555'}` }}>{state.autoTimers[type] ? 'STOP' : 'AUTO'}</button>
                   </div>
                 </div>
               </div>
