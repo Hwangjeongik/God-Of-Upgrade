@@ -177,23 +177,87 @@ export default function App() {
       const userSnap = await getDoc(userRef);
 
 const initFirebaseData = async (tgUser) => {
-      // 🚨 강제 테스트: 텔레그램 ID 대신 방금 만든 12345 ID를 사용
       const uId = tgUser.id.toString(); 
+      const uName = tgUser.first_name || "사령관";
       
-      const userRef = doc(db, "users", uId);
-      const userSnap = await getDoc(userRef);
+      try {
+        // 1. 🔥 [실시간 소각량 및 글로벌 경제 데이터 복구]
+        const systemRef = doc(db, "system", "economy");
+        const systemSnap = await getDoc(systemRef);
+        if (systemSnap.exists()) {
+          const sysData = systemSnap.data();
+          setState(s => ({
+            ...s,
+            pool: sysData.pool || 0,
+            burn: sysData.burn || 0,      // 👈 실시간 소각량 복구
+            jackpot: sysData.jackpot || 0,
+            lp: sysData.lp || 0,
+            reserve: sysData.reserve || 0
+          }));
+        }
 
-      if (userSnap.exists()) {
-        const data = userSnap.data();
-        console.log("DB 데이터 로드 성공:", data); // F12 콘솔에서 확인 가능
-        setState(s => ({ ...s, balance: data.balance, userId: uId }));
-      } else {
-        console.error("문서를 찾을 수 없습니다!");
+        // 2. 👤 [유저 데이터 및 인게임 모든 기능/효과 복구]
+        const userRef = doc(db, "users", uId);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          setState(s => ({
+            ...s, 
+            userId: uId,
+            userName: uName,
+            balance: data.balance || 0,
+            inviteCount: data.inviteCount || 0,
+            // ⚔️ 장비 및 일일 획득량 세트효과 복구
+            gears: data.gears || [
+              { id: 'weapon', lvl: 0 },
+              { id: 'armor', lvl: 0 },
+              { id: 'necklace', lvl: 0 },
+              { id: 'ring', lvl: 0 }
+            ],
+            // 🐾 펫 및 🏰 성 UI 상태 복구
+            petActive: data.petActive || false,
+            castleActive: data.castleActive || false,
+            petLevel: data.petLevel || 0,
+            castleLevel: data.castleLevel || 0,
+            // 🌲 사냥터 및 🎁 시즌 보상 복구
+            huntingGroundLvl: data.huntingGroundLvl || 1,
+            seasonRewardClaimed: data.seasonRewardClaimed || false
+          }));
+        } else {
+          // 신규 유저 접속 시 UI 깨짐 방지용 초기 데이터
+          setState(s => ({
+            ...s,
+            userId: uId,
+            userName: uName,
+            balance: 500000, 
+            inviteCount: 0,
+            gears: [
+              { id: 'weapon', lvl: 0 },
+              { id: 'armor', lvl: 0 },
+              { id: 'necklace', lvl: 0 },
+              { id: 'ring', lvl: 0 }
+            ],
+            petActive: false,
+            castleActive: false,
+            petLevel: 0,
+            castleLevel: 0,
+            huntingGroundLvl: 1,
+            seasonRewardClaimed: false
+          }));
+        }
+      } catch (error) {
+        console.error("인게임 데이터 복구 중 오류 발생:", error);
       }
     };
+
     if (window.Telegram && window.Telegram.WebApp) {
-      const tg = window.Telegram.WebApp; tg.ready(); tg.expand(); 
-      if (tg.initDataUnsafe?.user) { initFirebaseData(tg.initDataUnsafe.user, tg.initDataUnsafe.start_param); }
+      const tg = window.Telegram.WebApp; 
+      tg.ready(); 
+      tg.expand(); 
+      if (tg.initDataUnsafe?.user) { 
+        initFirebaseData(tg.initDataUnsafe.user); 
+      }
     }
   }, []);
 
