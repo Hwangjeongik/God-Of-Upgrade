@@ -24,15 +24,17 @@ export default function App() {
     isAdActive: false, adTimeLeft: 0
   });
 
+  // 🚨 [렉 완전 정복] 비동기 루프를 위한 실시간 상태 추적 엔진
   const autoTimersRef = useRef({});
   const autoTargetsRef = useRef({});
   const enhancingLocksRef = useRef({}); 
   const handleUpgradeRef = useRef();
+  const autoActiveRef = useRef({}); // 렉을 막아줄 10년 차 핵심 코어
   const [autoActive, setAutoActive] = useState({});
 
-  // 🚨 사령관님 요청대로 모든 이미지를 .jpg 로 완벽하게 교체했습니다!
+  // 🚨 사령관님 지시: weapon.jpg -> sword.jpg 파일명 완벽 교체!
   const [gears, setGears] = useState([
-    {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'weapon.jpg', emoji: '⚡'},
+    {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'sword.jpg', emoji: '⚡'},
     {id: 'armor', name: '아레스의 갑옷', lvl: 0, stat: '체력', base: 100, unit: '', imgFile: 'armor.jpg', emoji: '🔥'},
     {id: 'helmet', name: '아테나의 투구', lvl: 0, stat: '방어력', base: 5, unit: '', imgFile: 'helmet.jpg', emoji: '🦉'},
     {id: 'gloves', name: '헤파이스토스의 장갑', lvl: 0, stat: '명중률', base: 2, unit: '', imgFile: 'gloves.jpg', emoji: '🔨'},
@@ -118,7 +120,6 @@ export default function App() {
 
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
-  // 🚨 사령관 마스터 스킬: 꼬여버린 DB 강제 포맷 및 동기화 버튼 로직
   const resetAndSyncDB = async () => {
     if (!window.confirm("서버 데이터를 완전히 초기화(0강, 10억GOU) 하시겠습니까?\n이 버튼으로 MAX 에러 꼬임을 완벽히 풀 수 있습니다.")) return;
     const functions = getFunctions(app);
@@ -164,9 +165,11 @@ export default function App() {
       cost = getCastleCost(state.castleLevel, gears[5].lvl); currentLvl = state.castleLevel;
     }
 
-    if (autoActive[timerKey] && autoTargetsRef.current[timerKey]) {
+    // 🚨 오토 목표 검사 시 완벽한 종료를 위해 autoActiveRef 코어 검사
+    if (autoActiveRef.current[timerKey] && autoTargetsRef.current[timerKey]) {
       if (currentLvl >= autoTargetsRef.current[timerKey] || currentLvl >= maxLimit) {
-        clearInterval(autoTimersRef.current[timerKey]);
+        autoActiveRef.current[timerKey] = false;
+        clearTimeout(autoTimersRef.current[timerKey]);
         delete autoTimersRef.current[timerKey];
         delete autoTargetsRef.current[timerKey];
         setAutoActive(p => ({ ...p, [timerKey]: false }));
@@ -175,8 +178,9 @@ export default function App() {
     }
 
     if (state.balance < cost) {
-      if (autoActive[timerKey]) {
-        clearInterval(autoTimersRef.current[timerKey]);
+      if (autoActiveRef.current[timerKey]) {
+        autoActiveRef.current[timerKey] = false;
+        clearTimeout(autoTimersRef.current[timerKey]);
         delete autoTimersRef.current[timerKey];
         setAutoActive(p => ({ ...p, [timerKey]: false }));
       }
@@ -185,7 +189,8 @@ export default function App() {
 
     enhancingLocksRef.current[timerKey] = true;
     
-    if (!autoActive[timerKey]) {
+    // 오토 중이 아닐 때만 수동 애니메이션 로딩
+    if (!autoActiveRef.current[timerKey]) {
       setState(s => ({ ...s, balance: s.balance - cost }));
       triggerAnim(timerKey, 'loading'); 
     }
@@ -201,13 +206,19 @@ export default function App() {
         else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
       }
 
-      if (!autoActive[timerKey]) {
+      if (!autoActiveRef.current[timerKey]) {
         if (data.success) triggerAnim(timerKey, 'success');
         else triggerAnim(timerKey, 'fail');
       }
       
     } catch (error) { 
         console.error("강화 에러 발생:", error);
+        if (autoActiveRef.current[timerKey]) {
+            autoActiveRef.current[timerKey] = false;
+            clearTimeout(autoTimersRef.current[timerKey]);
+            delete autoTimersRef.current[timerKey];
+            setAutoActive(p => ({ ...p, [timerKey]: false }));
+        }
         alert(`네트워크 통신 불안정: ${error.message}\n상단 [DB 초기화] 버튼을 눌러 서버와 화면을 동기화해주세요.`);
     } finally {
         enhancingLocksRef.current[timerKey] = false;
@@ -216,13 +227,15 @@ export default function App() {
 
   useEffect(() => { handleUpgradeRef.current = handleUpgrade; });
 
+  // 🚨 [렉 박멸] 비동기 재귀 엔진 (Async Recursive Engine) 탑재 완수
   const toggleAuto = (type, id = null) => {
     const timerKey = id || type;
     const maxLvl = type === 'gear' ? 30 : 50;
     const currentLvl = type === 'gear' ? gears.find(g=>g.id===id).lvl : (type === 'pet' ? state.petLevel : state.castleLevel);
 
-    if (autoActive[timerKey]) { 
-      clearInterval(autoTimersRef.current[timerKey]); 
+    if (autoActiveRef.current[timerKey]) { 
+      autoActiveRef.current[timerKey] = false;
+      clearTimeout(autoTimersRef.current[timerKey]); 
       delete autoTimersRef.current[timerKey]; 
       delete autoTargetsRef.current[timerKey];
       setAutoActive(p => ({ ...p, [timerKey]: false }));
@@ -237,11 +250,24 @@ export default function App() {
       }
 
       autoTargetsRef.current[timerKey] = target;
+      autoActiveRef.current[timerKey] = true;
       setAutoActive(p => ({ ...p, [timerKey]: true }));
       
-      autoTimersRef.current[timerKey] = setInterval(() => {
-        if (handleUpgradeRef.current) handleUpgradeRef.current(type, id);
-      }, 1000); 
+      // 🚨 서버 응답이 완벽히 끝나야만 다음 요청을 쏘는 안전한 스마트 루프
+      const runAuto = async () => {
+          if (!autoActiveRef.current[timerKey]) return;
+          
+          if (handleUpgradeRef.current) {
+              await handleUpgradeRef.current(type, id);
+          }
+          
+          // 통신이 끝난 후 1초 대기 (네트워크 과부하 완벽 차단)
+          if (autoActiveRef.current[timerKey]) {
+              autoTimersRef.current[timerKey] = setTimeout(runAuto, 1000); 
+          }
+      };
+      
+      runAuto(); // 첫 발사
     }
   };
 
@@ -282,10 +308,8 @@ export default function App() {
     return () => clearInterval(timer);
   }, [checkHunt, currentStats, totalBonusPct, halvingMult]);
 
-  // 🚨 절대 경로 맵핑. 폴더 내 파일명과 확장자(.jpg)가 정확히 일치하면 100% 출력됩니다.
   const getAbsoluteImgUrl = (filename) => `${process.env.PUBLIC_URL}/${filename}`;
   
-  // 🚨 이미지가 없을 때를 대비해 한글 텍스트 대신 다시 예쁜 에모지로 덮어씌웁니다.
   const handleImageError = (e, emoji) => {
     e.target.style.display = 'none';
     e.target.parentNode.innerHTML = `<div style="font-size: 32px;">${emoji}</div>`;
@@ -375,7 +399,7 @@ export default function App() {
         }
       `}</style>
 
-      {/* 🚀 상단 고정 헤더: DB 초기화 버튼 신설 */}
+      {/* 상단 고정 헤더 */}
       <div className="fixed-header">
         <div>
           <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold' }}>{state.walletAddress || "지갑 연결됨"}</div>
@@ -412,7 +436,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 실시간 소각량 및 시즌 잭팟 보상금 UI */}
         <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px' }}>
           <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0, border: '1px solid rgba(239, 68, 68, 0.5)', background: 'rgba(239, 68, 68, 0.05)' }}>
             <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '11px' }}>🔥 GOU 실시간 소각량 (Burned)</div>
@@ -424,7 +447,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 📈 스탯 보너스 및 마일스톤 UI */}
         <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row' }}>
           <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0 }}>
             <div style={{ color: '#06b6d4', fontWeight: 'bold', fontSize: '12px' }}>📈 일일 총 획득 속도</div>
@@ -450,7 +472,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 🗺️ 사냥터 UI */}
         <h3 style={{ color: '#fbbf24', margin: '15px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>🗺️ 점령 영지 현황 (전투력 매칭)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginBottom: '25px' }} className="grid-hunts">
           {hunts.map(h => {
@@ -476,7 +497,6 @@ export default function App() {
           })}
         </div>
 
-        {/* ⚔️ 장비 무기고 */}
         <h3 style={{ color: '#fbbf24', margin: '20px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>⚔️ 신화 무기고 강화 (총합: <span style={{color: '#fff'}}>{totalGearLevel}강</span>)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }} className="gears-grid">
           {gears.map((g) => {
