@@ -24,15 +24,12 @@ export default function App() {
     isAdActive: false, adTimeLeft: 0
   });
 
-  // 🚨 [렉 완전 정복] 비동기 루프를 위한 실시간 상태 추적 엔진
   const autoTimersRef = useRef({});
   const autoTargetsRef = useRef({});
   const enhancingLocksRef = useRef({}); 
   const handleUpgradeRef = useRef();
-  const autoActiveRef = useRef({}); // 렉을 막아줄 10년 차 핵심 코어
   const [autoActive, setAutoActive] = useState({});
 
-  // 🚨 사령관님 지시: weapon.jpg -> sword.jpg 파일명 완벽 교체!
   const [gears, setGears] = useState([
     {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'sword.jpg', emoji: '⚡'},
     {id: 'armor', name: '아레스의 갑옷', lvl: 0, stat: '체력', base: 100, unit: '', imgFile: 'armor.jpg', emoji: '🔥'},
@@ -151,9 +148,12 @@ export default function App() {
     catch (error) { console.log(error); }
   };
 
-  const handleUpgrade = async (type, id = null) => {
+  // 🚀 [렉 & 1초 지연 박멸] 낙관적 UI 적용. 누르는 즉시 레벨과 잔고가 바뀝니다!
+  const handleUpgrade = async (type, id = null, isAutoMode = false) => {
     const timerKey = id || type;
-    if (enhancingLocksRef.current[timerKey]) return; 
+    
+    // 오토 모드일 때만 통신 락을 걸고, 수동 클릭은 락을 무시하고 광속으로 찍히게 허용
+    if (isAutoMode && enhancingLocksRef.current[timerKey]) return; 
 
     let cost = 0; let currentLvl = 0; let maxLimit = type === 'gear' ? 30 : 50;
 
@@ -165,11 +165,9 @@ export default function App() {
       cost = getCastleCost(state.castleLevel, gears[5].lvl); currentLvl = state.castleLevel;
     }
 
-    // 🚨 오토 목표 검사 시 완벽한 종료를 위해 autoActiveRef 코어 검사
-    if (autoActiveRef.current[timerKey] && autoTargetsRef.current[timerKey]) {
+    if (autoActive[timerKey] && autoTargetsRef.current[timerKey]) {
       if (currentLvl >= autoTargetsRef.current[timerKey] || currentLvl >= maxLimit) {
-        autoActiveRef.current[timerKey] = false;
-        clearTimeout(autoTimersRef.current[timerKey]);
+        clearInterval(autoTimersRef.current[timerKey]);
         delete autoTimersRef.current[timerKey];
         delete autoTargetsRef.current[timerKey];
         setAutoActive(p => ({ ...p, [timerKey]: false }));
@@ -178,64 +176,56 @@ export default function App() {
     }
 
     if (state.balance < cost) {
-      if (autoActiveRef.current[timerKey]) {
-        autoActiveRef.current[timerKey] = false;
-        clearTimeout(autoTimersRef.current[timerKey]);
+      if (autoActive[timerKey]) {
+        clearInterval(autoTimersRef.current[timerKey]);
         delete autoTimersRef.current[timerKey];
         setAutoActive(p => ({ ...p, [timerKey]: false }));
       }
       return alert("GOU 잔고가 부족합니다.");
     }
 
-    enhancingLocksRef.current[timerKey] = true;
+    if (isAutoMode) enhancingLocksRef.current[timerKey] = true;
+
+    // 🚀 즉각 반응 (Optimistic Update): 서버 응답을 기다리지 않고 화면부터 올림
+    const simSuccess = Math.random() < 0.8; // 테스트 확률 80% 가상 시뮬레이션
+    let nextLvlSim = simSuccess ? currentLvl + 1 : (currentLvl <= 5 || currentLvl === 10 || currentLvl === 20 ? currentLvl : currentLvl - 1);
     
-    // 오토 중이 아닐 때만 수동 애니메이션 로딩
-    if (!autoActiveRef.current[timerKey]) {
-      setState(s => ({ ...s, balance: s.balance - cost }));
-      triggerAnim(timerKey, 'loading'); 
-    }
+    setState(s => ({ ...s, balance: s.balance - cost }));
+    if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextLvlSim } : g));
+    else if (type === 'pet') setState(s => ({ ...s, petLevel: nextLvlSim }));
+    else if (type === 'castle') setState(s => ({ ...s, castleLevel: nextLvlSim }));
+    
+    triggerAnim(timerKey, simSuccess ? 'success' : 'fail');
 
     const functions = getFunctions(app);
-    try {
-      const result = await httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id });
-      const data = result.data;
-      
-      if (data.newLevel !== undefined) {
-        if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: data.newLevel } : g));
-        else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
-        else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
-      }
-
-      if (!autoActiveRef.current[timerKey]) {
-        if (data.success) triggerAnim(timerKey, 'success');
-        else triggerAnim(timerKey, 'fail');
-      }
-      
-    } catch (error) { 
-        console.error("강화 에러 발생:", error);
-        if (autoActiveRef.current[timerKey]) {
-            autoActiveRef.current[timerKey] = false;
-            clearTimeout(autoTimersRef.current[timerKey]);
-            delete autoTimersRef.current[timerKey];
-            setAutoActive(p => ({ ...p, [timerKey]: false }));
+    // 🚀 백그라운드 서버 전송 (await로 화면을 멈추지 않음)
+    httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id })
+      .then(result => {
+        const data = result.data;
+        // 서버의 "진짜" 데이터로 조용히 오차 교정
+        if (data.newLevel !== undefined) {
+          if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: data.newLevel } : g));
+          else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
+          else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
         }
-        alert(`네트워크 통신 불안정: ${error.message}\n상단 [DB 초기화] 버튼을 눌러 서버와 화면을 동기화해주세요.`);
-    } finally {
-        enhancingLocksRef.current[timerKey] = false;
-    }
+      })
+      .catch(error => {
+        console.error("강화 통신 장애:", error);
+      })
+      .finally(() => {
+        if (isAutoMode) enhancingLocksRef.current[timerKey] = false;
+      });
   };
 
   useEffect(() => { handleUpgradeRef.current = handleUpgrade; });
 
-  // 🚨 [렉 박멸] 비동기 재귀 엔진 (Async Recursive Engine) 탑재 완수
   const toggleAuto = (type, id = null) => {
     const timerKey = id || type;
     const maxLvl = type === 'gear' ? 30 : 50;
     const currentLvl = type === 'gear' ? gears.find(g=>g.id===id).lvl : (type === 'pet' ? state.petLevel : state.castleLevel);
 
-    if (autoActiveRef.current[timerKey]) { 
-      autoActiveRef.current[timerKey] = false;
-      clearTimeout(autoTimersRef.current[timerKey]); 
+    if (autoActive[timerKey]) { 
+      clearInterval(autoTimersRef.current[timerKey]); 
       delete autoTimersRef.current[timerKey]; 
       delete autoTargetsRef.current[timerKey];
       setAutoActive(p => ({ ...p, [timerKey]: false }));
@@ -250,24 +240,12 @@ export default function App() {
       }
 
       autoTargetsRef.current[timerKey] = target;
-      autoActiveRef.current[timerKey] = true;
       setAutoActive(p => ({ ...p, [timerKey]: true }));
       
-      // 🚨 서버 응답이 완벽히 끝나야만 다음 요청을 쏘는 안전한 스마트 루프
-      const runAuto = async () => {
-          if (!autoActiveRef.current[timerKey]) return;
-          
-          if (handleUpgradeRef.current) {
-              await handleUpgradeRef.current(type, id);
-          }
-          
-          // 통신이 끝난 후 1초 대기 (네트워크 과부하 완벽 차단)
-          if (autoActiveRef.current[timerKey]) {
-              autoTimersRef.current[timerKey] = setTimeout(runAuto, 1000); 
-          }
-      };
-      
-      runAuto(); // 첫 발사
+      // AUTO 모드는 1초 간격으로 서버와 통신하며 부드럽게 진행
+      autoTimersRef.current[timerKey] = setInterval(() => {
+        if (handleUpgradeRef.current) handleUpgradeRef.current(type, id, true); // true = isAutoMode
+      }, 1000); 
     }
   };
 
@@ -377,21 +355,23 @@ export default function App() {
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         .fixed-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 850px; background: rgba(10, 12, 18, 0.95); backdrop-filter: blur(12px); border-bottom: 2px solid #fbbf24; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 5px 20px rgba(0,0,0,0.8); }
         
-        @keyframes flashSuccess { 0% { background: rgba(251, 191, 36, 0.6); transform: scale(1.03); } 100% { background: transparent; transform: scale(1); } }
-        @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.6); transform: translateX(-4px); } 50% { transform: translateX(4px); } 100% { background: transparent; transform: translateX(0); } }
+        @keyframes flashSuccess { 0% { background: rgba(251, 191, 36, 0.6); transform: scale(1.05); } 100% { background: transparent; transform: scale(1); } }
+        @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.6); transform: translateX(-5px); } 50% { transform: translateX(5px); } 100% { background: transparent; transform: translateX(0); } }
         @keyframes breathing { 0% { box-shadow: 0 0 5px #fbbf24; border-color: #fbbf24; } 50% { box-shadow: 0 0 25px #fbbf24; border-color: #fff; } 100% { box-shadow: 0 0 5px #fbbf24; border-color: #fbbf24; } }
         
         .anim-success { animation: flashSuccess 0.2s ease-out; }
         .anim-fail { animation: flashFail 0.2s ease-out; }
-        .anim-loading { filter: brightness(1.3); transform: scale(0.97); transition: 0.05s; }
+        .anim-loading { filter: brightness(1.4); transform: scale(0.95); transition: 0.05s; }
         .hunt-active { animation: breathing 1.5s infinite ease-in-out; background: rgba(217, 119, 6, 0.5) !important; border: 2px solid #fff !important; }
         
         .action-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; transition: transform 0.05s; }
-        .action-btn:active { transform: scale(0.90); }
+        .action-btn:active { transform: scale(0.85); }
         
         .glass-panel { background: rgba(15, 18, 25, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-        .img-box-gear { width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 1px solid rgba(197,160,89,0.5); border-radius: 10px; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        .img-box-gear img { width: 85%; height: 85%; object-fit: contain; }
+        
+        /* 🚀 장비 이미지 대폭 확대 (60px -> 100px) */
+        .img-box-gear { width: 100px; height: 100px; background: rgba(0,0,0,0.8); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .img-box-gear img { width: 90%; height: 90%; object-fit: contain; }
         
         @media (max-width: 768px) {
           .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
@@ -504,16 +484,17 @@ export default function App() {
             const timerKey = g.id;
             return (
               <div key={g.id} className={`glass-panel ${anims[g.id] ? `anim-${anims[g.id]}` : ''}`} style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 0, borderTop: '4px solid rgba(197,160,89,0.8)' }}>
+                {/* 🚀 커진 이미지 적용 */}
                 <div className="img-box-gear">
                   <img src={getAbsoluteImgUrl(g.imgFile)} alt={g.name} onError={(e) => handleImageError(e, g.emoji)} />
                 </div>
                 <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', margin: '4px 0', color: '#fff', textAlign: 'center' }}>{g.name} <br/><span style={{ color: '#fbbf24' }}>+{g.lvl}</span></div>
-                <div style={{ color: '#ccc', fontSize: '11px', lineHeight: '1.4', textAlign: 'center' }}>
+                <div style={{ fontSize: '14px', fontWeight: '900', margin: '6px 0', color: '#fff', textAlign: 'center' }}>{g.name} <br/><span style={{ color: '#fbbf24' }}>+{g.lvl}</span></div>
+                <div style={{ color: '#ccc', fontSize: '12px', lineHeight: '1.4', textAlign: 'center' }}>
                   확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `80.0%`}</span><br/>
                   비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
                 </div>
-                <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '10px' }}>
+                <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '12px' }}>
                   <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
                   <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoActive[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoActive[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoActive[timerKey] ? '#06b6d4' : '#555'}` }}>{autoActive[timerKey] ? 'STOP' : 'AUTO'}</button>
                 </div>
@@ -542,23 +523,24 @@ export default function App() {
                   </div>
                 </div>
               )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <div className="img-box-gear" style={{ width: '70px', height: '70px', fontSize: '40px' }}>
-                  <img src={getAbsoluteImgUrl(img)} alt={name} onError={(e) => handleImageError(e, isPet?'🐉':'🏰')} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
+                {/* 🚀 거대해진 펫/성 이미지 (110px) */}
+                <div className="img-box-gear" style={{ width: '110px', height: '110px', margin: '0' }}>
+                  <img src={getAbsoluteImgUrl(img)} alt={name} onError={(e) => handleImageError(e, isPet?'🐉':'🏰')} style={{ width: '100%', height: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ color: '#fbbf24', margin: 0, fontSize: '18px' }}>{name} <span style={{ color: '#fff', fontSize: '14px' }}>Lv.{lvl}</span></h3>
-                  <div style={{ fontSize: '12px', color: '#ccc', margin: '5px 0', lineHeight: '1.4' }}>
+                  <h3 style={{ color: '#fbbf24', margin: 0, fontSize: '20px' }}>{name} <span style={{ color: '#fff', fontSize: '14px' }}>Lv.{lvl}</span></h3>
+                  <div style={{ fontSize: '13px', color: '#ccc', margin: '8px 0', lineHeight: '1.5' }}>
                     수익 보너스: <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>+{(isPet ? state.petLevel * 3 : state.castleLevel * 5) + (isPet ? petMilestone : castleMilestone)}%</span><br/>
                     확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `80.0%`}</span> | 비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : cost.toLocaleString()}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                     <button onClick={() => handleUpgrade(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
                     <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: autoActive[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoActive[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoActive[timerKey] ? '#06b6d4' : '#555'}` }}>{autoActive[timerKey] ? 'STOP' : 'AUTO'}</button>
                   </div>
                   
                   {isMax && (
-                    <button onClick={() => startSpecialHunt(type)} disabled={isHunting} className="action-btn" style={{ width: '100%', marginTop: '8px', background: isHunting ? '#333' : 'rgba(147,51,234,0.3)', color: isHunting ? '#888' : '#a855f7', border: `1px solid ${isHunting ? '#444' : '#a855f7'}` }}>
+                    <button onClick={() => startSpecialHunt(type)} disabled={isHunting} className="action-btn" style={{ width: '100%', marginTop: '10px', background: isHunting ? '#333' : 'rgba(147,51,234,0.3)', color: isHunting ? '#888' : '#a855f7', border: `1px solid ${isHunting ? '#444' : '#a855f7'}` }}>
                       {isHunting ? '특수 사냥 진행 중 ⚔️' : `${isPet ? '🐉 둥지 사냥 (12h / X30)' : '🏰 천공 사냥 (12h / X50)'}`}
                     </button>
                   )}
