@@ -5,7 +5,7 @@ import { app } from './firebase';
 
 const MAX_SUPPLY = 10000000000000; 
 
-// 🚀 통합 미니게임 아케이드 엔진 V4.5 (터치 딜레이 0ms 패치 & 밸런스 조정)
+// 🚀 통합 미니게임 아케이드 엔진 V5 (극강의 피지컬 패치)
 const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const [status, setStatus] = useState('playing'); 
   const [pos, setPos] = useState(0);
@@ -28,7 +28,8 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const animate = useCallback((time) => {
     if (lastTimeRef.current != null) {
       const dt = time - lastTimeRef.current;
-      let speed = type === 'blacksmith' ? 0.26 : 0.18 + (stacked * 0.04); 
+      // 🚨 블록 쌓기 속도 더욱 상향!
+      let speed = type === 'blacksmith' ? 0.26 : 0.19 + (stacked * 0.045); 
       posRef.current += dirRef.current * speed * dt;
       if (posRef.current >= 100) { posRef.current = 100; dirRef.current = -1; }
       if (posRef.current <= 0) { posRef.current = 0; dirRef.current = 1; }
@@ -47,7 +48,7 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
     return () => cancelAnimationFrame(reqRef.current);
   }, [status, animate, type]);
 
-  // 📦 상자 잡기 (터치 딜레이 해결 & 아주 조금 느리게: 0.5초 노출 / 0.15초 텀)
+  // 📦 상자 잡기 (아주 조금 더 빠름: 0.45초 노출 / 0.12초 텀)
   useEffect(() => {
     if(type === 'catch' && status === 'playing') {
       catchScoreRef.current = 0;
@@ -59,7 +60,7 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
              if(score === 5) setStatus('perfect');
              else if(score >= 3) setStatus('good');
              else setStatus('miss');
-           }, 400); 
+           }, 300); 
            return;
         }
         const id = catchSpawnRef.current;
@@ -69,14 +70,14 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
         
         setTimeout(() => {
           setTargets(prev => prev.filter(t => t.id !== id));
-          setTimeout(spawnNext, 150); // 0.15초 텀
-        }, 500); // 0.5초 노출
+          setTimeout(spawnNext, 120); 
+        }, 450); 
       };
-      setTimeout(spawnNext, 400); 
+      setTimeout(spawnNext, 300); 
     }
   }, [type, status]);
 
-  // 🧠 기억력 테스트 (더 빠르게: 0.1초 노출 / 0.2초 텀 -> 총 0.3초 주기)
+  // 🧠 기억력 테스트 (더 빠르게: 0.09초 노출 / 0.28초 텀)
   useEffect(() => {
     if(type === 'memory' && status === 'playing') {
       const seq = [Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4)];
@@ -86,17 +87,16 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
       const interval = setInterval(() => {
         if(i < seq.length) {
           setFlashIdx(seq[i]);
-          setTimeout(() => setFlashIdx(-1), 100); 
+          setTimeout(() => setFlashIdx(-1), 90); 
           i++;
         } else {
           clearInterval(interval);
         }
-      }, 300); 
+      }, 280); 
       return () => clearInterval(interval);
     }
   }, [type, status]);
 
-  // 🚨 0ms 즉발 터치 액션 (onPointerDown)
   const handleHit = (e) => {
     if (e) e.preventDefault();
     if(status !== 'playing') return;
@@ -188,7 +188,6 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
          {type === 'catch' && (
             <div style={{ width: '100%', height: '100%', position: 'relative', background:'rgba(0,0,0,0.5)', borderRadius:'15px', border:'1px solid #333', overflow:'hidden', touchAction: 'none' }}>
               <div style={{position:'absolute', top:10, left:10, color:'#fbbf24', fontWeight:'bold', zIndex:10}}>적중: {catchScoreRef.current} / 5</div>
-              {/* 🚨 onPointerDown을 사용해 터치 딜레이 0ms 실현 */}
               {targets.map(t => (
                 <div key={t.id} onPointerDown={(e) => handleCatch(e, t.id)} style={{ position:'absolute', top:t.top, left:t.left, fontSize:'50px', cursor:'pointer', padding:'10px', filter:'drop-shadow(0 0 10px #fbbf24)', transition: 'top 0.1s, left 0.1s', userSelect: 'none' }}>📦</div>
               ))}
@@ -235,7 +234,7 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   );
 };
 
-// ✂️ 🚨 100% 버그 픽스 완료된 업그레이드 카드 컴포넌트
+// ✂️ 최적화된 통합 업그레이드 카드 컴포넌트
 const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, animClass, boxAnimClass, specialHunt }) => (
   <div className={`glass-panel ${boxAnimClass}`} style={{ padding: '15px', display: 'flex', flexDirection: type === 'gear' ? 'column' : 'row', alignItems: 'center', gap: type === 'gear' ? '0' : '25px', marginBottom: type === 'gear' ? 0 : '15px', borderTop: type === 'gear' ? '4px solid rgba(197,160,89,0.8)' : 'none', position:'relative', overflow:'hidden' }}>
     {item.locked && (
@@ -243,7 +242,8 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
         <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px', padding: '10px 20px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)' }}>🔒 {item.lockMsg}</div>
       </div>
     )}
-    <div className="img-box-gear" style={type !== 'gear' ? { width: '110px', height: '110px', margin: '0' } : {}}>
+    {/* 🚨 장비 아이콘 크기 확장 120px 적용 완료 */}
+    <div className="img-box-gear" style={type !== 'gear' ? { width: '130px', height: '130px', margin: '0' } : {}}>
       <img src={`${process.env.PUBLIC_URL}/${item.imgFile}`} alt={item.name} onError={(e)=>{e.target.style.opacity='0'; e.target.nextSibling.style.display='block';}} />
       <span style={{ display: 'none', fontSize: '40px', position: 'absolute' }}>{item.emoji}</span>
     </div>
@@ -262,7 +262,6 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
       </div>
       
       <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '12px' }}>
-        {/* 🚨 type 변수 정확하게 전달! */}
         <button onClick={() => onUpgrade(type, item.id)} disabled={isMax || autoActive} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
         <button onClick={() => onAuto(type, item.id)} disabled={isMax} className="action-btn" style={{ background: autoActive ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', color: autoActive ? '#06b6d4' : '#888', border: `1px solid ${autoActive ? '#06b6d4' : '#555'}` }}>{autoActive ? 'STOP' : 'AUTO'}</button>
       </div>
@@ -375,6 +374,7 @@ export default function App() {
   const getPetCost = useCallback((lvl) => calculateCost(lvl, 'pet', levelsRef.current['necklace']), [calculateCost]);
   const getCastleCost = useCallback((lvl) => calculateCost(lvl, 'castle', levelsRef.current['necklace']), [calculateCost]);
 
+  // 사냥터 모니터링 (실시간 연동 완료)
   const checkHunt = useCallback((now, stats, huntState) => {
     if (huntState.castleHuntEndTime > now) return { name: '🏰 제국의 심장 (특수)', mult: 50, isSpecial: true };
     if (huntState.petHuntEndTime > now) return { name: '🐉 신수의 둥지 (특수)', mult: 30, isSpecial: true };
@@ -383,6 +383,15 @@ export default function App() {
 
   const currentHuntData = checkHunt(Date.now(), currentStats, state);
   const dailyGainDisplay = Math.floor(300000 * currentHuntData.mult * (1 + totalBonusPct / 100) * gainHalvingMult * (state.isAdActive ? 2.0 : 1.0));
+
+  // 🚨 화산 옆 특수 사냥터 UI 생성 엔진 🚨
+  const activeHuntsToRender = useMemo(() => {
+    const arr = [...hunts];
+    const now = Date.now();
+    if (state.castleHuntEndTime > now) arr.push({ name: '🏰 제국의 심장', mult: 50, isSpecial: true, endTime: state.castleHuntEndTime });
+    if (state.petHuntEndTime > now) arr.push({ name: '🐉 신수의 둥지', mult: 30, isSpecial: true, endTime: state.petHuntEndTime });
+    return arr;
+  }, [hunts, state.castleHuntEndTime, state.petHuntEndTime]);
 
   useEffect(() => {
     if (wallet) setState(s => ({ ...s, walletAddress: wallet.account.address.substring(0, 6) + '...' + wallet.account.address.substring(wallet.account.address.length - 4), screen: 'game' }));
@@ -397,7 +406,7 @@ export default function App() {
       const res = await httpsCallable(getFunctions(app), 'resetAccount')({ userId: getUserId() });
       if (res.data.success) {
         const d = res.data.data;
-        setState(s => ({ ...s, balance: d.balance, petLevel: d.petLevel, castleLevel: d.castleLevel, burned: 0, tickets: 5, adViewsLeft: 5 }));
+        setState(s => ({ ...s, balance: d.balance, petLevel: d.petLevel, castleLevel: d.castleLevel, burned: 0, tickets: 5, adViewsLeft: 5, jackpot: 50000000 }));
         setGears(p => p.map(g => { const found = d.gears.find(x => x.id === g.id); return found ? { ...g, lvl: found.lvl } : g; }));
         alert("초기화 성공!");
       }
@@ -439,7 +448,7 @@ export default function App() {
     alert("특수 사냥터 활성화! 12시간 동안 최고 배율의 수익이 국고로 자동 입금됩니다.");
   };
 
-  // 🚨 강화 로직 (매개변수 버그 완벽 수정)
+  // 🚨 수동 강화 (실패 시 소각량 & 잭팟 완벽 동기화 패치)
   const handleUpgrade = async (type, id = null) => {
     const key = id || type;
     if (lockRef.current[key]) return; 
@@ -454,7 +463,18 @@ export default function App() {
     const isSuccess = Math.random() < 0.8;
     let nextLvl = isSuccess ? currentLvl + 1 : (currentLvl <= 5 || currentLvl === 10 || currentLvl === 20 ? currentLvl : currentLvl - 1);
 
-    setState(s => ({ ...s, balance: s.balance - cost }));
+    setState(s => {
+      // 🚨 실패 수수료 적립 완벽 계산!
+      const feeRate = s.burned >= MAX_SUPPLY * 0.6 ? 0.23 : (s.burned >= MAX_SUPPLY * 0.3 ? 0.18 : 0.15);
+      const fee = isSuccess ? 0 : cost * feeRate;
+      return { 
+        ...s, 
+        balance: s.balance - cost, 
+        burned: s.burned + fee, 
+        jackpot: s.jackpot + fee 
+      };
+    });
+
     if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextLvl } : g));
     else if (type === 'pet') setState(s => ({ ...s, petLevel: nextLvl }));
     else if (type === 'castle') setState(s => ({ ...s, castleLevel: nextLvl }));
@@ -473,6 +493,7 @@ export default function App() {
 
   useEffect(() => { latestUpgradeRef.current = handleUpgrade; });
 
+  // 🚨 자동 강화 (실패 시 소각량 & 잭팟 완벽 동기화 패치)
   const toggleAuto = async (type, id = null) => {
     const key = id || type;
     const maxLimit = type === 'gear' ? 30 : 50;
@@ -497,11 +518,17 @@ export default function App() {
         let cost = calculateCost(simLvl, type, levelsRef.current['necklace']);
         if (simBalance < cost) { alert(`잔고 부족!`); break; }
 
-        simBalance -= cost;
         const isSuccess = Math.random() < 0.8;
+        
+        // 🚨 실패 수수료 적립을 state에 직접 안전하게 계산해서 쏴줍니다
+        setState(s => {
+          const feeRate = s.burned >= MAX_SUPPLY * 0.6 ? 0.23 : (s.burned >= MAX_SUPPLY * 0.3 ? 0.18 : 0.15);
+          const fee = isSuccess ? 0 : cost * feeRate;
+          return { ...s, balance: s.balance - cost, burned: s.burned + fee, jackpot: s.jackpot + fee };
+        });
+
         if (isSuccess) { simLvl++; successCost += cost; } else { failCost += cost; if (simLvl > 5 && simLvl !== 10 && simLvl !== 20) simLvl--; }
 
-        setState(s => ({ ...s, balance: simBalance }));
         if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: simLvl } : g));
         else if (type === 'pet') setState(s => ({ ...s, petLevel: simLvl }));
         else if (type === 'castle') setState(s => ({ ...s, castleLevel: simLvl }));
@@ -558,9 +585,14 @@ export default function App() {
         .action-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; transition: transform 0.05s, opacity 0.2s; }
         .action-btn:active { transform: scale(0.92); } .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
-        .img-box-gear { width: 100px; height: 100px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; position: relative; }
+        /* 🚨 장비 아이콘 사이즈를 기존 100px에서 120px로 시원하게 확대! */
+        .img-box-gear { width: 120px; height: 120px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; position: relative; }
         .img-box-gear img { width: 90%; height: 90%; object-fit: contain; }
-        @media (max-width: 768px) { .grid-hunts, .gears-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; } }
+        /* 🚨 사냥터 특수 슬롯 UI를 위해 그리드 반응형 최적화 */
+        @media (max-width: 768px) { 
+          .grid-hunts { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; gap: 8px !important; }
+          .gears-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; } 
+        }
       `}</style>
 
       {activeModal && <ArcadeGames type={activeModal} onClose={() => setActiveModal(null)} onReward={(r) => { if(r>0) setState(s=>({...s, balance:s.balance+r})); setActiveModal(null); }} pReward={pReward} gReward={gReward} />}
@@ -572,8 +604,8 @@ export default function App() {
             <div style={{ color: '#e6d5b8', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
               <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>🔨 대장장이 망치질</h4><p style={{ margin: '0 0 10px 0' }}><span style={{color:'#10b981'}}>PERFECT: 정중앙</span> | <span style={{color:'#fbbf24'}}>GOOD: 노란색 영역</span></p>
               <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>🏗️ 올림포스 블록 쌓기</h4><p style={{ margin: '0 0 10px 0' }}>첫 블록은 프리패스! 2,3층은 1층에 맞춰 정확히 쌓으세요.<br/><span style={{color:'#10b981'}}>PERFECT: 3층 완성</span> | <span style={{color:'#fbbf24'}}>GOOD: 2층 완성</span></p>
-              <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>📦 보물 상자 잡기</h4><p style={{ margin: '0 0 10px 0' }}>0.5초 만에 사라지는 상자 5개를 모두 터치하세요!<br/><span style={{color:'#10b981'}}>PERFECT: 5개 적중</span> | <span style={{color:'#fbbf24'}}>GOOD: 3~4개 적중</span></p>
-              <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>🧠 기억력 테스트</h4><p style={{ margin: '0 0 10px 0' }}>0.1초씩 번쩍이는 패턴 5개를 암기하고 똑같이 터치하세요!<br/><span style={{color:'#10b981'}}>PERFECT: 5연속 성공</span> | <span style={{color:'#fbbf24'}}>GOOD: 3~4연속 성공</span></p>
+              <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>📦 보물 상자 잡기</h4><p style={{ margin: '0 0 10px 0' }}>0.45초 만에 사라지는 상자 5개를 모두 터치하세요!<br/><span style={{color:'#10b981'}}>PERFECT: 5개 적중</span> | <span style={{color:'#fbbf24'}}>GOOD: 3~4개 적중</span></p>
+              <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>🧠 기억력 테스트</h4><p style={{ margin: '0 0 10px 0' }}>0.09초씩 번쩍이는 패턴 5개를 암기하고 똑같이 터치하세요!<br/><span style={{color:'#10b981'}}>PERFECT: 5연속 성공</span> | <span style={{color:'#fbbf24'}}>GOOD: 3~4연속 성공</span></p>
             </div>
             <h3 style={{ color: '#fbbf24', fontSize: '15px', marginBottom: '10px', textAlign: 'center', borderTop: '1px solid #444', paddingTop: '15px' }}>📈 스펙 티어별 보상 안내</h3>
             <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '8px', padding: '15px 10px', fontSize: '12px', color: '#ccc', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -603,7 +635,7 @@ export default function App() {
 
       <div style={{ width: '100%', maxWidth: '850px', padding: '10px 10px 80px 10px' }}>
         
-        {/* 🚨 V4.5 자산 획득 및 🌟보너스 통합 UI 🚨 */}
+        {/* 🚨 50:50 융합 대시보드 */}
         <div style={{ display: 'flex', gap: '15px', width: '100%', marginBottom: '20px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row' }}>
           <div className="glass-panel" style={{ flex: 1, margin: 0, padding: '20px', display: 'flex', flexDirection: 'column', border: '2px solid #06b6d4' }}>
             <h3 style={{color:'#06b6d4', margin:'0 0 10px 0', textAlign:'center', fontSize:'18px'}}>🌱 자산 획득 및 효율</h3>
@@ -617,13 +649,13 @@ export default function App() {
                 </button>
               </div>
 
-              {/* ✨ 사령관 오더: 획득량 상세(보너스 % 내역) UI 복구 완벽 적용 ✨ */}
-              <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '10px', marginBottom: '15px', fontSize: '11px' }}>
-                 <div style={{ color: '#fbbf24', fontWeight: 'bold', marginBottom: '5px', textAlign: 'center' }}>🌟 통합 보너스: +{totalBonusPct}%</div>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ccc' }}>
-                   <span>⚔️ 장비: <span style={{color: '#fff'}}>+{gearGainBonus + setBonus}%</span></span>
-                   <span>🐉 펫: <span style={{color: '#fff'}}>+{petGainBonus + petMilestone}%</span></span>
-                   <span>🏰 성: <span style={{color: '#fff'}}>+{castleGainBonus + castleMilestone}%</span></span>
+              {/* 🚨 사령관님 오더: 통합 보너스 디테일 (뭐 때문에 오르는지 표기) 🚨 */}
+              <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '10px', marginBottom: '15px', fontSize: '12px' }}>
+                 <div style={{ color: '#fbbf24', fontWeight: 'bold', marginBottom: '8px', textAlign: 'center', fontSize: '14px' }}>🌟 통합 보너스: +{totalBonusPct}%</div>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', color: '#ccc' }}>
+                   <div style={{display:'flex', justifyContent:'space-between'}}><span>⚔️ 장비: <span style={{color: '#fff', fontWeight:'bold'}}>+{gearGainBonus + setBonus}%</span></span> <span style={{fontSize:'10px', color:'#aaa'}}>(레벨 +{gearGainBonus}% / 세트 +{setBonus}%)</span></div>
+                   <div style={{display:'flex', justifyContent:'space-between'}}><span>🐉 펫: <span style={{color: '#fff', fontWeight:'bold'}}>+{petGainBonus + petMilestone}%</span></span> <span style={{fontSize:'10px', color:'#aaa'}}>(레벨 +{petGainBonus}% / 각성 +{petMilestone}%)</span></div>
+                   <div style={{display:'flex', justifyContent:'space-between'}}><span>🏰 성: <span style={{color: '#fff', fontWeight:'bold'}}>+{castleGainBonus + castleMilestone}%</span></span> <span style={{fontSize:'10px', color:'#aaa'}}>(레벨 +{castleGainBonus}% / 각성 +{castleMilestone}%)</span></div>
                  </div>
               </div>
 
@@ -683,20 +715,33 @@ export default function App() {
         </div>
 
         <h3 style={{ color: '#fbbf24', margin: '15px 0 10px 5px', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>🗺️ 점령 영지 현황 (전투력 매칭)</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginBottom: '25px' }} className="grid-hunts">
-          {hunts.map(h => {
-            const isActive = !currentHuntData.isSpecial && currentHuntData.name === h.name;
-            const isUnlocked = currentStats.atk >= h.req.atk && currentStats.hp >= h.req.hp && currentStats.def >= h.req.def && currentStats.acc >= h.req.acc && currentStats.sum >= h.reqSum;
+        {/* 🚨 사령관님 오더: 화산 옆 특수 사냥터 진행 UI 실시간 연동 🚨 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '25px' }} className="grid-hunts">
+          {activeHuntsToRender.map(h => {
+            const isActive = !h.isSpecial ? (!currentHuntData.isSpecial && currentHuntData.name === h.name) : true;
+            const isUnlocked = h.isSpecial ? true : (currentStats.atk >= h.req.atk && currentStats.hp >= h.req.hp && currentStats.def >= h.req.def && currentStats.acc >= h.req.acc && currentStats.sum >= h.reqSum);
+            
             return (
-              <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ background: 'rgba(15, 18, 25, 0.8)', border: `1px solid ${isActive ? '#fff' : (isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)')}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', opacity: isUnlocked ? 1 : 0.4 }}>
-                <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '12px', marginBottom: '5px' }}>{isActive ? '⚔️ ' : ''}{h.name}</b>
-                {h.name !== '초원 영지' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', background: 'rgba(0,0,0,0.8)', padding: '4px', borderRadius: '4px', fontSize: '10px', color: '#ccc', marginBottom: '5px' }}>
-                    <div>공 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444'}}>{h.req.atk}</span></div><div>체 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444'}}>{h.req.hp}</span></div>
-                    <div>방 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444'}}>{h.req.def}</span></div><div>명 <span style={{color: currentStats.acc >= h.req.acc ? '#06b6d4' : '#ef4444'}}>{h.req.acc}</span></div>
+              <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ background: h.isSpecial ? 'rgba(147, 51, 234, 0.2)' : 'rgba(15, 18, 25, 0.8)', border: `1px solid ${isActive ? (h.isSpecial ? '#a855f7' : '#fff') : (isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)')}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', opacity: isUnlocked ? 1 : 0.4, boxShadow: h.isSpecial ? '0 0 15px rgba(147,51,234,0.3)' : 'none' }}>
+                <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '12px', marginBottom: '5px' }}>{isActive && !h.isSpecial ? '⚔️ ' : ''}{h.name}</b>
+                
+                {h.isSpecial ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', padding: '10px 0' }}>
+                    <div style={{ color: '#a855f7', fontWeight: 'bold', fontSize: '12px', animation: 'flashSuccess 1.5s infinite' }}>🔥 진행 중</div>
+                    <div style={{ color: '#fbbf24', fontSize: '10px' }}>⏳ 남은 시간: {Math.ceil((h.endTime - Date.now()) / 3600000)}h</div>
                   </div>
+                ) : (
+                  h.name !== '초원 영지' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', background: 'rgba(0,0,0,0.8)', padding: '4px', borderRadius: '4px', fontSize: '10px', color: '#ccc', marginBottom: '5px' }}>
+                      <div>공 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444'}}>{h.req.atk}</span></div><div>체 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444'}}>{h.req.hp}</span></div>
+                      <div>방 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444'}}>{h.req.def}</span></div><div>명 <span style={{color: currentStats.acc >= h.req.acc ? '#06b6d4' : '#ef4444'}}>{h.req.acc}</span></div>
+                    </div>
+                  )
                 )}
-                <div style={{ fontSize: '11px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '5px' }}><div style={{ color: isUnlocked ? '#ccc' : '#666' }}>강화 <span style={{color: isUnlocked ? '#fff' : '#666', fontWeight: 'bold'}}>{h.reqSum}</span></div><div style={{ color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', marginTop: '2px' }}>수익 X{h.mult}</div></div>
+                <div style={{ fontSize: '11px', borderTop: `1px solid ${h.isSpecial ? 'rgba(147,51,234,0.3)' : 'rgba(255,255,255,0.1)'}`, paddingTop: '5px' }}>
+                  {!h.isSpecial && <div style={{ color: isUnlocked ? '#ccc' : '#666' }}>강화 <span style={{color: isUnlocked ? '#fff' : '#666', fontWeight: 'bold'}}>{h.reqSum}</span></div>}
+                  <div style={{ color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', marginTop: '2px' }}>수익 X{h.mult}</div>
+                </div>
               </div>
             );
           })}
