@@ -1,225 +1,277 @@
+/* eslint-disable */
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-admin.initializeApp();
+const https = require('https');
+const { Buffer } = require('buffer');
 
-// 🚨 사령관 전용 마스터 스위치 (테스트 시 true, 정식 오픈 시 false)
-const IS_TEST_MODE = false;
+// 🚨 에러 방지: 앱 중복 초기화 방어 로직
+if (admin.apps.length === 0) {
+    admin.initializeApp();
+}
 
-// ==========================================
-// 💰 1. 수확(Claim) API 서버 로직
-// ==========================================
-exports.claimGOU = functions.https.onCall(async (data, context) => {
-    try {
-        // 1. 요청 데이터 안전장치
-        if (!data) {
-            throw new functions.https.HttpsError('invalid-argument', '요청 데이터가 비어있습니다.');
+const IS_TEST_MODE = true; 
+const MAX_SUPPLY = 10000000000000; 
+
+// 🚨 사령관님의 텔레그램 봇 토큰을 여기에 입력하세요!
+const BOT_TOKEN = "8930501901:AAFxCo5ou_DAW27tHJ-1F0b3sLZ12EtoG10"; 
+const WEB_APP_URL = "https://gou-h9pt.onrender.com"; 
+
+// 🚀 텔레그램 푸시 알림 발송 엔진 (호환성 100% 네이티브)
+const sendTelegramPush = (chatId, title, name) => {
+    return new Promise((resolve) => {
+        if (!BOT_TOKEN || BOT_TOKEN.indexOf("여기에_봇_토큰을") !== -1) {
+            console.log("봇 토큰이 설정되지 않았습니다.");
+            return resolve(false);
         }
-
-        const uid = data.userId;
-        if (!uid) {
-            throw new functions.https.HttpsError('invalid-argument', '유저 ID(신분증)가 없습니다.');
-        }
-
-        const db = admin.firestore();
-        const userRef = db.collection('users').doc(uid);
-
-        return await db.runTransaction(async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists) {
-                throw new functions.https.HttpsError('not-found', '유저 데이터가 존재하지 않습니다.');
+        
+        const payload = JSON.stringify({
+            chat_id: chatId,
+            photo: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+            caption: "🎁 [" + title + "] " + name + " 님!\n\n일일 보급품이 도착했습니다!\n티켓 3장과 광고 3회가 모두 충전되었습니다.\n\n지금 바로 접속하여 영지 수확과 아케이드 게임을 시작하세요!",
+            reply_markup: {
+                inline_keyboard: [[{ text: "🚀 GOD OF UPGRADE 실행", web_app: { url: WEB_APP_URL } }]]
             }
-
-            const userData = userDoc.data();
-            const serverNow = Date.now(); 
-
-            // 2. 🔥 [범인 검거 및 완벽 방어] 타임스탬프 vs 숫자 포맷 정밀 변환
-            let lastClaimTime = serverNow;
-            if (userData.lastClaimTime) {
-                if (typeof userData.lastClaimTime.toMillis === 'function') {
-                    // 데이터베이스에 타임스탬프 객체로 저장되어 있던 경우 ms 숫자로 강제 변환
-                    lastClaimTime = userData.lastClaimTime.toMillis();
-                } else {
-                    // 일반 숫자이거나 기타 포맷인 경우
-                    lastClaimTime = Number(userData.lastClaimTime) || serverNow;
-                }
-            }
-
-            let elapsedMs = serverNow - lastClaimTime;
-            if (elapsedMs < 0) elapsedMs = 0;
-
-            const maxMiningDuration = 12 * 60 * 60 * 1000; 
-            if (elapsedMs > maxMiningDuration) elapsedMs = maxMiningDuration;
-
-            if (elapsedMs < 10000) {
-                return { success: false, message: '아직 수확할 GOU가 부족합니다. (최소 10초 대기)' };
-            }
-
-            const baseGOUPerSec = 300000 / 86400; 
-            const multiplier = Number(data.currentMultiplier) || 1.0; 
-            
-            // 3. 혹시 모를 NaN 발생 최종 차단막
-            let harvestedGOU = (elapsedMs / 1000) * baseGOUPerSec * multiplier;
-            if (isNaN(harvestedGOU) || harvestedGOU < 0) {
-                harvestedGOU = 0;
-            }
-
-            transaction.update(userRef, {
-                balance: admin.firestore.FieldValue.increment(harvestedGOU),
-                lastClaimTime: serverNow
-            });
-
-            return { 
-                success: true, 
-                harvestedAmount: harvestedGOU, 
-                message: `${Math.floor(harvestGOU).toLocaleString()} GOU를 획득했습니다!` 
-            };
         });
-    } catch (error) {
-        // 4. 🔥 [구글 가면 벗기기] 서버 내부에서 터진 진짜 에러 원인을 긁어다가 프론트엔드로 직송합니다.
-        console.error("claimGOU 실행 중 에러 발생:", error);
-        if (error instanceof functions.https.HttpsError) {
-            throw error;
-        }
-        // 일반 에러가 나면 숨기지 않고 메시지에 진짜 범인의 이름을 박아서 던집니다.
-        throw new functions.https.HttpsError('internal', `서버 리얼 버그: ${error.message}`);
-    }
-});
-// ==========================================
-// 🎲 2. 장비 강화 및 자원 분배 API 서버 로직
-// ==========================================
-exports.upgradeItem = functions.https.onCall(async (data, context) => {
-    const uid = data.userId;
-    if (!uid) {
-        throw new functions.https.HttpsError('invalid-argument', '유저 ID가 없습니다.');
-    }
-    
-    const { type, id } = data; 
+
+        const options = {
+            hostname: 'api.telegram.org',
+            port: 443,
+            path: '/bot' + BOT_TOKEN + '/sendPhoto',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            res.on('data', () => {});
+            res.on('end', () => resolve(true));
+        });
+
+        req.on('error', (e) => {
+            console.error("푸시 실패:", e);
+            resolve(false);
+        });
+
+        req.write(payload);
+        req.end();
+    });
+};
+
+exports.syncUserInfo = functions.https.onCall(async (data, context) => {
+    let reqData = data || {};
+    if (reqData.data) reqData = reqData.data;
+    const uid = reqData.userId;
+    if (!uid) return { success: false };
+
     const db = admin.firestore();
-    const userRef = db.collection('users').doc(uid);
-    const systemRef = db.collection('system').doc('economy'); 
+    await db.collection('users').doc(String(uid)).set({
+        chatId: uid, 
+        lastTitle: reqData.title || "훈련병",
+        lastName: reqData.name || "유저"
+    }, { merge: true });
+    return { success: true };
+});
 
-    return db.runTransaction(async (transaction) => {
-        const userDoc = await transaction.get(userRef);
-        let systemDoc = await transaction.get(systemRef);
-        
-        if (!userDoc.exists) throw new functions.https.HttpsError('not-found', '유저 데이터 오류');
-        
-        if (!systemDoc.exists) {
-            transaction.set(systemRef, { pool: 0, burn: 0, jackpot: 0, lp: 0, reserve: 0 });
-            systemDoc = await transaction.get(systemRef);
-        }
+// 🔔 수동 푸시 테스트용 API (이것으로 텔레그램 연동을 확인합니다!)
+exports.testPushNotification = functions.https.onCall(async (data, context) => {
+    let reqData = data || {};
+    if (reqData.data) reqData = reqData.data;
+    await sendTelegramPush(reqData.userId, reqData.title, reqData.name);
+    return { success: true };
+});
 
-        const userData = userDoc.data();
-        let balance = userData.balance || 0;
+// 🚨 배포 에러의 주범이었던 daily9AMPush (자동 스케줄러) 삭제 완료! 🚨
+
+exports.resetAccount = functions.https.onCall(async (data, context) => {
+    let reqData = data || {};
+    if (reqData.data) reqData = reqData.data;
+    const uid = reqData.userId || "test_commander_123";
+    const db = admin.firestore();
+    const userRef = db.collection('users').doc(String(uid));
+    const resetData = {
+        balance: 1000000000, lastClaimTime: Date.now(), 
+        gears: [{ id: 'sword', lvl: 0 }, { id: 'armor', lvl: 0 }, { id: 'helmet', lvl: 0 }, { id: 'gloves', lvl: 0 }, { id: 'boots', lvl: 0 }, { id: 'necklace', lvl: 0 }, { id: 'ring', lvl: 0 }],
+        petLevel: 0, castleLevel: 0
+    };
+    await userRef.set(resetData, { merge: true });
+    await db.collection('system').doc('economy').set({ burn: 0, pool: 0, jackpot: 50000000, lp: 0, reserve: 0 }, { merge: true });
+    return { success: true, data: resetData };
+});
+
+const getPhaseInfo = (burnAmount) => {
+    let phase = 0; let gainMult = 1.0; let costMult = 1.0;
+    let rates = { pool: 0.40, burn: 0.30, jackpot: 0.15, lp: 0.10, reserve: 0.05 };
+    if (burnAmount >= MAX_SUPPLY * 0.6) {
+        phase = 2; gainMult = 0.25; costMult = 0.5;
+        rates = { pool: 0.40, burn: 0.22, jackpot: 0.23, lp: 0.10, reserve: 0.05 };
+    } else if (burnAmount >= MAX_SUPPLY * 0.3) {
+        phase = 1; gainMult = 0.5; costMult = 1.0;
+        rates = { pool: 0.40, burn: 0.27, jackpot: 0.18, lp: 0.10, reserve: 0.05 };
+    }
+    return { phase, gainMult, costMult, rates };
+};
+
+exports.claimGOU = functions.https.onCall(async (data, context) => {
+    let reqData = data || {}; 
+    if (reqData.data) reqData = reqData.data;
+    const uid = reqData.userId || "test_commander_123";
+    const db = admin.firestore();
+    return await db.runTransaction(async (t) => {
+        const userDoc = await t.get(db.collection('users').doc(String(uid)));
+        const sysDoc = await t.get(db.collection('system').doc('economy'));
+        const serverNow = Date.now(); 
+        let userData = userDoc.exists ? userDoc.data() : { balance: 1000000000, lastClaimTime: serverNow - 10000, gears: [] };
+        let sysData = sysDoc.exists ? sysDoc.data() : { burn: 0 };
+        const phaseInfo = getPhaseInfo(sysData.burn || 0);
+        let elapsedMs = serverNow - (userData.lastClaimTime || serverNow);
+        if (elapsedMs > 12 * 60 * 60 * 1000) elapsedMs = 12 * 60 * 60 * 1000;
+        if (elapsedMs < 10000) return { success: false, message: '대기 중' };
+        let harvestedGOU = (elapsedMs / 1000) * (300000 / 86400) * (Number(reqData.currentMultiplier) || 1.0) * phaseInfo.gainMult;
+        if (isNaN(harvestedGOU) || harvestedGOU < 0) harvestedGOU = 0;
+        t.update(db.collection('users').doc(String(uid)), { balance: admin.firestore.FieldValue.increment(harvestedGOU), lastClaimTime: serverNow });
+        return { success: true, harvestedAmount: harvestedGOU };
+    });
+});
+
+exports.upgradeItem = functions.https.onCall(async (data, context) => {
+    let reqData = data || {}; 
+    if (reqData.data) reqData = reqData.data;
+    const uid = reqData.userId || "test_commander_123";
+    const type = reqData.type;
+    const id = reqData.id; 
+    const db = admin.firestore();
+    return await db.runTransaction(async (t) => {
+        const userRef = db.collection('users').doc(String(uid));
+        const sysRef = db.collection('system').doc('economy');
+        const userDoc = await t.get(userRef);
+        const sysDoc = await t.get(sysRef);
+        let userData = userDoc.exists ? userDoc.data() : {};
+        let sysData = sysDoc.exists ? sysDoc.data() : { burn: 0 };
+        const phaseInfo = getPhaseInfo(sysData.burn || 0);
+        
+        let balance = userData.balance !== undefined ? userData.balance : 1000000000;
         let gears = userData.gears || [];
-        let petActive = userData.petActive || false;
-        let castleActive = userData.castleActive || false;
-        let petLevel = userData.petLevel || 0;
-        let castleLevel = userData.castleLevel || 0;
-
-        const necklaceLvl = gears.find(g => g.id === 'necklace')?.lvl || 0;
-        const ringLvl = gears.find(g => g.id === 'ring')?.lvl || 0;
-
-        let currentLvl = 0;
-        let isMax = false;
-        let baseCostMultiplier = 1; 
-
-        if (type === 'gear') {
-            const targetGear = gears.find(g => g.id === id);
-            currentLvl = targetGear.lvl;
-            isMax = currentLvl >= 30;
-        } else if (type === 'pet') {
-            if (!petActive) throw new functions.https.HttpsError('failed-precondition', '펫이 개방되지 않았습니다.');
-            currentLvl = petLevel;
-            isMax = currentLvl >= 50;
-        } else if (type === 'castle') {
-            if (!castleActive) throw new functions.https.HttpsError('failed-precondition', '성이 개방되지 않았습니다.');
-            currentLvl = castleLevel;
-            isMax = currentLvl >= 50;
-            baseCostMultiplier = 10;
-        }
-
-        if (isMax) throw new functions.https.HttpsError('failed-precondition', '이미 MAX 레벨입니다.');
-
-        const effectiveLvl = Math.max(1, currentLvl + 1);
-        const tier = Math.floor((effectiveLvl - 1) / 10);
-        const step = ((effectiveLvl - 1) % 10) + 1;
-        let rawCost = step * Math.pow(10, tier) * 1000 * baseCostMultiplier;
         
-        const discount = 1 - (necklaceLvl * 0.005);
-        const finalCost = Math.floor(rawCost * discount);
-
-        if (balance < finalCost) throw new functions.https.HttpsError('resource-exhausted', 'GOU가 부족합니다.');
-
-        let rate = 0;
+        let foundSword = false;
+        for(let i=0; i<gears.length; i++) { if(gears[i].id === 'sword') foundSword = true; }
+        if (!foundSword) gears = [{ id: 'sword', lvl: 0 }, { id: 'armor', lvl: 0 }, { id: 'helmet', lvl: 0 }, { id: 'gloves', lvl: 0 }, { id: 'boots', lvl: 0 }, { id: 'necklace', lvl: 0 }, { id: 'ring', lvl: 0 }];
+        
+        let currentLvl = 0;
         if (type === 'gear') {
-            if (currentLvl < 5) rate = 1.0;
-            else if (currentLvl < 10) rate = 0.7;
-            else if (currentLvl < 15) rate = 0.6;
-            else if (currentLvl < 20) rate = 0.5;
-            else rate = [0.47, 0.44, 0.41, 0.38, 0.35, 0.32, 0.29, 0.26, 0.23, 0.20][currentLvl - 20] || 0.1;
+            const gItem = gears.find(function(g) { return g.id === id; });
+            currentLvl = gItem ? gItem.lvl : 0;
+        } else if (type === 'pet') {
+            currentLvl = userData.petLevel || 0;
         } else {
-            if (currentLvl < 5) rate = 1.0;
-            else if (currentLvl < 10) rate = 0.7;
-            else if (currentLvl < 15) rate = 0.65;
-            else if (currentLvl < 20) rate = 0.6;
-            else if (currentLvl < 25) rate = 0.55;
-            else if (currentLvl < 30) rate = 0.5;
-            else if (currentLvl < 35) rate = 0.45;
-            else if (currentLvl < 40) rate = 0.4;
-            else rate = [0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.22, 0.20][currentLvl - 40] || 0.1;
+            currentLvl = userData.castleLevel || 0;
         }
-
-        let finalRate = Math.min(0.99, rate + (ringLvl * 0.001));
-        if (IS_TEST_MODE) finalRate = 0.9;
-
-        const isSuccess = Math.random() < finalRate;
-
-        let economyUpdate = {};
+        
+        if (currentLvl >= (type === 'gear' ? 30 : 50)) throw new functions.https.HttpsError('failed-precondition', 'MAX 레벨');
+        
+        const necklaceItem = gears.find(function(g) { return g.id === 'necklace'; });
+        const necklaceLvl = necklaceItem ? necklaceItem.lvl : 0;
+        
+        const finalCost = Math.floor(((currentLvl % 10) + 1) * Math.pow(10, Math.floor(currentLvl / 10)) * (type === 'castle' ? 10000 : 1000) * (1 - (necklaceLvl * 0.005)) * phaseInfo.costMult);
+        if (balance < finalCost) throw new functions.https.HttpsError('resource-exhausted', 'GOU 부족');
+        
+        const isSuccess = IS_TEST_MODE ? (Math.random() < 0.8) : (Math.random() < 0.5);
+        let nextLvl = isSuccess ? currentLvl + 1 : (currentLvl <= 5 || currentLvl === 10 || currentLvl === 20 ? currentLvl : currentLvl - 1);
+        
+        let ecoUpdate = {};
         if (isSuccess) {
-            economyUpdate = { pool: admin.firestore.FieldValue.increment(finalCost) };
+            ecoUpdate = { pool: admin.firestore.FieldValue.increment(finalCost) };
         } else {
-            economyUpdate = {
-                pool: admin.firestore.FieldValue.increment(finalCost * 0.40),
-                burn: admin.firestore.FieldValue.increment(finalCost * 0.30),
-                jackpot: admin.firestore.FieldValue.increment(finalCost * 0.15),
-                lp: admin.firestore.FieldValue.increment(finalCost * 0.10),
-                reserve: admin.firestore.FieldValue.increment(finalCost * 0.05)
+            ecoUpdate = { 
+                pool: admin.firestore.FieldValue.increment(finalCost * phaseInfo.rates.pool), 
+                burn: admin.firestore.FieldValue.increment(finalCost * phaseInfo.rates.burn), 
+                jackpot: admin.firestore.FieldValue.increment(finalCost * phaseInfo.rates.jackpot), 
+                lp: admin.firestore.FieldValue.increment(finalCost * phaseInfo.rates.lp), 
+                reserve: admin.firestore.FieldValue.increment(finalCost * phaseInfo.rates.reserve) 
             };
         }
-
-        let userUpdate = { balance: admin.firestore.FieldValue.increment(-finalCost) };
-        let unlockMessage = null;
-
+        
+        let userUpdate = { balance: balance - finalCost };
         if (type === 'gear') {
-            const updatedGears = gears.map(g => 
-                g.id === id ? { ...g, lvl: isSuccess ? g.lvl + 1 : Math.max(0, g.lvl - 1) } : g
-            );
-            userUpdate.gears = updatedGears;
-
-            if (isSuccess && !petActive && updatedGears.every(g => g.lvl >= 30)) {
-                userUpdate.petActive = true;
-                unlockMessage = "🎉 장비 ALL 30강 달성! 신수(Pet)가 개방되었습니다!";
-            }
+            userUpdate.gears = gears.map(function(g) { return g.id === id ? { id: g.id, lvl: nextLvl } : g; });
         } else if (type === 'pet') {
-            const nextLvl = isSuccess ? currentLvl + 1 : Math.max(0, currentLvl - 1);
             userUpdate.petLevel = nextLvl;
-            
-            if (isSuccess && !castleActive && nextLvl >= 50) {
-                userUpdate.castleActive = true;
-                unlockMessage = "🏰 펫 50강 달성! 위대한 군주의 성이 개방되었습니다!";
-            }
-        } else if (type === 'castle') {
-            userUpdate.castleLevel = isSuccess ? currentLvl + 1 : Math.max(0, currentLvl - 1);
+        } else {
+            userUpdate.castleLevel = nextLvl;
         }
+        
+        t.update(userRef, userUpdate);
+        t.set(sysRef, ecoUpdate, { merge: true });
+        return { success: isSuccess, cost: finalCost, newLevel: nextLvl };
+    });
+});
 
-        transaction.update(userRef, userUpdate);
-        transaction.update(systemRef, economyUpdate);
-
-        return {
-            success: isSuccess,
-            cost: finalCost,
-            unlockMessage: unlockMessage
+exports.syncAutoUpgrade = functions.https.onCall(async (data, context) => {
+    let reqData = data || {}; 
+    if (reqData.data) reqData = reqData.data;
+    const uid = reqData.userId || "test_commander_123";
+    const type = reqData.type;
+    const id = reqData.id;
+    const finalLevel = reqData.finalLevel;
+    const successCost = reqData.successCost;
+    const failCost = reqData.failCost;
+    
+    const db = admin.firestore();
+    return await db.runTransaction(async (t) => {
+        const userRef = db.collection('users').doc(String(uid));
+        const sysRef = db.collection('system').doc('economy');
+        const userDoc = await t.get(userRef);
+        const sysDoc = await t.get(sysRef);
+        let sysData = sysDoc.exists ? sysDoc.data() : { burn: 0 };
+        const phaseInfo = getPhaseInfo(sysData.burn || 0);
+        
+        let userUpdate = { balance: admin.firestore.FieldValue.increment(-(successCost + failCost)) };
+        let gears = userDoc.exists && userDoc.data().gears ? userDoc.data().gears : [];
+        
+        let foundSword = false;
+        for(let i=0; i<gears.length; i++) { if(gears[i].id === 'sword') foundSword = true; }
+        if (!foundSword) gears = [{ id: 'sword', lvl: 0 }, { id: 'armor', lvl: 0 }, { id: 'helmet', lvl: 0 }, { id: 'gloves', lvl: 0 }, { id: 'boots', lvl: 0 }, { id: 'necklace', lvl: 0 }, { id: 'ring', lvl: 0 }];
+        
+        if (type === 'gear') {
+            userUpdate.gears = gears.map(function(g) { return g.id === id ? { id: g.id, lvl: finalLevel } : g; });
+        } else if (type === 'pet') {
+            userUpdate.petLevel = finalLevel;
+        } else if (type === 'castle') {
+            userUpdate.castleLevel = finalLevel;
+        }
+        
+        t.update(userRef, userUpdate);
+        let ecoUpdate = { 
+            pool: admin.firestore.FieldValue.increment(successCost + (failCost * phaseInfo.rates.pool)), 
+            burn: admin.firestore.FieldValue.increment(failCost * phaseInfo.rates.burn), 
+            jackpot: admin.firestore.FieldValue.increment(failCost * phaseInfo.rates.jackpot), 
+            lp: admin.firestore.FieldValue.increment(failCost * phaseInfo.rates.lp), 
+            reserve: admin.firestore.FieldValue.increment(failCost * phaseInfo.rates.reserve) 
         };
+        t.set(sysRef, ecoUpdate, { merge: true });
+        return { success: true };
+    });
+});
+
+exports.withdrawGOU = functions.https.onCall(async (data, context) => {
+    let reqData = data || {}; 
+    if (reqData.data) reqData = reqData.data;
+    const uid = reqData.userId || "test_commander_123";
+    const amount = Number(reqData.amount);
+    if (isNaN(amount) || amount < 10000000) throw new functions.https.HttpsError('invalid-argument', '최소 1,000만 GOU부터 출금 가능합니다.');
+    
+    const db = admin.firestore();
+    return await db.runTransaction(async (t) => {
+        const userRef = db.collection('users').doc(String(uid));
+        const sysRef = db.collection('system').doc('economy');
+        const userDoc = await t.get(userRef);
+        let userData = userDoc.exists ? userDoc.data() : {};
+        let balance = userData.balance || 0;
+        if (balance < amount) throw new functions.https.HttpsError('resource-exhausted', '잔고 부족');
+        const fee = Math.floor(amount * 0.05); 
+        t.update(userRef, { balance: admin.firestore.FieldValue.increment(-amount) });
+        t.set(sysRef, { burn: admin.firestore.FieldValue.increment(fee) }, { merge: true });
+        return { success: true, withdrawn: amount - fee, feeBurned: fee };
     });
 });
