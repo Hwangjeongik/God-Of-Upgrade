@@ -17,21 +17,25 @@ const BOT_TOKEN = "8930501901:AAFxCo5ou_DAW27tHJ-1F0b3sLZ12EtoG10";
 const WEB_APP_URL = "https://gou-h9pt.onrender.com"; 
 
 // 🚀 텔레그램 푸시 알림 발송 엔진 (호환성 100% 네이티브)
+// functions/index.js 파일 내부
+
 const sendTelegramPush = (chatId, title, name) => {
     return new Promise((resolve) => {
-        if (!BOT_TOKEN || BOT_TOKEN.indexOf("여기에_봇_토큰을") !== -1) {
-            console.log("봇 토큰이 설정되지 않았습니다.");
-            return resolve(false);
-        }
+        // ... (생략) ...
         
         const payload = JSON.stringify({
             chat_id: chatId,
-            photo: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+            
+            // 🚨 바로 이 부분입니다! 따옴표("") 안의 주소를 사령관님의 새 이미지 주소로 싹 바꿔주십시오!
+            photo: "https://gou-h9pt.onrender.com/gou.jpg", 
+            
             caption: "🎁 [" + title + "] " + name + " 님!\n\n일일 보급품이 도착했습니다!\n티켓 3장과 광고 3회가 모두 충전되었습니다.\n\n지금 바로 접속하여 영지 수확과 아케이드 게임을 시작하세요!",
             reply_markup: {
                 inline_keyboard: [[{ text: "🚀 GOD OF UPGRADE 실행", web_app: { url: WEB_APP_URL } }]]
             }
         });
+        
+        // ... (생략) ...
 
         const options = {
             hostname: 'api.telegram.org',
