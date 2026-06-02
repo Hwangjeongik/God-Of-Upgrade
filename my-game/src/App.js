@@ -30,6 +30,7 @@ export default function App() {
   const handleUpgradeRef = useRef();
   const [autoActive, setAutoActive] = useState({});
 
+  // 🚨 사령관님! 여기에 세팅된 파일명(weapon.png 등)을 실제 public 폴더에 넣으신 파일명/확장자와 정확히 일치시켜주세요! (jpg면 .jpg로 변경)
   const [gears, setGears] = useState([
     {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'weapon.png', emoji: '⚡'},
     {id: 'armor', name: '아레스의 갑옷', lvl: 0, stat: '체력', base: 100, unit: '', imgFile: 'armor.png', emoji: '🔥'},
@@ -50,7 +51,6 @@ export default function App() {
 
   const totalGearLevel = gears.reduce((a, b) => a + b.lvl, 0); 
   const minLvl = Math.min(...gears.map(g => g.lvl));
-
   const setBonus = minLvl >= 30 ? 500 : minLvl >= 20 ? 200 : minLvl >= 10 ? 100 : 0;
 
   const isPetUnlocked = totalGearLevel >= 210;
@@ -87,7 +87,6 @@ export default function App() {
 
   const petMilestone = getPetBonus(state.petLevel);
   const castleMilestone = getCastleBonus(state.castleLevel);
-
   const totalBonusPct = gearGainBonus + setBonus + petGainBonus + petMilestone + castleGainBonus + castleMilestone; 
 
   const isHalving = state.burned >= HALVING_BURN_THRESHOLD;
@@ -165,7 +164,12 @@ export default function App() {
     }
 
     enhancingLocksRef.current[timerKey] = true;
-    triggerAnim(timerKey, 'loading'); 
+    
+    // 🚨 렉 제로 핵심: 오토 중일 때는 화면 새로고침(애니메이션 등)을 건너뜀 (Silent Update)
+    if (!autoActive[timerKey]) {
+      setState(s => ({ ...s, balance: s.balance - cost }));
+      triggerAnim(timerKey, 'loading'); 
+    }
 
     const functions = getFunctions(app);
     try {
@@ -177,11 +181,15 @@ export default function App() {
         else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
         else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
       }
-      if (data.success) triggerAnim(timerKey, 'success');
-      else triggerAnim(timerKey, 'fail');
+
+      if (!autoActive[timerKey]) {
+        if (data.success) triggerAnim(timerKey, 'success');
+        else triggerAnim(timerKey, 'fail');
+      }
       
     } catch (error) { 
-        // 롤백 없음
+        console.error("강화 에러 발생:", error);
+        alert(`네트워크 통신 불안정: ${error.message}\n다시 시도해주세요.`);
     } finally {
         enhancingLocksRef.current[timerKey] = false;
     }
@@ -255,13 +263,10 @@ export default function App() {
     return () => clearInterval(timer);
   }, [checkHunt, currentStats, totalBonusPct, halvingMult]);
 
-  // 🚨 절대경로 이미지 반환
-  const getAbsoluteImgUrl = (filename) => `${window.location.origin}/${filename}`;
-
-  // 🚨 [누락 복구 완료!] 렌더 빌드 에러의 원인: 이미지 깨짐 방어 엔진(handleImageError) 부활
-  const handleImageError = (e, fallbackText) => {
+  // 🚨 안전하고 깔끔한 이미지 렌더링 폴백
+  const handleImageError = (e, emoji) => {
     e.target.style.display = 'none';
-    e.target.parentNode.innerHTML = `<div style="font-size: 20px; color: #fff; font-weight: bold;">${fallbackText}</div>`;
+    e.target.parentNode.innerHTML = `<div style="font-size: 32px;">${emoji}</div>`;
   };
 
   const renderMilestoneUI = () => {
@@ -307,7 +312,7 @@ export default function App() {
 
   if (state.screen === 'wallet') {
     return (
-      <div style={{ backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.4), rgba(26, 15, 20, 0.6)), url("/background.jpg")`, backgroundSize: 'cover', backgroundPosition: 'center', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8' }}>
+      <div style={{ backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.4), rgba(26, 15, 20, 0.6)), url("${process.env.PUBLIC_URL}/background.jpg")`, backgroundSize: 'cover', backgroundPosition: 'center', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8' }}>
         <h1 style={{ color: '#fbbf24', fontSize: '32px', textShadow: '0 0 10px rgba(251,191,36,0.5)' }}>GOD OF UPGRADE</h1>
         <div style={{ padding: '20px', background: 'rgba(0,0,0,0.5)', borderRadius: '15px', marginTop: '20px' }}><TonConnectButton /></div>
       </div>
@@ -318,7 +323,7 @@ export default function App() {
 
   return (
     <div className="main-wrap" style={{ 
-      backgroundImage: `linear-gradient(rgba(5, 8, 12, 0.75), rgba(15, 10, 12, 0.85)), url("/background.jpg")`,
+      backgroundImage: `linear-gradient(rgba(5, 8, 12, 0.75), rgba(15, 10, 12, 0.85)), url("${process.env.PUBLIC_URL}/background.jpg")`,
       backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', 
       paddingTop: '85px' 
     }}>
@@ -458,7 +463,8 @@ export default function App() {
             return (
               <div key={g.id} className={`glass-panel ${anims[g.id] ? `anim-${anims[g.id]}` : ''}`} style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 0, borderTop: '4px solid rgba(197,160,89,0.8)' }}>
                 <div className="img-box-gear">
-                  <img src={getAbsoluteImgUrl(g.imgFile)} alt={g.name} onError={(e) => handleImageError(e, g.emoji)} />
+                  {/* 🚨 절대경로 이미지 엔진 완벽 가동 */}
+                  <img src={`${process.env.PUBLIC_URL}/${g.imgFile}`} alt={g.name} onError={(e) => handleImageError(e, g.emoji)} />
                 </div>
                 <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
                 <div style={{ fontSize: '13px', fontWeight: 'bold', margin: '4px 0', color: '#fff', textAlign: 'center' }}>{g.name} <br/><span style={{ color: '#fbbf24' }}>+{g.lvl}</span></div>
@@ -497,7 +503,7 @@ export default function App() {
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <div className="img-box-gear" style={{ width: '70px', height: '70px', fontSize: '40px' }}>
-                  <img src={getAbsoluteImgUrl(img)} alt={name} onError={(e) => handleImageError(e, isPet?'🐉':'🏰')} />
+                  <img src={`${process.env.PUBLIC_URL}/${img}`} alt={name} onError={(e) => handleImageError(e, isPet?'🐉':'🏰')} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ color: '#fbbf24', margin: 0, fontSize: '18px' }}>{name} <span style={{ color: '#fff', fontSize: '14px' }}>Lv.{lvl}</span></h3>
