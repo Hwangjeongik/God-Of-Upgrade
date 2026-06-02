@@ -30,15 +30,15 @@ export default function App() {
   const handleUpgradeRef = useRef();
   const [autoActive, setAutoActive] = useState({});
 
-  // 🚨 사령관님! 여기에 세팅된 파일명(weapon.png 등)을 실제 public 폴더에 넣으신 파일명/확장자와 정확히 일치시켜주세요! (jpg면 .jpg로 변경)
+  // 🚨 사령관님 요청대로 모든 이미지를 .jpg 로 완벽하게 교체했습니다!
   const [gears, setGears] = useState([
-    {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'weapon.png', emoji: '⚡'},
-    {id: 'armor', name: '아레스의 갑옷', lvl: 0, stat: '체력', base: 100, unit: '', imgFile: 'armor.png', emoji: '🔥'},
-    {id: 'helmet', name: '아테나의 투구', lvl: 0, stat: '방어력', base: 5, unit: '', imgFile: 'helmet.png', emoji: '🦉'},
-    {id: 'gloves', name: '헤파이스토스의 장갑', lvl: 0, stat: '명중률', base: 2, unit: '', imgFile: 'gloves.png', emoji: '🔨'},
-    {id: 'boots', name: '헤르메스의 신발', lvl: 0, stat: 'GOU 보너스', base: 5, unit: '%', imgFile: 'shoes.png', emoji: '🪽'},
-    {id: 'necklace', name: '아프로디테의 목걸이', lvl: 0, stat: '비용감소', base: 0.5, unit: '%', imgFile: 'necklace.png', emoji: '🌹'},
-    {id: 'ring', name: '포세이돈의 반지', lvl: 0, stat: '성공확률', base: 0.1, unit: '%', imgFile: 'ring.png', emoji: '🌊'}
+    {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'weapon.jpg', emoji: '⚡'},
+    {id: 'armor', name: '아레스의 갑옷', lvl: 0, stat: '체력', base: 100, unit: '', imgFile: 'armor.jpg', emoji: '🔥'},
+    {id: 'helmet', name: '아테나의 투구', lvl: 0, stat: '방어력', base: 5, unit: '', imgFile: 'helmet.jpg', emoji: '🦉'},
+    {id: 'gloves', name: '헤파이스토스의 장갑', lvl: 0, stat: '명중률', base: 2, unit: '', imgFile: 'gloves.jpg', emoji: '🔨'},
+    {id: 'boots', name: '헤르메스의 신발', lvl: 0, stat: 'GOU 보너스', base: 5, unit: '%', imgFile: 'shoes.jpg', emoji: '🪽'},
+    {id: 'necklace', name: '아프로디테의 목걸이', lvl: 0, stat: '비용감소', base: 0.5, unit: '%', imgFile: 'necklace.jpg', emoji: '🌹'},
+    {id: 'ring', name: '포세이돈의 반지', lvl: 0, stat: '성공확률', base: 0.1, unit: '%', imgFile: 'ring.jpg', emoji: '🌊'}
   ]);
 
   const [anims, setAnims] = useState({});
@@ -118,6 +118,26 @@ export default function App() {
 
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
+  // 🚨 사령관 마스터 스킬: 꼬여버린 DB 강제 포맷 및 동기화 버튼 로직
+  const resetAndSyncDB = async () => {
+    if (!window.confirm("서버 데이터를 완전히 초기화(0강, 10억GOU) 하시겠습니까?\n이 버튼으로 MAX 에러 꼬임을 완벽히 풀 수 있습니다.")) return;
+    const functions = getFunctions(app);
+    try {
+      const res = await httpsCallable(functions, 'resetAccount')({ userId: getUserId() });
+      if (res.data.success) {
+        const d = res.data.data;
+        setState(s => ({ ...s, balance: d.balance, petLevel: d.petLevel, castleLevel: d.castleLevel }));
+        setGears(p => p.map(g => {
+            const found = d.gears.find(x => x.id === g.id);
+            return found ? { ...g, lvl: found.lvl } : g;
+        }));
+        alert("서버 초기화 및 동기화 완벽 성공! 이제 0강부터 정상적으로 폭풍 연타가 가능합니다.");
+      }
+    } catch (e) {
+      alert("동기화 실패: " + e.message);
+    }
+  };
+
   const claimGOU = async () => {
     const estimatedGain = Math.floor(state.pendingGOU);
     if (estimatedGain < 10) return alert("최소 10 GOU 이상부터 수확 가능합니다.");
@@ -165,7 +185,6 @@ export default function App() {
 
     enhancingLocksRef.current[timerKey] = true;
     
-    // 🚨 렉 제로 핵심: 오토 중일 때는 화면 새로고침(애니메이션 등)을 건너뜀 (Silent Update)
     if (!autoActive[timerKey]) {
       setState(s => ({ ...s, balance: s.balance - cost }));
       triggerAnim(timerKey, 'loading'); 
@@ -189,7 +208,7 @@ export default function App() {
       
     } catch (error) { 
         console.error("강화 에러 발생:", error);
-        alert(`네트워크 통신 불안정: ${error.message}\n다시 시도해주세요.`);
+        alert(`네트워크 통신 불안정: ${error.message}\n상단 [DB 초기화] 버튼을 눌러 서버와 화면을 동기화해주세요.`);
     } finally {
         enhancingLocksRef.current[timerKey] = false;
     }
@@ -263,7 +282,10 @@ export default function App() {
     return () => clearInterval(timer);
   }, [checkHunt, currentStats, totalBonusPct, halvingMult]);
 
-  // 🚨 안전하고 깔끔한 이미지 렌더링 폴백
+  // 🚨 절대 경로 맵핑. 폴더 내 파일명과 확장자(.jpg)가 정확히 일치하면 100% 출력됩니다.
+  const getAbsoluteImgUrl = (filename) => `${process.env.PUBLIC_URL}/${filename}`;
+  
+  // 🚨 이미지가 없을 때를 대비해 한글 텍스트 대신 다시 예쁜 에모지로 덮어씌웁니다.
   const handleImageError = (e, emoji) => {
     e.target.style.display = 'none';
     e.target.parentNode.innerHTML = `<div style="font-size: 32px;">${emoji}</div>`;
@@ -353,26 +375,26 @@ export default function App() {
         }
       `}</style>
 
-      {/* 상단 고정 헤더 */}
+      {/* 🚀 상단 고정 헤더: DB 초기화 버튼 신설 */}
       <div className="fixed-header">
         <div>
           <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold' }}>{state.walletAddress || "지갑 연결됨"}</div>
           <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#fff' }}>[{state.userTitle}] {state.userName}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ textAlign: 'right' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ textAlign: 'right', marginRight: '5px' }}>
             <span style={{ fontSize: '22px', fontWeight: '900', color: '#fbbf24', textShadow: '0 0 10px rgba(251,191,36,0.8)' }}>
               {Math.floor(state.balance).toLocaleString()}
             </span>
             <span style={{ fontSize: '12px', color: '#c5a059', marginLeft: '4px' }}>GOU</span>
           </div>
-          <button onClick={() => setState(s => ({...s, isRankingOpen: true}))} style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🏆 RANK</button>
+          <button onClick={resetAndSyncDB} style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🔄 DB 초기화</button>
+          <button onClick={() => setState(s => ({...s, isRankingOpen: true}))} style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🏆 RANK</button>
         </div>
       </div>
 
       <div style={{ width: '100%', maxWidth: '850px', padding: '10px 10px 80px 10px' }}>
         
-        {/* 코어 자산 수확 대시보드 */}
         <div className="glass-panel" style={{ textAlign: 'center', padding: '20px', border: '2px solid #fbbf24', background: 'rgba(20,24,32,0.9)' }}>
           <div style={{ background: 'rgba(0,0,0,0.6)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', marginBottom: '10px' }}>
@@ -463,8 +485,7 @@ export default function App() {
             return (
               <div key={g.id} className={`glass-panel ${anims[g.id] ? `anim-${anims[g.id]}` : ''}`} style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 0, borderTop: '4px solid rgba(197,160,89,0.8)' }}>
                 <div className="img-box-gear">
-                  {/* 🚨 절대경로 이미지 엔진 완벽 가동 */}
-                  <img src={`${process.env.PUBLIC_URL}/${g.imgFile}`} alt={g.name} onError={(e) => handleImageError(e, g.emoji)} />
+                  <img src={getAbsoluteImgUrl(g.imgFile)} alt={g.name} onError={(e) => handleImageError(e, g.emoji)} />
                 </div>
                 <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
                 <div style={{ fontSize: '13px', fontWeight: 'bold', margin: '4px 0', color: '#fff', textAlign: 'center' }}>{g.name} <br/><span style={{ color: '#fbbf24' }}>+{g.lvl}</span></div>
@@ -486,7 +507,7 @@ export default function App() {
           const isPet = type === 'pet'; 
           const isUnlocked = isPet ? isPetUnlocked : isCastleUnlocked; 
           const lvl = isPet ? state.petLevel : state.castleLevel; const name = isPet ? (isPetUnlocked ? '고대 황금 드래곤' : '신수 (잠김)') : (isCastleUnlocked ? '위대한 군주의 성' : '영지 (잠김)');
-          const img = isPet ? 'pet.png' : 'castle.png';
+          const img = isPet ? 'pet.jpg' : 'castle.jpg';
           const isMax = lvl >= 50; const cost = isPet ? getPetCost(lvl, gears[5].lvl) : getCastleCost(lvl, gears[5].lvl);
           const huntEndTime = isPet ? state.petHuntEndTime : state.castleHuntEndTime;
           const isHunting = huntEndTime > Date.now();
@@ -503,7 +524,7 @@ export default function App() {
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <div className="img-box-gear" style={{ width: '70px', height: '70px', fontSize: '40px' }}>
-                  <img src={`${process.env.PUBLIC_URL}/${img}`} alt={name} onError={(e) => handleImageError(e, isPet?'🐉':'🏰')} />
+                  <img src={getAbsoluteImgUrl(img)} alt={name} onError={(e) => handleImageError(e, isPet?'🐉':'🏰')} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ color: '#fbbf24', margin: 0, fontSize: '18px' }}>{name} <span style={{ color: '#fff', fontSize: '14px' }}>Lv.{lvl}</span></h3>
