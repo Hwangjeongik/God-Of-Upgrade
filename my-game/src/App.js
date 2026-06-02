@@ -5,7 +5,7 @@ import { app } from './firebase';
 
 const MAX_SUPPLY = 10000000000000; 
 
-// 🚀 다이내믹 스펙 보상 적용된 대장장이 미니게임
+// 🚀 [망치질 미니게임] 사령관님 오더: 망치 속도 2.2배 쾌속 상향 (0.12 -> 0.26)
 const BlacksmithMinigame = ({ onClose, onReward, totalGearLevel, petLevel, castleLevel }) => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [cursorPos, setCursorDisplay] = useState(0);
@@ -16,25 +16,25 @@ const BlacksmithMinigame = ({ onClose, onReward, totalGearLevel, petLevel, castl
   const requestRef = useRef();
   const lastTimeRef = useRef();
 
-  // 🚨 사령관님 스펙 기반 다이내믹 보상 연산기
-  let perfectReward = 1000000; // 기본 100만
-  let goodReward = 200000;     // 기본 20만
+  let perfectReward = 1000000; 
+  let goodReward = 200000;     
 
   if (castleLevel >= 50) {
-    perfectReward = 1000000000; // 성 50강: 10억
-    goodReward = 200000000;     // 성 50강: 2억
+    perfectReward = 1000000000; 
+    goodReward = 200000000;     
   } else if (petLevel >= 50) {
-    perfectReward = 100000000;  // 펫 50강: 1억
-    goodReward = 20000000;      // 펫 50강: 2천만
+    perfectReward = 100000000;  
+    goodReward = 20000000;      
   } else if (totalGearLevel >= 210) {
-    perfectReward = 10000000;   // 장비 210강: 1000만
-    goodReward = 2000000;       // 장비 210강: 200만
+    perfectReward = 10000000;   
+    goodReward = 2000000;       
   }
 
   const animate = useCallback((time) => {
     if (lastTimeRef.current != null) {
       const deltaTime = time - lastTimeRef.current;
-      const speed = 0.12; 
+      // 🚨 속도 대폭 상향: 훨씬 빠르고 쫄깃하게 움직입니다!
+      const speed = 0.26; 
       posRef.current += dirRef.current * speed * deltaTime;
       if (posRef.current >= 100) { posRef.current = 100; dirRef.current = -1; }
       if (posRef.current <= 0) { posRef.current = 0; dirRef.current = 1; }
@@ -67,9 +67,8 @@ const BlacksmithMinigame = ({ onClose, onReward, totalGearLevel, petLevel, castl
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(10, 12, 18, 0.95)', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 20000 }}>
       <h2 style={{ color: '#fbbf24', fontSize: '28px', marginBottom: '10px' }}>🔨 대장장이 망치질</h2>
-      <p style={{ color: '#ccc', fontSize: '13px', marginBottom: '20px' }}>타이밍에 맞춰 [PERFECT] 존에 멈추세요!</p>
+      <p style={{ color: '#ef4444', fontSize: '14px', fontWeight: 'bold', marginBottom: '20px', animation: 'flashFail 1s infinite' }}>망치 속도가 매우 빠릅니다! 집중하세요!</p>
       
-      {/* 🚨 현재 보상 티어 안내 UI 추가 */}
       <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid #555', padding: '10px 20px', borderRadius: '10px', marginBottom: '40px', textAlign: 'center' }}>
         <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold', marginBottom: '5px' }}>📈 현재 내 스펙 보상 티어</div>
         <div style={{ fontSize: '14px', color: '#fff' }}>
@@ -86,7 +85,7 @@ const BlacksmithMinigame = ({ onClose, onReward, totalGearLevel, petLevel, castl
 
       {!result ? (
         <div style={{ display: 'flex', gap: '15px' }}>
-          <button onClick={onClose} style={{ background: '#333', color: '#fff', padding: '20px 30px', borderRadius: '15px', fontSize: '18px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>포기</button>
+          <button onClick={onClose} style={{ background: '#333', color: '#fff', padding: '20px 30px', borderRadius: '15px', fontSize: '18px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>도망치기</button>
           <button onClick={handleHit} style={{ background: 'linear-gradient(90deg, #ef4444, #b91c1c)', color: '#fff', padding: '20px 60px', borderRadius: '15px', fontSize: '24px', fontWeight: '900', border: 'none', boxShadow: '0 5px 20px rgba(239, 68, 68, 0.5)', cursor: 'pointer' }}>
             💥 타격 (STOP)
           </button>
@@ -97,10 +96,10 @@ const BlacksmithMinigame = ({ onClose, onReward, totalGearLevel, petLevel, castl
             {result.type}!!
           </div>
           <div style={{ fontSize: '18px', color: '#fff', marginBottom: '30px' }}>
-            보상: <span style={{ color: result.reward > 0 ? '#10b981' : '#ef4444' }}>+{result.reward.toLocaleString()} GOU</span>
+            결과: <span style={{ color: result.reward > 0 ? '#10b981' : '#ef4444' }}>{result.reward > 0 ? `+${result.reward.toLocaleString()} GOU` : '보상 없음'}</span>
           </div>
           <button onClick={() => onReward(result.reward)} style={{ background: '#fbbf24', color: '#000', padding: '15px 40px', borderRadius: '10px', fontSize: '18px', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(251,191,36,0.4)' }}>
-            보상 받고 나가기
+            아케이드로 복귀
           </button>
         </div>
       )}
@@ -117,13 +116,15 @@ export default function App() {
     {name: '황혼 화산', mult: 12, reqSum: 150, req: {atk:230, hp:2300, def:115, acc:46}}
   ], []);
 
+  // 🚨 티켓(tickets) 및 남은 광고 시청 횟수(adViewsLeft) 상태 초기화 추가
   const [state, setState] = useState({ 
     screen: 'wallet', walletAddress: '', balance: 1000000000, burned: 0, jackpot: 50000000, 
     pendingGOU: 0, unclaimedTime: 0, 
     userName: "사령관", userTitle: "전설의 기사", isRankingOpen: false,
     petLevel: 0, castleLevel: 0,
     petHuntEndTime: 0, castleHuntEndTime: 0, 
-    isAdActive: false, adTimeLeft: 0
+    isAdActive: false, adTimeLeft: 0,
+    tickets: 0, adViewsLeft: 5 
   });
 
   const lockRef = useRef({}); 
@@ -133,7 +134,8 @@ export default function App() {
   const [lvlAnims, setLvlAnims] = useState({}); 
   const [anims, setAnims] = useState({});
   
-  const [activeMinigame, setActiveMinigame] = useState(null); 
+  // 🚨 모달 상태 (null | 'center' | 'blacksmith')
+  const [activeModal, setActiveModal] = useState(null); 
 
   const triggerAnim = useCallback((id, type) => {
     setAnims(prev => ({ ...prev, [id]: type }));
@@ -251,7 +253,7 @@ export default function App() {
       const res = await httpsCallable(functions, 'resetAccount')({ userId: getUserId() });
       if (res.data.success) {
         const d = res.data.data;
-        setState(s => ({ ...s, balance: d.balance, petLevel: d.petLevel, castleLevel: d.castleLevel, burned: 0 }));
+        setState(s => ({ ...s, balance: d.balance, petLevel: d.petLevel, castleLevel: d.castleLevel, burned: 0, tickets: 0, adViewsLeft: 5 }));
         setGears(p => p.map(g => {
             const found = d.gears.find(x => x.id === g.id);
             return found ? { ...g, lvl: found.lvl } : g;
@@ -289,15 +291,26 @@ export default function App() {
     catch (error) {}
   };
 
-  // 🚀 미니게임 클리어 보상 처리 로직
+  // 🚀 미니게임 티켓 광고 시청
+  const watchAdForTicket = () => {
+    if (state.adViewsLeft <= 0) return alert("오늘의 티켓 획득용 광고를 모두 시청하셨습니다! (매일 자정 리셋)");
+    alert("📺 광고 시청 완료! 미니게임 입장 티켓 1장이 지급되었습니다.");
+    setState(s => ({ ...s, tickets: s.tickets + 1, adViewsLeft: s.adViewsLeft - 1 }));
+  };
+
+  // 🚀 티켓 1장 소모 후 랜덤 게임 시작 (현재는 대장장이 고정 연결)
+  const startRandomGame = () => {
+    if (state.tickets <= 0) return alert("티켓이 부족합니다! 📺 광고를 시청하여 티켓을 획득하세요.");
+    setState(s => ({ ...s, tickets: s.tickets - 1 }));
+    setActiveModal('blacksmith'); 
+  };
+
   const handleMinigameReward = (reward) => {
     if (reward > 0) {
       setState(s => ({ ...s, balance: s.balance + reward }));
-      alert(`🎉 축하합니다! 보상 ${reward.toLocaleString()} GOU를 획득했습니다!`);
-    } else {
-      alert("❌ 아쉽게도 빗나갔습니다. 보상을 획득하지 못했습니다.");
     }
-    setActiveMinigame(null);
+    // 보상을 받고 다시 아케이드 화면(center)으로 복귀
+    setActiveModal('center');
   };
 
   const handleUpgrade = async (type, id = null) => {
@@ -430,7 +443,7 @@ export default function App() {
 
   const watchAdAndDouble = () => {
     setState(s => ({ ...s, isAdActive: true, adTimeLeft: 3600 }));
-    alert("📺 광고 시청 완료! 일일 획득량이 2배로 폭증합니다!");
+    alert("📺 일일 수확 획득량 2배 버프가 활성화되었습니다!");
   };
 
   useEffect(() => {
@@ -548,10 +561,49 @@ export default function App() {
         }
       `}</style>
 
-      {/* 🚀 미니게임 모달 (스펙 동기화 완료) */}
-      {activeMinigame === 'blacksmith' && (
+      {/* 🚀 게임장 (미니게임 아케이드) 모달 */}
+      {activeModal === 'center' && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
+          <div style={{ background: 'rgba(20,20,25,0.98)', border: '2px solid #10b981', padding: '30px 20px', borderRadius: '15px', width: '95%', maxWidth: '420px', boxShadow: '0 0 30px rgba(16,185,129,0.3)' }}>
+            <h2 style={{ textAlign: 'center', color: '#10b981', marginBottom: '15px', fontSize: '26px', fontWeight: '900' }}>🎰 미니게임 아케이드</h2>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(0,0,0,0.5)', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #333' }}>
+              <div style={{ textAlign: 'center', flex: 1 }}>
+                <div style={{ color: '#aaa', fontSize: '11px', marginBottom: '5px' }}>보유 티켓</div>
+                <div style={{ color: '#fbbf24', fontSize: '22px', fontWeight: 'bold' }}>🎟️ {state.tickets}개</div>
+              </div>
+              <div style={{ width: '1px', background: '#333' }}></div>
+              <div style={{ textAlign: 'center', flex: 1 }}>
+                <div style={{ color: '#aaa', fontSize: '11px', marginBottom: '5px' }}>남은 광고시청</div>
+                <div style={{ color: '#06b6d4', fontSize: '22px', fontWeight: 'bold' }}>📺 {state.adViewsLeft}회</div>
+              </div>
+            </div>
+
+            <button onClick={watchAdForTicket} style={{ width: '100%', background: 'linear-gradient(90deg, #06b6d4, #3b82f6)', color: '#fff', padding: '15px', borderRadius: '10px', fontSize: '16px', fontWeight: 'bold', border: 'none', marginBottom: '10px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(6,182,212,0.3)' }}>
+              📺 광고 보고 티켓 1개 받기
+            </button>
+
+            <button onClick={startRandomGame} style={{ width: '100%', background: 'linear-gradient(90deg, #10b981, #059669)', color: '#fff', padding: '15px', borderRadius: '10px', fontSize: '16px', fontWeight: 'bold', border: 'none', marginBottom: '25px', cursor: state.tickets > 0 ? 'pointer' : 'not-allowed', opacity: state.tickets > 0 ? 1 : 0.5, boxShadow: '0 4px 15px rgba(16,185,129,0.3)' }}>
+              🎰 티켓 1개 사용 (게임 랜덤 시작)
+            </button>
+
+            <h3 style={{ color: '#fbbf24', fontSize: '14px', marginBottom: '10px', textAlign: 'center' }}>📈 스펙별 미니게임 보상표</h3>
+            <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '8px', padding: '15px 10px', fontSize: '11px', color: '#ccc', display: 'flex', flexDirection: 'column', gap: '10px', border: '1px solid #444' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>🌱 인간계 (장비 210 미만)</span><span style={{fontWeight:'bold'}}>P: 100만 / G: 20만</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>⚔️ 영웅계 (장비 210 이상)</span><span style={{color:'#06b6d4', fontWeight:'bold'}}>P: 1,000만 / G: 200만</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>🐉 천상계 (펫 50강 이상)</span><span style={{color:'#a855f7', fontWeight:'bold'}}>P: 1억 / G: 2,000만</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>🏰 신계 (성 50강 이상)</span><span style={{color:'#fbbf24', fontWeight:'bold'}}>P: 10억 / G: 2억</span></div>
+            </div>
+
+            <button onClick={() => setActiveModal(null)} style={{ width: '100%', background: 'transparent', color: '#888', border: '1px solid #555', padding: '10px', borderRadius: '8px', marginTop: '20px', cursor: 'pointer' }}>로비로 돌아가기</button>
+          </div>
+        </div>
+      )}
+
+      {/* 🚀 개별 미니게임 모달 (블랙스미스) */}
+      {activeModal === 'blacksmith' && (
         <BlacksmithMinigame 
-          onClose={() => setActiveMinigame(null)} 
+          onClose={() => setActiveModal('center')} 
           onReward={handleMinigameReward} 
           totalGearLevel={totalGearLevel}
           petLevel={state.petLevel}
@@ -572,7 +624,7 @@ export default function App() {
             </span>
             <span style={{ fontSize: '12px', color: '#c5a059', marginLeft: '4px' }}>GOU</span>
           </div>
-          <button onClick={() => setActiveMinigame('blacksmith')} style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid #10b981', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🎟️ 게임장</button>
+          <button onClick={() => setActiveModal('center')} style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid #10b981', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🎟️ 게임장</button>
           
           <button onClick={() => setState(s => ({...s, isRankingOpen: true}))} style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🏆 RANK</button>
         </div>
@@ -599,7 +651,7 @@ export default function App() {
         </div>
 
         {/* 실시간 소각량 및 시즌 잭팟 보상금 UI */}
-        <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row' }}>
           <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0, border: '1px solid rgba(239, 68, 68, 0.5)', background: 'rgba(239, 68, 68, 0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '11px' }}>🔥 총 소각량 (Burned)</div>
