@@ -24,15 +24,9 @@ export default function App() {
     isAdActive: false, adTimeLeft: 0
   });
 
-  // 🚨 [렉 제로 및 점프 방지 엔진]
   const lockRef = useRef({}); 
-  const autoActiveRef = useRef({}); 
-  const autoTargetsRef = useRef({});
-  const latestUpgradeRef = useRef();
-  
   const [autoUI, setAutoUI] = useState({});
-  // 🚨 빌드 에러 원인 완치: 변수명 anims로 통일 완료!
-  const [anims, setAnims] = useState({}); 
+  const [lvlAnims, setLvlAnims] = useState({}); // 숫자 번쩍 애니메이션 전용
 
   const [gears, setGears] = useState([
     {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'sword.jpg', emoji: '⚡'},
@@ -46,10 +40,9 @@ export default function App() {
 
   const wallet = useTonWallet();
 
-  // 🚨 가벼운 숫자 튕김 애니메이션 함수
-  const triggerAnim = useCallback((id, type) => {
-    setAnims(prev => ({ ...prev, [id]: type }));
-    setTimeout(() => setAnims(prev => ({ ...prev, [id]: null })), 250);
+  const triggerLvlAnim = useCallback((id, type) => {
+    setLvlAnims(prev => ({ ...prev, [id]: type }));
+    setTimeout(() => setLvlAnims(prev => ({ ...prev, [id]: null })), 250);
   }, []);
 
   const totalGearLevel = gears.reduce((a, b) => a + b.lvl, 0); 
@@ -142,19 +135,17 @@ export default function App() {
     const estimatedGain = Math.floor(state.pendingGOU);
     if (estimatedGain < 10) return alert("최소 10 GOU 이상부터 수확 가능합니다.");
     setState(s => ({ ...s, balance: s.balance + estimatedGain, pendingGOU: 0, unclaimedTime: 0 }));
-    triggerAnim('claim', 'success');
     const functions = getFunctions(app);
     try { await httpsCallable(functions, 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * adMultiplier }); } 
     catch (error) {}
   };
 
-  // 🚀 [서버 응답 대기 및 UI 널뛰기 방지]
-  const handleUpgrade = async (type, id = null, isAuto = false) => {
+  // 🚀 수동 연타: 0.15초 쿨타임으로 중복 방지 + 낙관적 UI 초광속 반영
+  const handleUpgrade = async (type, id = null) => {
     const key = id || type;
     
-    // 🚨 물리 락: 서버 대답 오기 전엔 다중 터치 절대 무시
-    if (lockRef.current[key]) return 'LOCKED';
-
+    if (lockRef.current[key]) return; // 연타 방어
+    
     let cost = 0; let currentLvl = 0; let maxLimit = type === 'gear' ? 30 : 50;
 
     if (type === 'gear') {
@@ -165,93 +156,76 @@ export default function App() {
       cost = getCastleCost(state.castleLevel, gears[5].lvl); currentLvl = state.castleLevel;
     }
 
-    if (currentLvl >= maxLimit) return 'STOP';
-    if (state.balance < cost) {
-      if (!isAuto) alert("GOU 잔고가 부족합니다.");
-      return 'STOP';
-    }
+    if (currentLvl >= maxLimit) return;
+    if (state.balance < cost) return alert("GOU 잔고가 부족합니다.");
 
+    // 0.15초 동안만 잠그고 바로 풀어줌 -> 미친 듯한 연타 가능!
     lockRef.current[key] = true;
+    setTimeout(() => { lockRef.current[key] = false; }, 150);
+
+    // 낙관적 UI: 화면부터 즉각 올림 (모션 최소화)
+    const simSuccess = Math.random() < 0.8;
+    let nextLvlSim = simSuccess ? currentLvl + 1 : (currentLvl <= 5 || currentLvl === 10 || currentLvl === 20 ? currentLvl : currentLvl - 1);
+
     setState(s => ({ ...s, balance: s.balance - cost }));
+    if (type === 'gear') setGears(prev => prev.map(g => g.id === id ? { ...g, lvl: nextLvlSim } : g));
+    else if (type === 'pet') setState(s => ({ ...s, petLevel: nextLvlSim }));
+    else if (type === 'castle') setState(s => ({ ...s, castleLevel: nextLvlSim }));
+    
+    triggerLvlAnim(key, simSuccess ? 'up' : 'down');
 
+    // 서버로 파이어 앤 포겟 (비동기 처리)
     const functions = getFunctions(app);
-    try {
-      const result = await httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id });
-      const data = result.data;
-      
-      // 서버의 정확한 결과(+1 or -1)만 반영
-      if (data.newLevel !== undefined) {
-        if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: data.newLevel } : g));
-        else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
-        else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
-      }
-      
-      // 무거운 배경 번쩍임 대신 숫자만 살짝 튕기게 적용
-      if (data.success) triggerAnim(key, 'up');
-      else triggerAnim(key, 'down');
-
-      return data; 
-    } catch (error) { 
-        setState(s => ({ ...s, balance: s.balance + cost })); 
-        return 'ERROR';
-    } finally {
-        lockRef.current[key] = false;
-    }
+    httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id })
+      .then(result => {
+        const data = result.data;
+        // 오차가 발생하면 조용히 서버 데이터로 교정
+        if (data.newLevel !== undefined && data.newLevel !== nextLvlSim) {
+          if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: data.newLevel } : g));
+          else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
+          else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
+        }
+      }).catch(e => console.error(e));
   };
 
-  useEffect(() => { latestUpgradeRef.current = handleUpgrade; });
-
-  // 🚀 비동기 재귀 엔진: 7개 돌려도 렉 제로
-  const toggleAuto = async (type, id = null) => {
+  // 🚀 [혁명] 퀀텀 오토 엔진: 렉과 과부하의 근원인 화면 루프(setInterval)를 완벽히 소각!
+  // 오토 클릭 시 서버에 "X강까지 가줘!" 1번만 보내고, 0.1초 뒤 결과만 쓱 받아서 띄웁니다!
+  const triggerQuantumAuto = async (type, id = null) => {
     const key = id || type;
     const maxLvl = type === 'gear' ? 30 : 50;
 
-    if (autoActiveRef.current[key]) { 
-      autoActiveRef.current[key] = false;
-      setAutoUI(p => ({ ...p, [key]: false }));
-      return;
-    } 
-
     const currentLvl = type === 'gear' ? gears.find(g=>g.id===id).lvl : (type === 'pet' ? state.petLevel : state.castleLevel);
-    const targetStr = window.prompt(`목표 강화 레벨을 숫자로 입력하세요 (현재 ${currentLvl}강 / 최대 ${maxLvl}강):`, maxLvl);
+    const targetStr = window.prompt(`[퀀텀 오토 모드] 🚀\n단 1초 만에 목표 레벨까지 자동 연산합니다.\n목표 강화 레벨을 입력하세요 (현재 ${currentLvl}강 / 최대 ${maxLvl}강):`, maxLvl);
     if (!targetStr) return; 
     const target = parseInt(targetStr, 10);
     
     if (isNaN(target) || target <= currentLvl || target > maxLvl) {
-        alert(`현재 레벨보다 높은 ${maxLvl} 이하의 유효한 숫자를 입력해 주십시오.`);
-        return;
+        return alert(`현재 레벨보다 높은 ${maxLvl} 이하의 유효한 숫자를 입력해 주십시오.`);
     }
 
-    autoActiveRef.current[key] = true;
-    autoTargetsRef.current[key] = target;
-    setAutoUI(p => ({ ...p, [key]: true }));
-    
-    // 서버 대답을 받고 화면을 갱신한 뒤, 비로소 0.3초 쉬고 다시 쏘는 완벽한 구조 (렉 0%)
-    const runAutoLoop = async () => {
-      while (autoActiveRef.current[key]) {
-        const res = await latestUpgradeRef.current(type, id, true);
-        
-        if (res === 'STOP' || res === 'ERROR') {
-          autoActiveRef.current[key] = false;
-          setAutoUI(p => ({ ...p, [key]: false }));
-          break;
-        }
+    setAutoUI(p => ({ ...p, [key]: true })); // 로딩 UI 켜기
 
-        if (res && res.newLevel !== undefined) {
-          if (res.newLevel >= autoTargetsRef.current[key] || res.newLevel >= maxLvl) {
-            autoActiveRef.current[key] = false;
-            setAutoUI(p => ({ ...p, [key]: false }));
-            alert(`목표 레벨(${res.newLevel}강) 달성 완료!`);
-            break;
-          }
-        }
+    const functions = getFunctions(app);
+    try {
+      // 🚨 단 1번의 통신으로 목표 레벨까지 서버에서 광속 처리
+      const result = await httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id, targetLevel: target });
+      const data = result.data;
+      
+      if (data.newLevel !== undefined) {
+        if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: data.newLevel } : g));
+        else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
+        else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
         
-        // 🚨 렉 제로 핵심 쿨다운: 300ms 
-        await new Promise(r => setTimeout(r, 300)); 
+        setState(s => ({ ...s, balance: s.balance - (data.cost || 0) })); // 소모 비용 일괄 차감
+        triggerLvlAnim(key, 'up'); // 성공 이펙트 빵!
+        
+        alert(`퀀텀 오토 연산 완료! 🚀\n${data.loopCount}번의 시도 끝에 [${data.newLevel}강]을 달성했습니다!`);
       }
-    };
-
-    runAutoLoop();
+    } catch (error) { 
+        alert(`퀀텀 연산 실패: ${error.message}`);
+    } finally {
+        setAutoUI(p => ({ ...p, [key]: false })); // 로딩 UI 끄기
+    }
   };
 
   const startSpecialHunt = (type) => {
@@ -293,9 +267,9 @@ export default function App() {
 
   const getAbsoluteImgUrl = (filename) => `${process.env.PUBLIC_URL}/${filename}`;
   
-  // 🚨 이미지가 없을 때 글자가 써지던 버그 파괴! 조용히 에모지만 보여줌
+  // 🚨 에러 글자 삭제. 이미지가 깨지면 투명하게 숨기고 배경의 에모지를 보여줌
   const handleImageError = (e) => {
-    e.target.style.display = 'none';
+    e.target.style.opacity = '0';
     e.target.nextSibling.style.display = 'block';
   };
 
@@ -357,19 +331,14 @@ export default function App() {
       backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', 
       paddingTop: '85px' 
     }}>
-      {/* 🚨 패널 흔들림 삭제, 숫자에만 가벼운 스케일링 클래스(lvl-up, lvl-down) 적용 완료 */}
+      {/* 🚨 패널 흔들림 완전 삭제. 깔끔하게 텍스트 숫자만 튀어 오르는 이펙트 */}
       <style>{`
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         .fixed-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 850px; background: rgba(15, 20, 28, 0.98); border-bottom: 2px solid #fbbf24; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 5px 20px rgba(0,0,0,0.9); }
         
-        @keyframes flashSuccess { 0% { background: rgba(34, 197, 94, 0.3) !important; transition: background 0.15s ease-out; } 100% { background: transparent; } }
-        @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.3) !important; transition: background 0.15s ease-out; } 100% { background: transparent; } }
-        
         @keyframes lvlUp { 0% { transform: scale(1); color: #fbbf24; } 50% { transform: scale(1.6); color: #fff; } 100% { transform: scale(1); color: #fbbf24; } }
         @keyframes lvlDown { 0% { transform: scale(1); color: #fbbf24; } 50% { transform: scale(0.7); color: #ef4444; } 100% { transform: scale(1); color: #fbbf24; } }
         
-        .anim-success { animation: flashSuccess 0.2s ease-out; }
-        .anim-fail { animation: flashFail 0.2s ease-out; }
         .lvl-up { animation: lvlUp 0.25s ease-out; display: inline-block; }
         .lvl-down { animation: lvlDown 0.25s ease-out; display: inline-block; }
         
@@ -377,11 +346,11 @@ export default function App() {
         .action-btn:active { transform: scale(0.92); }
         .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         
-        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: background 0.15s; }
+        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
         
-        /* 🚀 100px 대형 이미지 세팅 보존 */
-        .img-box-gear { width: 100px; height: 100px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); }
-        .img-box-gear img { width: 90%; height: 90%; object-fit: contain; }
+        /* 🚀 100px 대형 이미지 세팅 완벽 보존 */
+        .img-box-gear { width: 100px; height: 100px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); position: relative; }
+        .img-box-gear img { width: 90%; height: 90%; object-fit: contain; transition: opacity 0.2s; }
         
         @media (max-width: 768px) {
           .grid-hunts { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
@@ -419,7 +388,7 @@ export default function App() {
             <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '5px', overflow: 'hidden', marginBottom: '15px' }}>
               <div style={{ width: `${timeProgress}%`, height: '100%', background: state.unclaimedTime >= 43200 ? '#ef4444' : '#06b6d4', transition: 'width 1s linear' }}></div>
             </div>
-            <button className={`action-btn ${anims['claim'] ? `anim-${anims['claim']}` : ''}`} onClick={claimGOU} style={{ width: '100%', background: 'linear-gradient(90deg, #fbbf24, #d97706)', color: '#000', padding: '16px 0', fontSize: '18px', fontWeight: '900', boxShadow: '0 4px 15px rgba(217,119,6,0.4)' }}>🚀 영지 수확하기</button>
+            <button className="action-btn" onClick={claimGOU} style={{ width: '100%', background: 'linear-gradient(90deg, #fbbf24, #d97706)', color: '#000', padding: '16px 0', fontSize: '18px', fontWeight: '900', boxShadow: '0 4px 15px rgba(217,119,6,0.4)' }}>🚀 영지 수확하기</button>
           </div>
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
             <button className="action-btn" onClick={() => alert('스마트 컨트랙트 입금 준비 중')} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid #10b981' }}>📥 입금하기</button>
@@ -497,18 +466,18 @@ export default function App() {
           {gears.map((g) => {
             const isMax = g.lvl >= 30;
             const timerKey = g.id;
-            const animClass = anims[timerKey] === 'up' ? 'lvl-up' : anims[timerKey] === 'down' ? 'lvl-down' : '';
+            const animClass = lvlAnims[timerKey] === 'up' ? 'lvl-up' : lvlAnims[timerKey] === 'down' ? 'lvl-down' : '';
             
             return (
               <div key={g.id} className="glass-panel" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 0, borderTop: '4px solid rgba(197,160,89,0.8)' }}>
                 <div className="img-box-gear">
                   <img src={getAbsoluteImgUrl(g.imgFile)} alt={g.name} onError={handleImageError} />
-                  <span style={{ display: 'none', fontSize: '40px' }}>{g.emoji}</span>
+                  <span style={{ display: 'none', fontSize: '40px', position: 'absolute' }}>{g.emoji}</span>
                 </div>
                 <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
                 
-                {/* 🚨 패널 흔들림 대신, 숫자 텍스트만 가볍게 튀어 오르는 시각적 이펙트 적용 */}
-                <div style={{ fontSize: '13px', fontWeight: '900', margin: '4px 0', color: '#fff', textAlign: 'center' }}>
+                {/* 🚨 패널 흔들림 대신, 숫자 텍스트만 가볍게 튀어 오르는 시각적 이펙트 */}
+                <div style={{ fontSize: '13px', fontWeight: '900', margin: '6px 0', color: '#fff', textAlign: 'center' }}>
                   {g.name} <br/>
                   <span className={animClass} style={{ color: '#fbbf24', display: 'inline-block' }}>+{g.lvl}</span>
                 </div>
@@ -517,9 +486,9 @@ export default function App() {
                   확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `80.0%`}</span><br/>
                   비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
                 </div>
-                <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '10px' }}>
+                <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '12px' }}>
                   <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax || autoUI[timerKey]} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
-                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
+                  <button onClick={() => triggerQuantumAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? '연산중' : 'AUTO'}</button>
                 </div>
               </div>
             );
@@ -537,12 +506,12 @@ export default function App() {
           const huntEndTime = isPet ? state.petHuntEndTime : state.castleHuntEndTime;
           const isHunting = huntEndTime > Date.now();
           const timerKey = type;
-          const animClass = anims[timerKey] === 'up' ? 'lvl-up' : anims[timerKey] === 'down' ? 'lvl-down' : '';
+          const animClass = lvlAnims[timerKey] === 'up' ? 'lvl-up' : lvlAnims[timerKey] === 'down' ? 'lvl-down' : '';
 
           return (
             <div key={type} className="glass-panel" style={{ position: 'relative', overflow: 'hidden', padding: '20px', marginTop: '15px', marginBottom: 0 }}>
               {!isUnlocked && (
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backdropFilter: 'blur(5px)', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
                   <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px', padding: '10px 20px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)' }}>
                     🔒 {isPet ? '장비 총합 210강 달성 시 개방' : '펫 50강 달성 시 개방'}
                   </div>
@@ -551,7 +520,7 @@ export default function App() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
                 <div className="img-box-gear" style={{ width: '110px', height: '110px', margin: '0' }}>
                   <img src={getAbsoluteImgUrl(img)} alt={name} onError={handleImageError} style={{ width: '100%', height: '100%' }} />
-                  <span style={{ display: 'none', fontSize: '40px' }}>{isPet ? '🐉' : '🏰'}</span>
+                  <span style={{ display: 'none', fontSize: '40px', position: 'absolute' }}>{isPet ? '🐉' : '🏰'}</span>
                 </div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ color: '#fbbf24', margin: 0, fontSize: '20px' }}>
@@ -563,7 +532,7 @@ export default function App() {
                   </div>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                     <button onClick={() => handleUpgrade(type)} disabled={!isUnlocked || isMax || autoUI[timerKey]} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
-                    <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
+                    <button onClick={() => triggerQuantumAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? '연산중' : 'AUTO'}</button>
                   </div>
                   
                   {isMax && (
