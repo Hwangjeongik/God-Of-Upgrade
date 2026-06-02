@@ -24,9 +24,12 @@ export default function App() {
     isAdActive: false, adTimeLeft: 0
   });
 
+  // 🚀 하이퍼 싱크(Hyper-Sync) 코어 엔진 변수
   const lockRef = useRef({}); 
+  const autoActiveRef = useRef({}); 
+  const levelsRef = useRef({}); // 렉 없는 실시간 섀도우 메모리
   const [autoUI, setAutoUI] = useState({});
-  const [lvlAnims, setLvlAnims] = useState({}); // 숫자 번쩍 애니메이션 전용
+  const [lvlAnims, setLvlAnims] = useState({}); 
 
   const [gears, setGears] = useState([
     {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'sword.jpg', emoji: '⚡'},
@@ -40,9 +43,18 @@ export default function App() {
 
   const wallet = useTonWallet();
 
+  // 🚨 섀도우 메모리 동기화 (최신 잔고와 레벨을 항시 추적)
+  useEffect(() => {
+    gears.forEach(g => levelsRef.current[g.id] = g.lvl);
+    levelsRef.current['pet'] = state.petLevel;
+    levelsRef.current['castle'] = state.castleLevel;
+    levelsRef.current['balance'] = state.balance;
+    levelsRef.current['necklace'] = gears.find(g => g.id === 'necklace')?.lvl || 0;
+  });
+
   const triggerLvlAnim = useCallback((id, type) => {
     setLvlAnims(prev => ({ ...prev, [id]: type }));
-    setTimeout(() => setLvlAnims(prev => ({ ...prev, [id]: null })), 250);
+    setTimeout(() => setLvlAnims(prev => ({ ...prev, [id]: null })), 200);
   }, []);
 
   const totalGearLevel = gears.reduce((a, b) => a + b.lvl, 0); 
@@ -80,18 +92,32 @@ export default function App() {
   const gearGainBonus = totalGearLevel * 2;
   const petGainBonus = isPetUnlocked ? state.petLevel * 3 : 0;
   const castleGainBonus = isCastleUnlocked ? state.castleLevel * 5 : 0;
-
   const petMilestone = getPetBonus(state.petLevel);
   const castleMilestone = getCastleBonus(state.castleLevel);
   const totalBonusPct = gearGainBonus + setBonus + petGainBonus + petMilestone + castleGainBonus + castleMilestone; 
-
   const isHalving = state.burned >= HALVING_BURN_THRESHOLD;
   const halvingMult = isHalving ? 0.5 : 1.0;
   const adMultiplier = state.isAdActive ? 2.0 : 1.0;
 
-  const getCost = useCallback((lvl, nLvl) => Math.floor(((lvl < 10 ? 1000 : lvl < 20 ? 10000 : 100000) + ((lvl % 10) * 100)) * (1 - (nLvl * 0.005)) * halvingMult), [halvingMult]);
-  const getPetCost = useCallback((lvl, nLvl) => Math.floor((lvl < 9 ? 100 + (lvl * 10) : lvl < 19 ? 1000 + ((lvl % 10) * 100) : lvl < 29 ? 10000 + ((lvl % 10) * 1000) : lvl < 39 ? 100000 + ((lvl % 10) * 10000) : 1000000 + ((lvl % 10) * 100000)) * (1 - (nLvl * 0.005)) * halvingMult), [halvingMult]);
-  const getCastleCost = useCallback((lvl, nLvl) => Math.floor((lvl < 9 ? 1000 + (lvl * 100) : lvl < 19 ? 10000 + ((lvl % 10) * 1000) : lvl < 29 ? 100000 + ((lvl % 10) * 10000) : lvl < 39 ? 1000000 + ((lvl % 10) * 100000) : 10000000 + ((lvl % 10) * 1000000)) * (1 - (nLvl * 0.005)) * halvingMult), [halvingMult]);
+  // 🚨 오토 루프에서 직접 사용할 수 있도록 독립적인 계산 로직 탑재
+  const calculateCost = (lvl, type, necklaceLvl) => {
+    const effectiveLvl = Math.max(1, lvl + 1);
+    const tier = Math.floor((effectiveLvl - 1) / 10);
+    const step = ((effectiveLvl - 1) % 10) + 1;
+    let baseMult = type === 'castle' ? 10 : 1;
+    let rawCost = step * Math.pow(10, tier) * 1000 * baseMult;
+    let cost = Math.floor(rawCost * (1 - (necklaceLvl * 0.005)));
+    
+    // 특수 장비 공식 (오토 비용 계산을 위해 분리)
+    if (type === 'pet') cost = Math.floor((lvl < 9 ? 100 + (lvl * 10) : lvl < 19 ? 1000 + ((lvl % 10) * 100) : lvl < 29 ? 10000 + ((lvl % 10) * 1000) : lvl < 39 ? 100000 + ((lvl % 10) * 10000) : 1000000 + ((lvl % 10) * 100000)) * (1 - (necklaceLvl * 0.005)) * halvingMult);
+    if (type === 'castle') cost = Math.floor((lvl < 9 ? 1000 + (lvl * 100) : lvl < 19 ? 10000 + ((lvl % 10) * 1000) : lvl < 29 ? 100000 + ((lvl % 10) * 10000) : lvl < 39 ? 1000000 + ((lvl % 10) * 100000) : 10000000 + ((lvl % 10) * 1000000)) * (1 - (necklaceLvl * 0.005)) * halvingMult);
+    if (type === 'gear') cost = Math.floor(((lvl < 10 ? 1000 : lvl < 20 ? 10000 : 100000) + ((lvl % 10) * 100)) * (1 - (necklaceLvl * 0.005)) * halvingMult);
+    return cost;
+  };
+
+  const getCost = useCallback((lvl, nLvl) => calculateCost(lvl, 'gear', nLvl), [halvingMult]);
+  const getPetCost = useCallback((lvl, nLvl) => calculateCost(lvl, 'pet', nLvl), [halvingMult]);
+  const getCastleCost = useCallback((lvl, nLvl) => calculateCost(lvl, 'castle', nLvl), [halvingMult]);
 
   const checkHunt = useCallback((now, stats) => {
     if (state.castleHuntEndTime > now) return { name: '🏰 제국의 심장 (특수)', mult: 50, isSpecial: true };
@@ -135,35 +161,29 @@ export default function App() {
     const estimatedGain = Math.floor(state.pendingGOU);
     if (estimatedGain < 10) return alert("최소 10 GOU 이상부터 수확 가능합니다.");
     setState(s => ({ ...s, balance: s.balance + estimatedGain, pendingGOU: 0, unclaimedTime: 0 }));
+    triggerAnim('claim', 'success');
     const functions = getFunctions(app);
     try { await httpsCallable(functions, 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * adMultiplier }); } 
     catch (error) {}
   };
 
-  // 🚀 수동 연타: 0.15초 쿨타임으로 중복 방지 + 낙관적 UI 초광속 반영
+  // 🚀 수동 연타 (광속 낙관적 UI - 서버 대기 안함)
   const handleUpgrade = async (type, id = null) => {
     const key = id || type;
     
-    if (lockRef.current[key]) return; // 연타 방어
-    
-    let cost = 0; let currentLvl = 0; let maxLimit = type === 'gear' ? 30 : 50;
+    // 연타 락 (0.15초 뒤 해제)
+    if (lockRef.current[key]) return; 
 
-    if (type === 'gear') {
-      const g = gears.find(x => x.id === id); cost = getCost(g.lvl, gears[5].lvl); currentLvl = g.lvl;
-    } else if (type === 'pet') {
-      cost = getPetCost(state.petLevel, gears[5].lvl); currentLvl = state.petLevel;
-    } else if (type === 'castle') {
-      cost = getCastleCost(state.castleLevel, gears[5].lvl); currentLvl = state.castleLevel;
-    }
+    let cost = calculateCost(levelsRef.current[key], type, levelsRef.current['necklace']);
+    let currentLvl = levelsRef.current[key];
+    let maxLimit = type === 'gear' ? 30 : 50;
 
     if (currentLvl >= maxLimit) return;
-    if (state.balance < cost) return alert("GOU 잔고가 부족합니다.");
+    if (levelsRef.current['balance'] < cost) return alert("GOU 잔고가 부족합니다.");
 
-    // 0.15초 동안만 잠그고 바로 풀어줌 -> 미친 듯한 연타 가능!
     lockRef.current[key] = true;
     setTimeout(() => { lockRef.current[key] = false; }, 150);
 
-    // 낙관적 UI: 화면부터 즉각 올림 (모션 최소화)
     const simSuccess = Math.random() < 0.8;
     let nextLvlSim = simSuccess ? currentLvl + 1 : (currentLvl <= 5 || currentLvl === 10 || currentLvl === 20 ? currentLvl : currentLvl - 1);
 
@@ -174,28 +194,32 @@ export default function App() {
     
     triggerLvlAnim(key, simSuccess ? 'up' : 'down');
 
-    // 서버로 파이어 앤 포겟 (비동기 처리)
+    // 서버로 백그라운드 전송
     const functions = getFunctions(app);
-    httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id })
-      .then(result => {
-        const data = result.data;
-        // 오차가 발생하면 조용히 서버 데이터로 교정
-        if (data.newLevel !== undefined && data.newLevel !== nextLvlSim) {
-          if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: data.newLevel } : g));
-          else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
-          else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
+    httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id }).then(res => {
+        if(res.data.newLevel !== undefined && res.data.newLevel !== nextLvlSim) {
+            // 오차 보정
+            if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: res.data.newLevel } : g));
+            else if (type === 'pet') setState(s => ({ ...s, petLevel: res.data.newLevel }));
+            else if (type === 'castle') setState(s => ({ ...s, castleLevel: res.data.newLevel }));
         }
-      }).catch(e => console.error(e));
+    }).catch(e => console.log(e));
   };
 
-  // 🚀 [혁명] 퀀텀 오토 엔진: 렉과 과부하의 근원인 화면 루프(setInterval)를 완벽히 소각!
-  // 오토 클릭 시 서버에 "X강까지 가줘!" 1번만 보내고, 0.1초 뒤 결과만 쓱 받아서 띄웁니다!
-  const triggerQuantumAuto = async (type, id = null) => {
+  // 🚀 [도파민 폭발] 클라이언트 시뮬레이터 오토 (서버 통신 제거, 렉 0%)
+  const toggleAuto = async (type, id = null) => {
     const key = id || type;
     const maxLvl = type === 'gear' ? 30 : 50;
 
-    const currentLvl = type === 'gear' ? gears.find(g=>g.id===id).lvl : (type === 'pet' ? state.petLevel : state.castleLevel);
-    const targetStr = window.prompt(`[퀀텀 오토 모드] 🚀\n단 1초 만에 목표 레벨까지 자동 연산합니다.\n목표 강화 레벨을 입력하세요 (현재 ${currentLvl}강 / 최대 ${maxLvl}강):`, maxLvl);
+    // 이미 실행 중이면 STOP 명령
+    if (autoActiveRef.current[key]) { 
+      autoActiveRef.current[key] = false; 
+      setAutoUI(p => ({ ...p, [key]: false }));
+      return;
+    } 
+
+    const currentLvl = levelsRef.current[key];
+    const targetStr = window.prompt(`목표 강화 레벨을 숫자로 입력하세요 (현재 ${currentLvl}강 / 최대 ${maxLvl}강):`, maxLvl);
     if (!targetStr) return; 
     const target = parseInt(targetStr, 10);
     
@@ -203,29 +227,66 @@ export default function App() {
         return alert(`현재 레벨보다 높은 ${maxLvl} 이하의 유효한 숫자를 입력해 주십시오.`);
     }
 
-    setAutoUI(p => ({ ...p, [key]: true })); // 로딩 UI 켜기
+    autoActiveRef.current[key] = true;
+    setAutoUI(p => ({ ...p, [key]: true }));
+    
+    let totalCostSpent = 0;
 
-    const functions = getFunctions(app);
-    try {
-      // 🚨 단 1번의 통신으로 목표 레벨까지 서버에서 광속 처리
-      const result = await httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id, targetLevel: target });
-      const data = result.data;
-      
-      if (data.newLevel !== undefined) {
-        if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: data.newLevel } : g));
-        else if (type === 'pet') setState(s => ({ ...s, petLevel: data.newLevel }));
-        else if (type === 'castle') setState(s => ({ ...s, castleLevel: data.newLevel }));
+    // 🚀 서버를 괴롭히지 않고 핸드폰 메모리에서 0.25초마다 화면만 갱신 (렉 절대 불가)
+    const runSimulator = async () => {
+      while (autoActiveRef.current[key]) {
+        let simLvl = levelsRef.current[key];
+        let simBalance = levelsRef.current['balance'];
         
-        setState(s => ({ ...s, balance: s.balance - (data.cost || 0) })); // 소모 비용 일괄 차감
-        triggerLvlAnim(key, 'up'); // 성공 이펙트 빵!
+        if (simLvl >= target || simLvl >= maxLvl) {
+          alert(`목표 레벨(${simLvl}강) 달성 완료!`);
+          break;
+        }
+
+        let cost = calculateCost(simLvl, type, levelsRef.current['necklace']);
+        if (simBalance < cost) {
+            alert(`잔고가 부족하여 ${simLvl}강에서 정지합니다.`);
+            break;
+        }
+
+        // 시뮬레이션 적용
+        simBalance -= cost;
+        totalCostSpent += cost;
         
-        alert(`퀀텀 오토 연산 완료! 🚀\n${data.loopCount}번의 시도 끝에 [${data.newLevel}강]을 달성했습니다!`);
+        const isSuccess = Math.random() < 0.8;
+        if (isSuccess) {
+            simLvl++;
+        } else {
+            if (simLvl <= 5 || simLvl === 10 || simLvl === 20) { /* 패널티 무시 */ }
+            else simLvl--;
+        }
+
+        // 화면 즉각 갱신
+        setState(s => ({ ...s, balance: simBalance }));
+        if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: simLvl } : g));
+        else if (type === 'pet') setState(s => ({ ...s, petLevel: simLvl }));
+        else if (type === 'castle') setState(s => ({ ...s, castleLevel: simLvl }));
+        
+        triggerLvlAnim(key, isSuccess ? 'up' : 'down');
+
+        // 🚨 타격감을 살리는 0.25초의 미친 속도 (서버 통신이 없어서 100% 부드러움)
+        await new Promise(r => setTimeout(r, 250)); 
       }
-    } catch (error) { 
-        alert(`퀀텀 연산 실패: ${error.message}`);
-    } finally {
-        setAutoUI(p => ({ ...p, [key]: false })); // 로딩 UI 끄기
-    }
+
+      // 루프가 끝나면(STOP, 목표달성, 돈부족) 서버로 영수증 딱 1번 발송
+      autoActiveRef.current[key] = false;
+      setAutoUI(p => ({ ...p, [key]: false }));
+
+      if (totalCostSpent > 0) {
+          const finalLevel = levelsRef.current[key];
+          const functions = getFunctions(app);
+          httpsCallable(functions, 'syncAutoUpgrade')({ 
+              userId: getUserId(), type, id, finalLevel, totalCost: totalCostSpent 
+          }).catch(e => console.log("동기화 지연:", e));
+      }
+    };
+
+    runSimulator();
   };
 
   const startSpecialHunt = (type) => {
@@ -267,7 +328,7 @@ export default function App() {
 
   const getAbsoluteImgUrl = (filename) => `${process.env.PUBLIC_URL}/${filename}`;
   
-  // 🚨 에러 글자 삭제. 이미지가 깨지면 투명하게 숨기고 배경의 에모지를 보여줌
+  // 🚨 글자 깨짐 방어. 이미지 에러 시 조용히 숨기고 배경의 에모지를 보여줌
   const handleImageError = (e) => {
     e.target.style.opacity = '0';
     e.target.nextSibling.style.display = 'block';
@@ -346,7 +407,7 @@ export default function App() {
         .action-btn:active { transform: scale(0.92); }
         .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         
-        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: background 0.15s; }
         
         /* 🚀 100px 대형 이미지 세팅 완벽 보존 */
         .img-box-gear { width: 100px; height: 100px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); position: relative; }
@@ -388,7 +449,7 @@ export default function App() {
             <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '5px', overflow: 'hidden', marginBottom: '15px' }}>
               <div style={{ width: `${timeProgress}%`, height: '100%', background: state.unclaimedTime >= 43200 ? '#ef4444' : '#06b6d4', transition: 'width 1s linear' }}></div>
             </div>
-            <button className="action-btn" onClick={claimGOU} style={{ width: '100%', background: 'linear-gradient(90deg, #fbbf24, #d97706)', color: '#000', padding: '16px 0', fontSize: '18px', fontWeight: '900', boxShadow: '0 4px 15px rgba(217,119,6,0.4)' }}>🚀 영지 수확하기</button>
+            <button className={`action-btn ${anims['claim'] ? `anim-${anims['claim']}` : ''}`} onClick={claimGOU} style={{ width: '100%', background: 'linear-gradient(90deg, #fbbf24, #d97706)', color: '#000', padding: '16px 0', fontSize: '18px', fontWeight: '900', boxShadow: '0 4px 15px rgba(217,119,6,0.4)' }}>🚀 영지 수확하기</button>
           </div>
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
             <button className="action-btn" onClick={() => alert('스마트 컨트랙트 입금 준비 중')} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid #10b981' }}>📥 입금하기</button>
@@ -427,7 +488,7 @@ export default function App() {
                   • 신수(펫): <span style={{color: '#fff'}}>+{petGainBonus + petMilestone}%</span> | 영지(성): <span style={{color: '#fff'}}>+{castleGainBonus + castleMilestone}%</span>
                 </div>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.6)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', minWidth: '130px' }}>
+              <div style={{ background: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', minWidth: '130px' }}>
                 {renderMilestoneUI()}
               </div>
             </div>
@@ -476,7 +537,7 @@ export default function App() {
                 </div>
                 <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
                 
-                {/* 🚨 패널 흔들림 대신, 숫자 텍스트만 가볍게 튀어 오르는 시각적 이펙트 */}
+                {/* 🚨 패널 흔들림 대신, 숫자 텍스트만 가볍게 튀어 오르는 시각적 이펙트 적용 */}
                 <div style={{ fontSize: '13px', fontWeight: '900', margin: '6px 0', color: '#fff', textAlign: 'center' }}>
                   {g.name} <br/>
                   <span className={animClass} style={{ color: '#fbbf24', display: 'inline-block' }}>+{g.lvl}</span>
@@ -488,7 +549,7 @@ export default function App() {
                 </div>
                 <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '12px' }}>
                   <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax || autoUI[timerKey]} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
-                  <button onClick={() => triggerQuantumAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? '연산중' : 'AUTO'}</button>
+                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
                 </div>
               </div>
             );
@@ -532,7 +593,7 @@ export default function App() {
                   </div>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                     <button onClick={() => handleUpgrade(type)} disabled={!isUnlocked || isMax || autoUI[timerKey]} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
-                    <button onClick={() => triggerQuantumAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? '연산중' : 'AUTO'}</button>
+                    <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
                   </div>
                   
                   {isMax && (
