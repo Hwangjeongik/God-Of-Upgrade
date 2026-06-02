@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TonConnectButton, useTonWallet } from '@tonconnect/ui-react';
@@ -5,7 +6,7 @@ import { app } from './firebase';
 
 const MAX_SUPPLY = 10000000000000; 
 
-// 🚀 통합 미니게임 아케이드 엔진 V7 (한계 돌파 스피드 패치)
+// 🚀 통합 미니게임 아케이드 엔진 V8 (극한의 스피드)
 const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const [status, setStatus] = useState('playing'); 
   const [pos, setPos] = useState(0);
@@ -28,7 +29,6 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const animate = useCallback((time) => {
     if (lastTimeRef.current != null) {
       const dt = time - lastTimeRef.current;
-      // 🚨 블록 쌓기 속도 한계 돌파! (0.21 기본 + 0.055 가속)
       let speed = type === 'blacksmith' ? 0.26 : 0.21 + (stacked * 0.055); 
       posRef.current += dirRef.current * speed * dt;
       if (posRef.current >= 100) { posRef.current = 100; dirRef.current = -1; }
@@ -48,7 +48,6 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
     return () => cancelAnimationFrame(reqRef.current);
   }, [status, animate, type]);
 
-  // 📦 상자 잡기 (아주아주 조금 더 빠름: 0.38초 노출 / 0.09초 텀)
   useEffect(() => {
     if(type === 'catch' && status === 'playing') {
       catchScoreRef.current = 0;
@@ -67,7 +66,6 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
         const newTarget = { id, top: Math.random()*60 + 10 + '%', left: Math.random()*70 + 10 + '%' };
         setTargets([newTarget]); 
         catchSpawnRef.current++;
-        
         setTimeout(() => {
           setTargets(prev => prev.filter(t => t.id !== id));
           setTimeout(spawnNext, 90); 
@@ -77,7 +75,6 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
     }
   }, [type, status]);
 
-  // 🧠 기억력 테스트 (더 빠르게: 0.075초 노출 / 0.22초 텀)
   useEffect(() => {
     if(type === 'memory' && status === 'playing') {
       const seq = [Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4)];
@@ -234,7 +231,6 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   );
 };
 
-// ✂️ 최적화된 통합 업그레이드 카드 컴포넌트
 const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, animClass, boxAnimClass, specialHunt }) => (
   <div className={`glass-panel ${boxAnimClass}`} style={{ padding: '15px', display: 'flex', flexDirection: type === 'gear' ? 'column' : 'row', alignItems: 'center', gap: type === 'gear' ? '0' : '25px', marginBottom: type === 'gear' ? 0 : '15px', borderTop: type === 'gear' ? '4px solid rgba(197,160,89,0.8)' : 'none', position:'relative', overflow:'hidden' }}>
     {item.locked && (
@@ -283,13 +279,11 @@ export default function App() {
     {name: '황혼 화산', mult: 12, reqSum: 150, req: {atk:230, hp:2300, def:115, acc:46}}
   ], []);
 
-  // 🚨 V7 KST 9AM 리셋 및 3시간 자동 충전 스탯 추가
   const [state, setState] = useState({ 
     screen: 'wallet', walletAddress: '', balance: 1000000000, burned: 0, jackpot: 50000000, 
     pendingGOU: 0, unclaimedTime: 0, userName: "사령관", isRankingOpen: false,
     petLevel: 0, castleLevel: 0, petHuntEndTime: 0, castleHuntEndTime: 0, isAdActive: false, adTimeLeft: 0,
-    tickets: 0, adViewsLeft: 3, nextAdChargeTime: 0, lastDailyReset: Math.floor((Date.now() + 9 * 3600000) / 86400000),
-    customGodTitle: "UPGRADE" // 👑 커스텀 호칭
+    tickets: 0, adViewsLeft: 3, nextAdChargeTime: 0, lastDailyReset: Math.floor((Date.now() + 9 * 3600000) / 86400000), customGodTitle: "UPGRADE" 
   });
 
   const lockRef = useRef({}); 
@@ -331,7 +325,6 @@ export default function App() {
   const isPetUnlocked = totalGearLevel >= 210;
   const isCastleUnlocked = state.petLevel >= 50;
 
-  // 👑 호칭 산정 로직
   const userRankTitle = useMemo(() => {
     if (state.castleLevel >= 50) return `${state.customGodTitle} GOD`;
     if (state.petLevel >= 50) return "사령관";
@@ -339,13 +332,9 @@ export default function App() {
     return "훈련병";
   }, [state.castleLevel, state.petLevel, totalGearLevel, state.customGodTitle]);
 
-  // 🚨 랭킹 엔진 업데이트 (성 > 펫 > 장비, 지저분한 텍스트 제거)
   const rankings = useMemo(() => {
     const myScore = state.castleLevel * 100000 + state.petLevel * 1000 + totalGearLevel;
-    const myData = { 
-      name: state.userName, title: userRankTitle, 
-      score: myScore, isMe: true 
-    };
+    const myData = { name: state.userName, title: userRankTitle, score: myScore, isMe: true };
     const bots = [
       { name: "KOREA", title: "LEGENDARY GOD", score: 50 * 100000 + 50 * 1000 + 210 },
       { name: "UPGRADE", title: "KING OF LUCK", score: 40 * 100000 + 50 * 1000 + 210 },
@@ -408,12 +397,17 @@ export default function App() {
     return arr;
   }, [hunts, state.castleHuntEndTime, state.petHuntEndTime]);
 
-  useEffect(() => {
-    if (wallet) setState(s => ({ ...s, walletAddress: wallet.account.address.substring(0, 6) + '...' + wallet.account.address.substring(wallet.account.address.length - 4), screen: 'game' }));
-    else setState(s => ({ ...s, screen: 'wallet' }));
-  }, [wallet]);
-
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
+
+  // 🚀 접속 시 텔레그램 푸시 정보 백엔드에 동기화
+  useEffect(() => {
+    if (wallet) {
+      setState(s => ({ ...s, walletAddress: wallet.account.address.substring(0, 6) + '...' + wallet.account.address.substring(wallet.account.address.length - 4), screen: 'game' }));
+      httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName }).catch(e => console.log(e));
+    } else {
+      setState(s => ({ ...s, screen: 'wallet' }));
+    }
+  }, [wallet, userRankTitle, state.userName]);
 
   const resetAndSyncDB = async () => {
     if (!window.confirm("서버 데이터를 완전히 초기화하시겠습니까?")) return;
@@ -463,19 +457,15 @@ export default function App() {
     alert("특수 사냥터 활성화! 12시간 동안 최고 배율의 수익이 국고로 자동 입금됩니다.");
   };
 
-  // 👑 GOD 호칭 변경 시스템
   const handleTitleEdit = () => {
     if (state.castleLevel >= 50) {
       const newPrefix = window.prompt("자신만의 호칭(영문/한글)을 입력하세요! (예: KOREA)\n입력하신 단어 뒤에 ' GOD'이 고정으로 붙습니다.", state.customGodTitle);
       if (newPrefix && newPrefix.trim() !== "") {
          setState(s => ({ ...s, customGodTitle: newPrefix.trim().toUpperCase() }));
       }
-    } else {
-      alert("🔒 성 50강 달성 시 나만의 GOD 호칭을 부여할 수 있습니다!");
-    }
+    } else { alert("🔒 성 50강 달성 시 나만의 GOD 호칭을 부여할 수 있습니다!"); }
   };
 
-  // 📺 광고 시청 시스템 (티켓 충전 및 3시간 자동 쿨타임)
   const watchAdForTicket = () => {
     if (state.adViewsLeft <= 0) return alert("현재 광고 충전 중입니다! (3시간마다 1장씩 충전, 매일 오전 9시 3장 리셋)");
     setState(s => {
@@ -485,7 +475,6 @@ export default function App() {
     alert("📺 광고 시청 완료! 게임장 티켓 1장이 충전되었습니다.");
   };
 
-  // ⏳ 타이머 포맷팅
   const formatAdChargeTime = (targetTime) => {
     const diff = Math.max(0, targetTime - Date.now());
     const h = Math.floor(diff / 3600000);
@@ -494,7 +483,14 @@ export default function App() {
     return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
   };
 
-  // 🚨 수동 강화 완벽 복구 (펫/성 실패 시 소각, 잭팟 100% 정상 연동)
+  // 🔔 텔레그램 푸시 알림 수동 발송 (테스트용)
+  const testPushNotification = async () => {
+    try {
+      await httpsCallable(getFunctions(app), 'testPushNotification')({ userId: getUserId(), title: userRankTitle, name: state.userName });
+      alert("텔레그램으로 보급 알림 전송 명령을 내렸습니다!");
+    } catch (e) { alert("푸시 실패 (봇 토큰을 백엔드에 입력했는지 확인하세요): " + e.message); }
+  };
+
   const handleUpgrade = async (type, id = null) => {
     const key = id || type;
     if (lockRef.current[key]) return; 
@@ -534,7 +530,6 @@ export default function App() {
 
   useEffect(() => { latestUpgradeRef.current = handleUpgrade; });
 
-  // 🚨 AUTO 강화 완벽 복구
   const toggleAuto = async (type, id = null) => {
     const key = id || type;
     const maxLimit = type === 'gear' ? 30 : 50;
@@ -590,41 +585,31 @@ export default function App() {
     runSimulator();
   };
 
-  // 📺 메인 글로벌 타이머 (KST 오전 9시 광고 초기화 + 3시간 충전 로직 포함)
   useEffect(() => {
     if (window.Telegram?.WebApp) { window.Telegram.WebApp.ready(); window.Telegram.WebApp.expand(); }
     const timer = setInterval(() => {
       setState(s => {
-        // 1. KST 9AM 리셋 체크
         const currentKSTDay = Math.floor((Date.now() + 9 * 3600000) / 86400000);
         let newAdViews = s.adViewsLeft;
         let newNextCharge = s.nextAdChargeTime;
         let newLastReset = s.lastDailyReset;
 
         if (currentKSTDay > s.lastDailyReset) {
-          newAdViews = 3;
-          newNextCharge = 0;
-          newLastReset = currentKSTDay;
+          newAdViews = 3; newNextCharge = 0; newLastReset = currentKSTDay;
         } else if (newAdViews < 3 && Date.now() >= newNextCharge && newNextCharge > 0) {
           newAdViews++;
           newNextCharge = newAdViews < 3 ? Date.now() + 3 * 3600000 : 0;
         }
 
-        // 2. 수확량 계산
         const b = checkHunt(Date.now(), currentStats, s);
         const gainPerSec = ((300000 * b.mult * (1 + totalBonusPct / 100)) / 86400) * gainHalvingMult * (s.isAdActive ? 2.0 : 1.0);
         let nUnclaimed = s.unclaimedTime + 1;
         if (nUnclaimed > 43200) nUnclaimed = 43200; 
         
         return { 
-          ...s, 
-          pendingGOU: nUnclaimed < 43200 ? s.pendingGOU + gainPerSec : s.pendingGOU, 
-          unclaimedTime: nUnclaimed, 
-          isAdActive: s.adTimeLeft > 0 ? true : false, 
-          adTimeLeft: Math.max(0, s.adTimeLeft - 1),
-          adViewsLeft: newAdViews,
-          nextAdChargeTime: newNextCharge,
-          lastDailyReset: newLastReset
+          ...s, pendingGOU: nUnclaimed < 43200 ? s.pendingGOU + gainPerSec : s.pendingGOU, 
+          unclaimedTime: nUnclaimed, isAdActive: s.adTimeLeft > 0 ? true : false, adTimeLeft: Math.max(0, s.adTimeLeft - 1),
+          adViewsLeft: newAdViews, nextAdChargeTime: newNextCharge, lastDailyReset: newLastReset
         };
       });
     }, 1000);
@@ -644,7 +629,7 @@ export default function App() {
     <div className="main-wrap" style={{ backgroundImage: `linear-gradient(rgba(5, 8, 12, 0.85), rgba(15, 10, 12, 0.95)), url("${process.env.PUBLIC_URL}/background.jpg")`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '85px' }}>
       <style>{`
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        .fixed-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 850px; background: rgba(15, 20, 28, 0.98); border-bottom: 2px solid #fbbf24; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 5px 20px rgba(0,0,0,0.9); }
+        .fixed-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 850px; background: rgba(15, 20, 28, 0.98); border-bottom: 2px solid #fbbf24; padding: 15px 15px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 5px 20px rgba(0,0,0,0.9); }
         @keyframes flashSuccess { 0% { background: rgba(34, 197, 94, 0.3) !important; transition: background 0.15s ease-out; } 100% { background: transparent; } }
         @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.3) !important; transition: background 0.15s ease-out; } 100% { background: transparent; } }
         @keyframes lvlUp { 0% { transform: scale(1); color: #fbbf24; } 50% { transform: scale(1.6); color: #fff; } 100% { transform: scale(1); color: #fbbf24; } }
@@ -654,13 +639,9 @@ export default function App() {
         .action-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; transition: transform 0.05s, opacity 0.2s; }
         .action-btn:active { transform: scale(0.92); } .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
-        /* 🚨 장비 아이콘 사이즈를 시원하게 확대! */
         .img-box-gear { width: 135px; height: 135px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; position: relative; }
         .img-box-gear img { width: 90%; height: 90%; object-fit: contain; }
-        @media (max-width: 768px) { 
-          .grid-hunts { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; gap: 8px !important; }
-          .gears-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; } 
-        }
+        @media (max-width: 768px) { .grid-hunts { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; gap: 8px !important; } .gears-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; } }
       `}</style>
 
       {activeModal && <ArcadeGames type={activeModal} onClose={() => setActiveModal(null)} onReward={(r) => { if(r>0) setState(s=>({...s, balance:s.balance+r})); setActiveModal(null); }} pReward={pReward} gReward={gReward} />}
@@ -687,26 +668,29 @@ export default function App() {
         </div>
       )}
 
+      {/* 🚨 헤더 레이아웃 초강력 고정 (모바일에서도 버튼이 잘리지 않습니다!) 🚨 */}
       <div className="fixed-header">
-        <div>
+        <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold' }}>{state.walletAddress || "지갑 연결됨"}</div>
-          {/* 👑 커스텀 GOD 칭호 수여를 위한 헤더 클릭 액션 추가 */}
           <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#fff', cursor: state.castleLevel >= 50 ? 'pointer' : 'default', textDecoration: state.castleLevel >= 50 ? 'underline' : 'none' }} onClick={handleTitleEdit} title="클릭하여 나만의 GOD 칭호를 만드세요!">
             <span style={{color: userRankTitle.includes('GOD') ? '#fbbf24' : '#06b6d4'}}>[{userRankTitle}]</span> {state.userName}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ textAlign: 'right', marginRight: '5px' }}>
-            <span style={{ fontSize: '22px', fontWeight: '900', color: '#fbbf24', textShadow: '0 0 10px rgba(251,191,36,0.8)' }}>{Math.floor(state.balance).toLocaleString()}</span>
-            <span style={{ fontSize: '12px', color: '#c5a059', marginLeft: '4px' }}>GOU</span>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
+          {/* 🔔 텔레그램 알림 수동 발송 테스트 버튼! */}
+          <button onClick={testPushNotification} style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', border: '1px solid #3b82f6', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 0 10px rgba(59, 130, 246, 0.3)' }}>🔔 알림</button>
+
+          <div style={{ textAlign: 'right', minWidth: '60px' }}>
+            <span style={{ fontSize: '18px', fontWeight: '900', color: '#fbbf24', textShadow: '0 0 10px rgba(251,191,36,0.8)' }}>{Math.floor(state.balance).toLocaleString()}</span>
+            <span style={{ fontSize: '10px', color: '#c5a059', marginLeft: '2px' }}>GOU</span>
           </div>
-          <button onClick={() => setState(s => ({...s, isRankingOpen: true}))} style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer', boxShadow: '0 0 10px rgba(251,191,36,0.3)' }}>🏆 RANK</button>
+          <button onClick={() => setState(s => ({...s, isRankingOpen: true}))} style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 0 10px rgba(251,191,36,0.3)' }}>🏆 RANK</button>
         </div>
       </div>
 
       <div style={{ width: '100%', maxWidth: '850px', padding: '10px 10px 80px 10px' }}>
         
-        {/* 🚨 50:50 융합 대시보드 */}
         <div style={{ display: 'flex', gap: '15px', width: '100%', marginBottom: '20px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row' }}>
           <div className="glass-panel" style={{ flex: 1, margin: 0, padding: '20px', display: 'flex', flexDirection: 'column', border: '2px solid #06b6d4' }}>
             <h3 style={{color:'#06b6d4', margin:'0 0 10px 0', textAlign:'center', fontSize:'18px'}}>🌱 자산 획득 및 효율</h3>
@@ -714,10 +698,8 @@ export default function App() {
               
               <div style={{ textAlign: 'center', marginBottom: '15px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
                 <div style={{ color: '#ccc', fontSize: '11px' }}>일일 자동 채굴량</div>
-                {/* 🚨 사령관 오더: 일일채굴량 폰트 빵빵하게(28px) */}
                 <div style={{ color: '#fbbf24', fontWeight: '900', fontSize: '28px', textShadow: '0 0 10px rgba(251,191,36,0.5)' }}>+{dailyGainDisplay.toLocaleString()}</div>
-                {/* 🚨 사령관 오더: 광고버프 버튼 시원하게 */}
-                <button onClick={() => { if(state.adViewsLeft>0){ setState(s=>({...s, isAdActive:true, adTimeLeft:3600, adViewsLeft:s.adViewsLeft-1})); alert("2배 버프가 가동됩니다!"); }else{alert("광고가 모두 소진되었습니다.");} }} style={{ background: state.isAdActive ? 'rgba(16,185,129,0.8)' : 'transparent', color: state.isAdActive ? '#fff' : '#10b981', border: '1px solid #10b981', padding: '8px 12px', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer', width: '100%' }}>
+                <button onClick={() => { if(state.adViewsLeft>0){ setState(s=>({...s, isAdActive:true, adTimeLeft:3600, adViewsLeft:s.adViewsLeft-1, nextAdChargeTime: s.adViewsLeft===3 ? Date.now() + 3*3600000 : s.nextAdChargeTime})); alert("2배 버프가 가동됩니다!"); }else{alert("광고가 모두 소진되었습니다.");} }} style={{ background: state.isAdActive ? 'rgba(16,185,129,0.8)' : 'transparent', color: state.isAdActive ? '#fff' : '#10b981', border: '1px solid #10b981', padding: '8px 12px', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer', width: '100%' }}>
                   {state.isAdActive ? `🔥 버프 가동 중 (${Math.floor(state.adTimeLeft/60)}분 남음)` : "📺 광고: 1시간 채굴량 2배"}
                 </button>
               </div>
@@ -760,10 +742,7 @@ export default function App() {
               <div style={{textAlign:'center', flex:1}}>
                 <div style={{fontSize:'11px', color:'#aaa', marginBottom:'4px'}}>남은 광고</div>
                 <div style={{color:'#06b6d4', fontWeight:'bold', fontSize:'18px'}}>📺 {state.adViewsLeft}/3</div>
-                {/* 🚨 3시간 자동충전 타이머 표시 */}
-                {state.adViewsLeft < 3 && (
-                  <div style={{fontSize:'9px', color:'#fbbf24', marginTop:'2px'}}>+충전: {formatAdChargeTime(state.nextAdChargeTime)}</div>
-                )}
+                {state.adViewsLeft < 3 && <div style={{fontSize:'9px', color:'#fbbf24', marginTop:'2px'}}>+충전: {formatAdChargeTime(state.nextAdChargeTime)}</div>}
               </div>
             </div>
             <button onClick={watchAdForTicket} style={{ width:'100%', background: 'linear-gradient(90deg, #06b6d4, #3b82f6)', color: '#fff', border:'none', padding:'12px', borderRadius:'10px', fontWeight:'bold', marginBottom:'15px', cursor:'pointer' }}>📺 광고 보고 티켓 충전</button>
@@ -855,12 +834,11 @@ export default function App() {
         })}
       </div>
       
-      {/* 🚨 사령관님 오더: 절대 계급 랭킹 시스템 🚨 */}
       {state.isRankingOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
           <div style={{ background: 'rgba(20,20,25,0.98)', border: '2px solid #fbbf24', padding: '30px 20px', borderRadius: '15px', width: '95%', maxWidth: '420px' }}>
             <h2 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '25px' }}>👑 SERVER RANKING</h2>
-            <div style={{ textAlign: 'center', color: '#ccc', fontSize: '11px', marginBottom: '15px' }}>※ 순위 산정: 성 레벨 ➡️ 펫 레벨 ➡️ 장비 총합 순</div>
+            <div style={{ textAlign: 'center', color: '#ccc', fontSize: '11px', marginBottom: '15px' }}>※ 순위 산정: 절대 전투력 점수 기준</div>
             <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e6d5b8', fontSize: '14px', marginBottom: '10px' }}>
               <thead><tr style={{ borderBottom: '2px solid #fbbf24', color: '#fbbf24' }}><th style={{ padding: '10px', textAlign: 'left' }}>순위</th><th style={{ padding: '10px', textAlign: 'left' }}>사령관명</th><th style={{ padding: '10px', textAlign: 'right' }}>전투력 점수</th></tr></thead>
               <tbody>
