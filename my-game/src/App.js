@@ -484,13 +484,24 @@ export default function App() {
   };
 
   // 🔔 텔레그램 푸시 알림 수동 발송 (테스트용)
+ // 🔔 텔레그램 푸시 알림 수동 발송 (유저 ID 인식 테스트 강화판)
   const testPushNotification = async () => {
-    try {
-      await httpsCallable(getFunctions(app), 'testPushNotification')({ userId: getUserId(), title: userRankTitle, name: state.userName });
-      alert("텔레그램으로 보급 알림 전송 명령을 내렸습니다!");
-    } catch (e) { alert("푸시 실패 (봇 토큰을 백엔드에 입력했는지 확인하세요): " + e.message); }
-  };
+    const uid = getUserId();
+    
+    // 🚨 텔레그램 ID를 제대로 가져왔는지 화면에 띄워서 확인!
+    alert(`현재 인식된 텔레그램 ID: ${uid}`);
+    
+    if (uid === "test_commander_123") {
+      return alert("🚨 에러: 텔레그램 ID를 인식하지 못했습니다! 1. 텔레그램 앱에서 실행했는지 2. index.html에 스크립트를 넣었는지 확인하세요.");
+    }
 
+    try {
+      await httpsCallable(getFunctions(app), 'testPushNotification')({ userId: uid, title: userRankTitle, name: state.userName });
+      alert("✅ 백엔드로 실제 알림 전송 명령을 꽂아 넣었습니다! 텔레그램을 확인하세요!");
+    } catch (e) { 
+      alert("❌ 푸시 실패: " + e.message); 
+    }
+  };
   const handleUpgrade = async (type, id = null) => {
     const key = id || type;
     if (lockRef.current[key]) return; 
