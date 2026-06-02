@@ -24,12 +24,19 @@ export default function App() {
     isAdActive: false, adTimeLeft: 0
   });
 
-  // 🚀 하이퍼 싱크(Hyper-Sync) 코어 엔진 변수
   const lockRef = useRef({}); 
   const autoActiveRef = useRef({}); 
-  const levelsRef = useRef({}); // 렉 없는 실시간 섀도우 메모리
+  const levelsRef = useRef({}); 
   const [autoUI, setAutoUI] = useState({});
   const [lvlAnims, setLvlAnims] = useState({}); 
+  
+  // 🚨 [에러 완치] 빌드 실패 원인이었던 anims 변수와 triggerAnim 함수 완벽 복구
+  const [anims, setAnims] = useState({});
+
+  const triggerAnim = useCallback((id, type) => {
+    setAnims(prev => ({ ...prev, [id]: type }));
+    setTimeout(() => setAnims(prev => ({ ...prev, [id]: null })), 250);
+  }, []);
 
   const [gears, setGears] = useState([
     {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'sword.jpg', emoji: '⚡'},
@@ -43,7 +50,6 @@ export default function App() {
 
   const wallet = useTonWallet();
 
-  // 🚨 섀도우 메모리 동기화 (최신 잔고와 레벨을 항시 추적)
   useEffect(() => {
     gears.forEach(g => levelsRef.current[g.id] = g.lvl);
     levelsRef.current['pet'] = state.petLevel;
@@ -99,7 +105,6 @@ export default function App() {
   const halvingMult = isHalving ? 0.5 : 1.0;
   const adMultiplier = state.isAdActive ? 2.0 : 1.0;
 
-  // 🚨 오토 루프에서 직접 사용할 수 있도록 독립적인 계산 로직 탑재
   const calculateCost = (lvl, type, necklaceLvl) => {
     const effectiveLvl = Math.max(1, lvl + 1);
     const tier = Math.floor((effectiveLvl - 1) / 10);
@@ -108,7 +113,6 @@ export default function App() {
     let rawCost = step * Math.pow(10, tier) * 1000 * baseMult;
     let cost = Math.floor(rawCost * (1 - (necklaceLvl * 0.005)));
     
-    // 특수 장비 공식 (오토 비용 계산을 위해 분리)
     if (type === 'pet') cost = Math.floor((lvl < 9 ? 100 + (lvl * 10) : lvl < 19 ? 1000 + ((lvl % 10) * 100) : lvl < 29 ? 10000 + ((lvl % 10) * 1000) : lvl < 39 ? 100000 + ((lvl % 10) * 10000) : 1000000 + ((lvl % 10) * 100000)) * (1 - (necklaceLvl * 0.005)) * halvingMult);
     if (type === 'castle') cost = Math.floor((lvl < 9 ? 1000 + (lvl * 100) : lvl < 19 ? 10000 + ((lvl % 10) * 1000) : lvl < 29 ? 100000 + ((lvl % 10) * 10000) : lvl < 39 ? 1000000 + ((lvl % 10) * 100000) : 10000000 + ((lvl % 10) * 1000000)) * (1 - (necklaceLvl * 0.005)) * halvingMult);
     if (type === 'gear') cost = Math.floor(((lvl < 10 ? 1000 : lvl < 20 ? 10000 : 100000) + ((lvl % 10) * 100)) * (1 - (necklaceLvl * 0.005)) * halvingMult);
@@ -167,11 +171,8 @@ export default function App() {
     catch (error) {}
   };
 
-  // 🚀 수동 연타 (광속 낙관적 UI - 서버 대기 안함)
   const handleUpgrade = async (type, id = null) => {
     const key = id || type;
-    
-    // 연타 락 (0.15초 뒤 해제)
     if (lockRef.current[key]) return; 
 
     let cost = calculateCost(levelsRef.current[key], type, levelsRef.current['necklace']);
@@ -193,12 +194,11 @@ export default function App() {
     else if (type === 'castle') setState(s => ({ ...s, castleLevel: nextLvlSim }));
     
     triggerLvlAnim(key, simSuccess ? 'up' : 'down');
+    triggerAnim(key, simSuccess ? 'success' : 'fail'); // 버튼 모션 복구
 
-    // 서버로 백그라운드 전송
     const functions = getFunctions(app);
     httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id }).then(res => {
         if(res.data.newLevel !== undefined && res.data.newLevel !== nextLvlSim) {
-            // 오차 보정
             if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: res.data.newLevel } : g));
             else if (type === 'pet') setState(s => ({ ...s, petLevel: res.data.newLevel }));
             else if (type === 'castle') setState(s => ({ ...s, castleLevel: res.data.newLevel }));
@@ -206,12 +206,10 @@ export default function App() {
     }).catch(e => console.log(e));
   };
 
-  // 🚀 [도파민 폭발] 클라이언트 시뮬레이터 오토 (서버 통신 제거, 렉 0%)
   const toggleAuto = async (type, id = null) => {
     const key = id || type;
     const maxLvl = type === 'gear' ? 30 : 50;
 
-    // 이미 실행 중이면 STOP 명령
     if (autoActiveRef.current[key]) { 
       autoActiveRef.current[key] = false; 
       setAutoUI(p => ({ ...p, [key]: false }));
@@ -232,7 +230,6 @@ export default function App() {
     
     let totalCostSpent = 0;
 
-    // 🚀 서버를 괴롭히지 않고 핸드폰 메모리에서 0.25초마다 화면만 갱신 (렉 절대 불가)
     const runSimulator = async () => {
       while (autoActiveRef.current[key]) {
         let simLvl = levelsRef.current[key];
@@ -249,7 +246,6 @@ export default function App() {
             break;
         }
 
-        // 시뮬레이션 적용
         simBalance -= cost;
         totalCostSpent += cost;
         
@@ -261,19 +257,17 @@ export default function App() {
             else simLvl--;
         }
 
-        // 화면 즉각 갱신
         setState(s => ({ ...s, balance: simBalance }));
         if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: simLvl } : g));
         else if (type === 'pet') setState(s => ({ ...s, petLevel: simLvl }));
         else if (type === 'castle') setState(s => ({ ...s, castleLevel: simLvl }));
         
         triggerLvlAnim(key, isSuccess ? 'up' : 'down');
+        triggerAnim(key, isSuccess ? 'success' : 'fail'); // 버튼 모션 복구
 
-        // 🚨 타격감을 살리는 0.25초의 미친 속도 (서버 통신이 없어서 100% 부드러움)
         await new Promise(r => setTimeout(r, 250)); 
       }
 
-      // 루프가 끝나면(STOP, 목표달성, 돈부족) 서버로 영수증 딱 1번 발송
       autoActiveRef.current[key] = false;
       setAutoUI(p => ({ ...p, [key]: false }));
 
@@ -328,7 +322,6 @@ export default function App() {
 
   const getAbsoluteImgUrl = (filename) => `${process.env.PUBLIC_URL}/${filename}`;
   
-  // 🚨 글자 깨짐 방어. 이미지 에러 시 조용히 숨기고 배경의 에모지를 보여줌
   const handleImageError = (e) => {
     e.target.style.opacity = '0';
     e.target.nextSibling.style.display = 'block';
@@ -392,14 +385,18 @@ export default function App() {
       backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', color: '#e6d5b8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', 
       paddingTop: '85px' 
     }}>
-      {/* 🚨 패널 흔들림 완전 삭제. 깔끔하게 텍스트 숫자만 튀어 오르는 이펙트 */}
       <style>{`
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
         .fixed-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 850px; background: rgba(15, 20, 28, 0.98); border-bottom: 2px solid #fbbf24; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 5px 20px rgba(0,0,0,0.9); }
         
+        @keyframes flashSuccess { 0% { background: rgba(34, 197, 94, 0.3) !important; transition: background 0.15s ease-out; } 100% { background: transparent; } }
+        @keyframes flashFail { 0% { background: rgba(239, 68, 68, 0.3) !important; transition: background 0.15s ease-out; } 100% { background: transparent; } }
+        
         @keyframes lvlUp { 0% { transform: scale(1); color: #fbbf24; } 50% { transform: scale(1.6); color: #fff; } 100% { transform: scale(1); color: #fbbf24; } }
         @keyframes lvlDown { 0% { transform: scale(1); color: #fbbf24; } 50% { transform: scale(0.7); color: #ef4444; } 100% { transform: scale(1); color: #fbbf24; } }
         
+        .anim-success { animation: flashSuccess 0.2s ease-out; }
+        .anim-fail { animation: flashFail 0.2s ease-out; }
         .lvl-up { animation: lvlUp 0.25s ease-out; display: inline-block; }
         .lvl-down { animation: lvlDown 0.25s ease-out; display: inline-block; }
         
@@ -407,9 +404,8 @@ export default function App() {
         .action-btn:active { transform: scale(0.92); }
         .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         
-        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: background 0.15s; }
+        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
         
-        /* 🚀 100px 대형 이미지 세팅 완벽 보존 */
         .img-box-gear { width: 100px; height: 100px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); position: relative; }
         .img-box-gear img { width: 90%; height: 90%; object-fit: contain; transition: opacity 0.2s; }
         
@@ -488,7 +484,7 @@ export default function App() {
                   • 신수(펫): <span style={{color: '#fff'}}>+{petGainBonus + petMilestone}%</span> | 영지(성): <span style={{color: '#fff'}}>+{castleGainBonus + castleMilestone}%</span>
                 </div>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', minWidth: '130px' }}>
+              <div style={{ background: 'rgba(0,0,0,0.6)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', minWidth: '130px' }}>
                 {renderMilestoneUI()}
               </div>
             </div>
@@ -528,16 +524,16 @@ export default function App() {
             const isMax = g.lvl >= 30;
             const timerKey = g.id;
             const animClass = lvlAnims[timerKey] === 'up' ? 'lvl-up' : lvlAnims[timerKey] === 'down' ? 'lvl-down' : '';
+            const boxAnimClass = anims[timerKey] === 'success' ? 'anim-success' : anims[timerKey] === 'fail' ? 'anim-fail' : '';
             
             return (
-              <div key={g.id} className="glass-panel" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 0, borderTop: '4px solid rgba(197,160,89,0.8)' }}>
+              <div key={g.id} className={`glass-panel ${boxAnimClass}`} style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 0, borderTop: '4px solid rgba(197,160,89,0.8)' }}>
                 <div className="img-box-gear">
                   <img src={getAbsoluteImgUrl(g.imgFile)} alt={g.name} onError={handleImageError} />
                   <span style={{ display: 'none', fontSize: '40px', position: 'absolute' }}>{g.emoji}</span>
                 </div>
                 <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{g.stat}: {(g.lvl * g.base).toFixed(1)}{g.unit}]</div>
                 
-                {/* 🚨 패널 흔들림 대신, 숫자 텍스트만 가볍게 튀어 오르는 시각적 이펙트 적용 */}
                 <div style={{ fontSize: '13px', fontWeight: '900', margin: '6px 0', color: '#fff', textAlign: 'center' }}>
                   {g.name} <br/>
                   <span className={animClass} style={{ color: '#fbbf24', display: 'inline-block' }}>+{g.lvl}</span>
@@ -568,9 +564,10 @@ export default function App() {
           const isHunting = huntEndTime > Date.now();
           const timerKey = type;
           const animClass = lvlAnims[timerKey] === 'up' ? 'lvl-up' : lvlAnims[timerKey] === 'down' ? 'lvl-down' : '';
+          const boxAnimClass = anims[timerKey] === 'success' ? 'anim-success' : anims[timerKey] === 'fail' ? 'anim-fail' : '';
 
           return (
-            <div key={type} className="glass-panel" style={{ position: 'relative', overflow: 'hidden', padding: '20px', marginTop: '15px', marginBottom: 0 }}>
+            <div key={type} className={`glass-panel ${boxAnimClass}`} style={{ position: 'relative', overflow: 'hidden', padding: '20px', marginTop: '15px', marginBottom: 0 }}>
               {!isUnlocked && (
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
                   <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px', padding: '10px 20px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)' }}>
