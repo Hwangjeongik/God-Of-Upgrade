@@ -5,7 +5,7 @@ import { app } from './firebase';
 
 const MAX_SUPPLY = 10000000000000; 
 
-// 🚀 통합 미니게임 아케이드 엔진 V5 (극강의 피지컬 패치)
+// 🚀 통합 미니게임 아케이드 엔진 V6 (한계 돌파 스피드)
 const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const [status, setStatus] = useState('playing'); 
   const [pos, setPos] = useState(0);
@@ -28,8 +28,8 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const animate = useCallback((time) => {
     if (lastTimeRef.current != null) {
       const dt = time - lastTimeRef.current;
-      // 🚨 블록 쌓기 속도 더욱 상향!
-      let speed = type === 'blacksmith' ? 0.26 : 0.19 + (stacked * 0.045); 
+      // 🚨 블록 쌓기 속도 더욱 상향! (0.20 기본 + 0.05 가속)
+      let speed = type === 'blacksmith' ? 0.26 : 0.20 + (stacked * 0.05); 
       posRef.current += dirRef.current * speed * dt;
       if (posRef.current >= 100) { posRef.current = 100; dirRef.current = -1; }
       if (posRef.current <= 0) { posRef.current = 0; dirRef.current = 1; }
@@ -48,7 +48,7 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
     return () => cancelAnimationFrame(reqRef.current);
   }, [status, animate, type]);
 
-  // 📦 상자 잡기 (아주 조금 더 빠름: 0.45초 노출 / 0.12초 텀)
+  // 📦 상자 잡기 (아주 아주 조금 더 빠름: 0.4초 노출 / 0.1초 텀)
   useEffect(() => {
     if(type === 'catch' && status === 'playing') {
       catchScoreRef.current = 0;
@@ -70,14 +70,14 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
         
         setTimeout(() => {
           setTargets(prev => prev.filter(t => t.id !== id));
-          setTimeout(spawnNext, 120); 
-        }, 450); 
+          setTimeout(spawnNext, 100); 
+        }, 400); 
       };
       setTimeout(spawnNext, 300); 
     }
   }, [type, status]);
 
-  // 🧠 기억력 테스트 (더 빠르게: 0.09초 노출 / 0.28초 텀)
+  // 🧠 기억력 테스트 (더 빠르게: 0.08초 노출 / 0.24초 텀)
   useEffect(() => {
     if(type === 'memory' && status === 'playing') {
       const seq = [Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4)];
@@ -87,12 +87,12 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
       const interval = setInterval(() => {
         if(i < seq.length) {
           setFlashIdx(seq[i]);
-          setTimeout(() => setFlashIdx(-1), 90); 
+          setTimeout(() => setFlashIdx(-1), 80); 
           i++;
         } else {
           clearInterval(interval);
         }
-      }, 280); 
+      }, 240); 
       return () => clearInterval(interval);
     }
   }, [type, status]);
@@ -242,8 +242,8 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
         <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px', padding: '10px 20px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)' }}>🔒 {item.lockMsg}</div>
       </div>
     )}
-    {/* 🚨 장비 아이콘 크기 확장 120px 적용 완료 */}
-    <div className="img-box-gear" style={type !== 'gear' ? { width: '130px', height: '130px', margin: '0' } : {}}>
+    {/* 🚨 장비(135px), 펫/성(150px) 이미지 시원하게 확대! */}
+    <div className="img-box-gear" style={type !== 'gear' ? { width: '150px', height: '150px', margin: '0' } : {}}>
       <img src={`${process.env.PUBLIC_URL}/${item.imgFile}`} alt={item.name} onError={(e)=>{e.target.style.opacity='0'; e.target.nextSibling.style.display='block';}} />
       <span style={{ display: 'none', fontSize: '40px', position: 'absolute' }}>{item.emoji}</span>
     </div>
@@ -330,12 +330,21 @@ export default function App() {
   const isPetUnlocked = totalGearLevel >= 210;
   const isCastleUnlocked = state.petLevel >= 50;
 
-  const mockRankings = useMemo(() => [
-    { rank: 1, name: "KOREA", title: "LEGENDARY GOD", power: "999,999" },
-    { rank: 2, name: "UPGRADE", title: "KING OF LUCK", power: "850,200" },
-    { rank: 3, name: "CHAMPION", title: "IRON KNIGHT", power: "720,500" },
-    { rank: 4, name: state.userName, title: state.userTitle, power: totalGearLevel, isMe: true }
-  ], [state.userName, state.userTitle, totalGearLevel]);
+  // 🚨 랭킹 엔진 업데이트 (성 > 펫 > 장비 계급순 정렬 완벽 적용)
+  const rankings = useMemo(() => {
+    const myScore = state.castleLevel * 10000 + state.petLevel * 100 + totalGearLevel;
+    const myData = { 
+      name: state.userName, title: state.userTitle, 
+      power: `성${state.castleLevel} / 펫${state.petLevel} / 장비${totalGearLevel}`, 
+      score: myScore, isMe: true 
+    };
+    const bots = [
+      { name: "KOREA", title: "LEGENDARY GOD", score: 50 * 10000 + 50 * 100 + 210, power: "성50 / 펫50 / 장비210" },
+      { name: "UPGRADE", title: "KING OF LUCK", score: 40 * 10000 + 50 * 100 + 210, power: "성40 / 펫50 / 장비210" },
+      { name: "CHAMPION", title: "IRON KNIGHT", score: 30 * 10000 + 20 * 100 + 150, power: "성30 / 펫20 / 장비150" },
+    ];
+    return [...bots, myData].sort((a, b) => b.score - a.score).map((r, i) => ({ ...r, rank: i + 1 }));
+  }, [state.userName, state.userTitle, state.castleLevel, state.petLevel, totalGearLevel]);
 
   const currentStats = useMemo(() => ({
     atk: gears[0].lvl * gears[0].base, hp: gears[1].lvl * gears[1].base, def: gears[2].lvl * gears[2].base, acc: gears[3].lvl * gears[3].base, sum: totalGearLevel
@@ -448,7 +457,7 @@ export default function App() {
     alert("특수 사냥터 활성화! 12시간 동안 최고 배율의 수익이 국고로 자동 입금됩니다.");
   };
 
-  // 🚨 수동 강화 (실패 시 소각량 & 잭팟 완벽 동기화 패치)
+  // 🚨 수동 강화 완벽 복구 (펫/성 실패 시 소각, 잭팟 100% 정상 연동)
   const handleUpgrade = async (type, id = null) => {
     const key = id || type;
     if (lockRef.current[key]) return; 
@@ -463,21 +472,22 @@ export default function App() {
     const isSuccess = Math.random() < 0.8;
     let nextLvl = isSuccess ? currentLvl + 1 : (currentLvl <= 5 || currentLvl === 10 || currentLvl === 20 ? currentLvl : currentLvl - 1);
 
+    // 🚨 여기서 모든 State를 원자적(Atomic)으로 묶어서 업데이트합니다!
     setState(s => {
-      // 🚨 실패 수수료 적립 완벽 계산!
       const feeRate = s.burned >= MAX_SUPPLY * 0.6 ? 0.23 : (s.burned >= MAX_SUPPLY * 0.3 ? 0.18 : 0.15);
       const fee = isSuccess ? 0 : cost * feeRate;
-      return { 
+      const newState = { 
         ...s, 
         balance: s.balance - cost, 
         burned: s.burned + fee, 
         jackpot: s.jackpot + fee 
       };
+      if (type === 'pet') newState.petLevel = nextLvl;
+      if (type === 'castle') newState.castleLevel = nextLvl;
+      return newState;
     });
 
     if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextLvl } : g));
-    else if (type === 'pet') setState(s => ({ ...s, petLevel: nextLvl }));
-    else if (type === 'castle') setState(s => ({ ...s, castleLevel: nextLvl }));
     
     triggerLvlAnim(key, isSuccess ? 'up' : 'down');
     triggerAnim(key, isSuccess ? 'success' : 'fail');
@@ -493,7 +503,7 @@ export default function App() {
 
   useEffect(() => { latestUpgradeRef.current = handleUpgrade; });
 
-  // 🚨 자동 강화 (실패 시 소각량 & 잭팟 완벽 동기화 패치)
+  // 🚨 AUTO 강화 완벽 복구 (펫/성 실패 시 소각, 잭팟 100% 정상 연동)
   const toggleAuto = async (type, id = null) => {
     const key = id || type;
     const maxLimit = type === 'gear' ? 30 : 50;
@@ -520,18 +530,20 @@ export default function App() {
 
         const isSuccess = Math.random() < 0.8;
         
-        // 🚨 실패 수수료 적립을 state에 직접 안전하게 계산해서 쏴줍니다
+        let nextSimLvl = simLvl;
+        if (isSuccess) { nextSimLvl++; successCost += cost; } 
+        else { failCost += cost; if (simLvl > 5 && simLvl !== 10 && simLvl !== 20) nextSimLvl--; }
+
         setState(s => {
           const feeRate = s.burned >= MAX_SUPPLY * 0.6 ? 0.23 : (s.burned >= MAX_SUPPLY * 0.3 ? 0.18 : 0.15);
           const fee = isSuccess ? 0 : cost * feeRate;
-          return { ...s, balance: s.balance - cost, burned: s.burned + fee, jackpot: s.jackpot + fee };
+          const newState = { ...s, balance: s.balance - cost, burned: s.burned + fee, jackpot: s.jackpot + fee };
+          if (type === 'pet') newState.petLevel = nextSimLvl;
+          if (type === 'castle') newState.castleLevel = nextSimLvl;
+          return newState;
         });
 
-        if (isSuccess) { simLvl++; successCost += cost; } else { failCost += cost; if (simLvl > 5 && simLvl !== 10 && simLvl !== 20) simLvl--; }
-
-        if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: simLvl } : g));
-        else if (type === 'pet') setState(s => ({ ...s, petLevel: simLvl }));
-        else if (type === 'castle') setState(s => ({ ...s, castleLevel: simLvl }));
+        if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextSimLvl } : g));
         
         triggerLvlAnim(key, isSuccess ? 'up' : 'down');
         triggerAnim(key, isSuccess ? 'success' : 'fail'); 
@@ -585,8 +597,8 @@ export default function App() {
         .action-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; transition: transform 0.05s, opacity 0.2s; }
         .action-btn:active { transform: scale(0.92); } .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
-        /* 🚨 장비 아이콘 사이즈를 기존 100px에서 120px로 시원하게 확대! */
-        .img-box-gear { width: 120px; height: 120px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; position: relative; }
+        /* 🚨 장비 아이콘 사이즈를 기존 120px에서 135px로 시원하게 확대! */
+        .img-box-gear { width: 135px; height: 135px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; position: relative; }
         .img-box-gear img { width: 90%; height: 90%; object-fit: contain; }
         /* 🚨 사냥터 특수 슬롯 UI를 위해 그리드 반응형 최적화 */
         @media (max-width: 768px) { 
@@ -604,8 +616,8 @@ export default function App() {
             <div style={{ color: '#e6d5b8', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
               <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>🔨 대장장이 망치질</h4><p style={{ margin: '0 0 10px 0' }}><span style={{color:'#10b981'}}>PERFECT: 정중앙</span> | <span style={{color:'#fbbf24'}}>GOOD: 노란색 영역</span></p>
               <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>🏗️ 올림포스 블록 쌓기</h4><p style={{ margin: '0 0 10px 0' }}>첫 블록은 프리패스! 2,3층은 1층에 맞춰 정확히 쌓으세요.<br/><span style={{color:'#10b981'}}>PERFECT: 3층 완성</span> | <span style={{color:'#fbbf24'}}>GOOD: 2층 완성</span></p>
-              <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>📦 보물 상자 잡기</h4><p style={{ margin: '0 0 10px 0' }}>0.45초 만에 사라지는 상자 5개를 모두 터치하세요!<br/><span style={{color:'#10b981'}}>PERFECT: 5개 적중</span> | <span style={{color:'#fbbf24'}}>GOOD: 3~4개 적중</span></p>
-              <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>🧠 기억력 테스트</h4><p style={{ margin: '0 0 10px 0' }}>0.09초씩 번쩍이는 패턴 5개를 암기하고 똑같이 터치하세요!<br/><span style={{color:'#10b981'}}>PERFECT: 5연속 성공</span> | <span style={{color:'#fbbf24'}}>GOOD: 3~4연속 성공</span></p>
+              <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>📦 보물 상자 잡기</h4><p style={{ margin: '0 0 10px 0' }}>0.4초 만에 사라지는 상자 5개를 모두 터치하세요!<br/><span style={{color:'#10b981'}}>PERFECT: 5개 적중</span> | <span style={{color:'#fbbf24'}}>GOOD: 3~4개 적중</span></p>
+              <h4 style={{ color: '#fbbf24', marginBottom: '5px' }}>🧠 기억력 테스트</h4><p style={{ margin: '0 0 10px 0' }}>0.08초씩 번쩍이는 패턴 5개를 암기하고 똑같이 터치하세요!<br/><span style={{color:'#10b981'}}>PERFECT: 5연속 성공</span> | <span style={{color:'#fbbf24'}}>GOOD: 3~4연속 성공</span></p>
             </div>
             <h3 style={{ color: '#fbbf24', fontSize: '15px', marginBottom: '10px', textAlign: 'center', borderTop: '1px solid #444', paddingTop: '15px' }}>📈 스펙 티어별 보상 안내</h3>
             <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '8px', padding: '15px 10px', fontSize: '12px', color: '#ccc', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -630,6 +642,8 @@ export default function App() {
             <span style={{ fontSize: '12px', color: '#c5a059', marginLeft: '4px' }}>GOU</span>
           </div>
           <button onClick={resetAndSyncDB} style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🔄 리셋</button>
+          {/* 🚨 랭킹 버튼 확실하게 노출! */}
+          <button onClick={() => setState(s => ({...s, isRankingOpen: true}))} style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer', boxShadow: '0 0 10px rgba(251,191,36,0.3)' }}>🏆 RANK</button>
         </div>
       </div>
 
@@ -780,16 +794,20 @@ export default function App() {
         })}
       </div>
       
+      {/* 🚨 사령관님 오더: 절대 계급 랭킹 시스템 (성 > 펫 > 장비) 🚨 */}
       {state.isRankingOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
           <div style={{ background: 'rgba(20,20,25,0.98)', border: '2px solid #fbbf24', padding: '30px 20px', borderRadius: '15px', width: '95%', maxWidth: '420px' }}>
-            <h2 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '25px' }}>👑 RANKING</h2>
+            <h2 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '25px' }}>👑 SERVER RANKING</h2>
+            <div style={{ textAlign: 'center', color: '#ccc', fontSize: '11px', marginBottom: '15px' }}>※ 순위 산정: 성 레벨 ➡️ 펫 레벨 ➡️ 장비 총합 순</div>
             <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e6d5b8', fontSize: '14px', marginBottom: '10px' }}>
-              <thead><tr style={{ borderBottom: '2px solid #fbbf24', color: '#fbbf24' }}><th style={{ padding: '10px', textAlign: 'left' }}>순위</th><th style={{ padding: '10px', textAlign: 'left' }}>사령관명</th><th style={{ padding: '10px', textAlign: 'right' }}>강화총합</th></tr></thead>
+              <thead><tr style={{ borderBottom: '2px solid #fbbf24', color: '#fbbf24' }}><th style={{ padding: '10px', textAlign: 'left' }}>순위</th><th style={{ padding: '10px', textAlign: 'left' }}>사령관명</th><th style={{ padding: '10px', textAlign: 'right' }}>전투력(계급)</th></tr></thead>
               <tbody>
-                {mockRankings.map(r => (
+                {rankings.map(r => (
                   <tr key={r.rank} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: r.isMe ? 'rgba(251,191,36,0.15)' : 'transparent' }}>
-                    <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{r.rank}</td><td style={{ padding: '12px 10px', fontWeight: 'bold' }}>[{r.title}] {r.name}</td><td style={{ padding: '12px 10px', textAlign: 'right', color: '#fbbf24' }}>{r.power}</td>
+                    <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{r.rank === 1 ? '🥇 1' : r.rank === 2 ? '🥈 2' : r.rank === 3 ? '🥉 3' : r.rank}</td>
+                    <td style={{ padding: '12px 10px', fontWeight: 'bold' }}><span style={{color:'#06b6d4', fontSize:'11px'}}>[{r.title}]</span><br/>{r.name} {r.isMe ? '⭐' : ''}</td>
+                    <td style={{ padding: '12px 10px', textAlign: 'right', color: '#fbbf24', fontSize: '12px' }}>{r.power}</td>
                   </tr>
                 ))}
               </tbody>
