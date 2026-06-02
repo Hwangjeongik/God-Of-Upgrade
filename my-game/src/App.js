@@ -5,64 +5,36 @@ import { app } from './firebase';
 
 const MAX_SUPPLY = 10000000000000; 
 
-// 🚀 통합 미니게임 아케이드 엔진 (4가지 게임 동시 구현)
+// 🚀 통합 미니게임 아케이드 엔진 V2 (사령관 기획 완벽 반영)
 const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const [status, setStatus] = useState('playing'); // playing, perfect, good, miss
   
-  // 🔨 망치질 & 🏗️ 블록 쌓기 공통 스탯
+  // 🔨 망치질 & 🏗️ 블록 쌓기 공통
   const [pos, setPos] = useState(0);
   const posRef = useRef(0);
   const dirRef = useRef(1);
   const reqRef = useRef();
   const lastTimeRef = useRef();
 
-  // ⚡ 벼락 베기 (스와이프/클릭) 스탯
-  const [targets, setTargets] = useState([
-    {id:1, top:'20%', left:'20%'}, {id:2, top:'60%', left:'70%'}, {id:3, top:'35%', left:'45%'}
-  ]);
+  // 🏗️ 블록 쌓기 상태
+  const [stacked, setStacked] = useState(0);
+
+  // ⚡ 벼락 베기 상태
+  const [targets, setTargets] = useState([]);
+  const slashScoreRef = useRef(0);
+  const slashSpawnRef = useRef(0);
   
-  // 🧠 신탁 암기 (메모리) 스탯
+  // 🧠 신탁 암기 상태
   const [memSeq, setMemSeq] = useState([]);
   const [userSeq, setUserSeq] = useState([]);
   const [flashIdx, setFlashIdx] = useState(-1);
 
-  // 메모리 게임 시퀀스 생성 및 플레이
-  useEffect(() => {
-    if(type === 'memory' && status === 'playing') {
-      const seq = [Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4)];
-      setMemSeq(seq);
-      let i = 0;
-      const interval = setInterval(() => {
-        if(i < seq.length) {
-          setFlashIdx(seq[i]);
-          setTimeout(() => setFlashIdx(-1), 400); // 0.4초간 반짝임
-          i++;
-        } else {
-          clearInterval(interval);
-        }
-      }, 800);
-      return () => clearInterval(interval);
-    }
-  }, [type, status]);
-
-  const handleMemoryClick = (idx) => {
-    if(status !== 'playing' || memSeq.length === 0) return;
-    const newSeq = [...userSeq, idx];
-    setUserSeq(newSeq);
-    
-    if(newSeq[newSeq.length-1] !== memSeq[newSeq.length-1]) {
-       setStatus('miss'); // 틀리면 즉시 실패
-    } else if(newSeq.length === memSeq.length) {
-       setStatus('perfect'); // 3개 다 맞추면 퍼펙트
-    }
-  };
-
-  // 60fps 게이지 이동 (망치 & 블록)
+  // 60fps 게이지 애니메이션 (망치 & 블록)
   const animate = useCallback((time) => {
     if (lastTimeRef.current != null) {
       const dt = time - lastTimeRef.current;
-      // 망치질은 0.26 (초광속), 블록쌓기는 0.18 (조금 덜 빠름)
-      const speed = type === 'blacksmith' ? 0.26 : 0.18; 
+      // 망치질은 0.26 / 블록쌓기는 쌓을수록 빨라짐(0.18 -> 0.22 -> 0.26)
+      let speed = type === 'blacksmith' ? 0.26 : 0.18 + (stacked * 0.04); 
       posRef.current += dirRef.current * speed * dt;
       if (posRef.current >= 100) { posRef.current = 100; dirRef.current = -1; }
       if (posRef.current <= 0) { posRef.current = 0; dirRef.current = 1; }
@@ -72,7 +44,7 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
     if (status === 'playing' && (type === 'blacksmith' || type === 'tower')) {
       reqRef.current = requestAnimationFrame(animate);
     }
-  }, [status, type]);
+  }, [status, type, stacked]);
 
   useEffect(() => {
     if (status === 'playing' && (type === 'blacksmith' || type === 'tower')) {
@@ -81,32 +53,115 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
     return () => cancelAnimationFrame(reqRef.current);
   }, [status, animate, type]);
 
-  // 정지 버튼 타격 판정
+  // ⚡ 벼락 베기 (생성 및 소멸 엔진)
+  useEffect(() => {
+    if(type === 'slash' && status === 'playing') {
+      slashScoreRef.current = 0;
+      slashSpawnRef.current = 0;
+      
+      const spawnNext = () => {
+        if (slashSpawnRef.current >= 5) {
+           setTimeout(() => {
+             const score = slashScoreRef.current;
+             if(score === 5) setStatus('perfect');
+             else if(score >= 3) setStatus('good');
+             else setStatus('miss');
+           }, 500);
+           return;
+        }
+        
+        const id = slashSpawnRef.current;
+        const newTarget = { id, top: Math.random()*60 + 10 + '%', left: Math.random()*70 + 10 + '%' };
+        setTargets([newTarget]); // 1개씩만 팝업
+        slashSpawnRef.current++;
+        
+        // 0.6초 뒤에 안 누르면 사라짐
+        setTimeout(() => {
+          setTargets(prev => prev.filter(t => t.id !== id));
+          setTimeout(spawnNext, 200); // 0.2초 대기 후 다음 타겟
+        }, 600);
+      };
+      setTimeout(spawnNext, 500); 
+    }
+  }, [type, status]);
+
+  // 🧠 신탁 암기 (시퀀스 엔진)
+  useEffect(() => {
+    if(type === 'memory' && status === 'playing') {
+      // 5개 패턴 생성
+      const seq = [Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4)];
+      setMemSeq(seq);
+      setUserSeq([]);
+      let i = 0;
+      const interval = setInterval(() => {
+        if(i < seq.length) {
+          setFlashIdx(seq[i]);
+          setTimeout(() => setFlashIdx(-1), 200); // 0.2초 초광속 반짝임
+          i++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [type, status]);
+
+  // --- 플레이어 조작 핸들러 ---
+  
+  // 1. 멈추기 (망치 & 블록)
   const handleHit = () => {
     if(status !== 'playing') return;
-    cancelAnimationFrame(reqRef.current);
-    let s = 'miss';
+    
     if (type === 'blacksmith') {
-      if (posRef.current >= 45 && posRef.current <= 55) s = 'perfect';
-      else if (posRef.current >= 30 && posRef.current <= 70) s = 'good';
-    } else if (type === 'tower') {
-      if (posRef.current >= 40 && posRef.current <= 60) s = 'perfect'; // 중앙 탑
-      else if (posRef.current >= 20 && posRef.current <= 80) s = 'good';
+      cancelAnimationFrame(reqRef.current);
+      if (posRef.current >= 45 && posRef.current <= 55) setStatus('perfect');
+      else if (posRef.current >= 30 && posRef.current <= 70) setStatus('good');
+      else setStatus('miss');
+    } 
+    else if (type === 'tower') {
+      // 타겟존: 42.5 ~ 57.5 (조금 관대하게 40~60 적용)
+      if (posRef.current >= 40 && posRef.current <= 60) {
+        const nextStacked = stacked + 1;
+        setStacked(nextStacked);
+        if (nextStacked === 3) {
+           cancelAnimationFrame(reqRef.current);
+           setStatus('perfect');
+        } else {
+           posRef.current = 0; // 초기 위치로 리셋 후 다음 층 계속
+        }
+      } else {
+        cancelAnimationFrame(reqRef.current);
+        if (stacked === 2) setStatus('good');
+        else setStatus('miss'); 
+      }
     }
-    setStatus(s);
   };
 
-  // 벼락 베기 상자 터치
+  // 2. 벼락 베기 타격
   const handleSlash = (id) => {
     if(status !== 'playing') return;
-    const newTargets = targets.filter(t => t.id !== id);
-    setTargets(newTargets);
-    if(newTargets.length === 0) setStatus('perfect');
+    slashScoreRef.current++;
+    setTargets([]); // 맞추면 즉시 소멸
+  };
+
+  // 3. 메모리 터치
+  const handleMemoryClick = (idx) => {
+    if(status !== 'playing' || memSeq.length === 0 || flashIdx !== -1) return;
+    const newSeq = [...userSeq, idx];
+    setUserSeq(newSeq);
+    
+    if(newSeq[newSeq.length-1] !== memSeq[newSeq.length-1]) {
+       // 틀렸을 때 여태까지 맞춘 갯수 평가
+       if (newSeq.length - 1 >= 3) setStatus('good');
+       else setStatus('miss');
+    } else if(newSeq.length === memSeq.length) {
+       setStatus('perfect');
+    }
   };
 
   const getTitle = () => {
     if(type==='blacksmith') return '🔨 대장장이 망치질';
-    if(type==='tower') return '🏗️ 올림포스 신전 건축';
+    if(type==='tower') return '🏗️ 올림포스 블록 쌓기';
     if(type==='slash') return '⚡ 제우스의 벼락 베기';
     if(type==='memory') return '🧠 아테나의 신탁 암기';
   };
@@ -116,14 +171,14 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
        <h2 style={{color:'#fbbf24', fontSize:'28px', marginBottom:'20px'}}>{getTitle()}</h2>
        
        <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid #555', padding: '10px 20px', borderRadius: '10px', marginBottom: '30px', textAlign: 'center' }}>
-          <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold', marginBottom: '5px' }}>📈 현재 내 스펙 보상 티어</div>
+          <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold', marginBottom: '5px' }}>📈 현재 스펙 보상 티어</div>
           <div style={{ fontSize: '14px', color: '#fff' }}>
             PERFECT: <span style={{ color: '#10b981', fontWeight: 'bold' }}>{pReward.toLocaleString()}</span> GOU <br/>
             GOOD: <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>{gReward.toLocaleString()}</span> GOU
           </div>
         </div>
 
-       {/* 개별 게임 화면 영역 */}
+       {/* 개별 게임 화면 렌더링 */}
        <div style={{width:'90%', maxWidth:'400px', height:'200px', position:'relative', display:'flex', justifyContent:'center', alignItems:'center', marginBottom:'30px'}}>
          
          {/* 1. 망치질 */}
@@ -137,28 +192,45 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
          
          {/* 2. 블록 쌓기 */}
          {type === 'tower' && (
-            <div style={{ position: 'relative', width: '100%', height: '150px', borderBottom: '4px solid #fff' }}>
-              <div style={{ position: 'absolute', left: '40%', width: '20%', height: '40px', bottom: '0', background: 'rgba(6, 182, 212, 0.5)', border: '2px dashed #06b6d4' }}></div>
-              <div style={{ position: 'absolute', left: `${pos}%`, width: '20%', height: '40px', background: '#fbbf24', bottom: status === 'playing' ? '80px' : '0', transition: 'bottom 0.2s ease-in', border:'2px solid #fff', transform: 'translateX(-50%)', borderRadius:'4px' }}></div>
+            <div style={{ position: 'relative', width: '100%', height: '180px', borderBottom: '4px solid #fff' }}>
+              {/* 기둥 가이드 선 */}
+              <div style={{position:'absolute', left:'50%', width:'2px', height:'100%', background:'rgba(255,255,255,0.1)', transform:'translateX(-50%)'}}></div>
+              
+              {/* 여태까지 쌓은 블록들 */}
+              {Array.from({length: stacked}).map((_, i) => (
+                 <div key={i} style={{ position: 'absolute', left: '50%', width: '15%', height: '30px', background: '#fbbf24', bottom: `${i*30}px`, transform: 'translateX(-50%)', borderRadius:'4px', border:'1px solid #000' }}></div>
+              ))}
+              
+              {/* 이번 층 타겟 존 (점선) */}
+              {status === 'playing' && <div style={{ position: 'absolute', left: '42.5%', width: '15%', height: '30px', bottom: `${stacked*30}px`, background: 'rgba(6, 182, 212, 0.3)', border: '2px dashed #06b6d4' }}></div>}
+              
+              {/* 이번 층 움직이는 블록 */}
+              {status === 'playing' && <div style={{ position: 'absolute', left: `${pos}%`, width: '15%', height: '30px', background: '#fbbf24', bottom: `${stacked*30}px`, border:'2px solid #fff', transform: 'translateX(-50%)', borderRadius:'4px' }}></div>}
             </div>
          )}
          
          {/* 3. 벼락 베기 */}
          {type === 'slash' && (
-            <div style={{ width: '100%', height: '100%', position: 'relative', background:'rgba(0,0,0,0.5)', borderRadius:'15px', border:'1px solid #333' }}>
+            <div style={{ width: '100%', height: '100%', position: 'relative', background:'rgba(0,0,0,0.5)', borderRadius:'15px', border:'1px solid #333', overflow:'hidden' }}>
+              <div style={{position:'absolute', top:10, left:10, color:'#fbbf24', fontWeight:'bold', zIndex:10}}>적중: {slashScoreRef.current} / 5</div>
               {targets.map(t => (
-                <div key={t.id} onClick={() => handleSlash(t.id)} style={{ position:'absolute', top:t.top, left:t.left, fontSize:'45px', cursor:'pointer', padding:'10px', filter:'drop-shadow(0 0 10px #fbbf24)' }}>🎁</div>
+                <div key={t.id} onClick={() => handleSlash(t.id)} onTouchStart={() => handleSlash(t.id)} style={{ position:'absolute', top:t.top, left:t.left, fontSize:'45px', cursor:'pointer', padding:'10px', filter:'drop-shadow(0 0 10px #fbbf24)', transition: 'top 0.1s, left 0.1s' }}>🎁</div>
               ))}
-              {status === 'playing' && <div style={{position:'absolute', bottom:'10px', color:'#fbbf24', width:'100%', textAlign:'center', fontWeight:'bold'}}>보물상자를 모두 빠르게 터치하세요!</div>}
+              {status === 'playing' && targets.length === 0 && <div style={{position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', color:'#555', fontWeight:'bold'}}>집중하세요!</div>}
             </div>
          )}
          
          {/* 4. 신탁 암기 (메모리) */}
          {type === 'memory' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              {[0,1,2,3].map(i => (
-                <div key={i} onClick={() => handleMemoryClick(i)} style={{ width: '80px', height: '80px', borderRadius: '15px', background: flashIdx === i ? '#fff' : ['#ef4444','#3b82f6','#10b981','#fbbf24'][i], opacity: flashIdx === i ? 1 : 0.6, cursor: 'pointer', transition: 'background 0.1s, opacity 0.1s', boxShadow: flashIdx === i ? '0 0 20px #fff' : 'none' }}></div>
-              ))}
+            <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+              <div style={{color:'#06b6d4', marginBottom:'15px', fontWeight:'bold', fontSize:'16px'}}>
+                {flashIdx !== -1 ? '패턴을 외우세요!' : '순서대로 터치하세요!'} ({userSeq.length}/5)
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                {[0,1,2,3].map(i => (
+                  <div key={i} onClick={() => handleMemoryClick(i)} style={{ width: '80px', height: '80px', borderRadius: '15px', background: flashIdx === i ? '#fff' : ['#ef4444','#3b82f6','#10b981','#fbbf24'][i], opacity: flashIdx === i ? 1 : 0.6, cursor: 'pointer', transition: 'background 0.1s, opacity 0.1s', boxShadow: flashIdx === i ? '0 0 20px #fff' : 'none' }}></div>
+                ))}
+              </div>
             </div>
          )}
        </div>
@@ -188,7 +260,7 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
        )}
     </div>
   );
-}
+};
 
 
 export default function App() {
@@ -217,7 +289,6 @@ export default function App() {
   const [lvlAnims, setLvlAnims] = useState({}); 
   const [anims, setAnims] = useState({});
   
-  // 🚨 미니게임 모달 (null | 'blacksmith' | 'tower' | 'slash' | 'memory')
   const [activeModal, setActiveModal] = useState(null); 
 
   const triggerAnim = useCallback((id, type) => {
@@ -271,7 +342,6 @@ export default function App() {
     sum: totalGearLevel
   }), [gears, totalGearLevel]);
 
-  // 🚨 미니게임 다이내믹 보상 계산기 (사령관 스펙 연동)
   const getMinigameRewards = () => {
     let p = 1000000; let g = 200000;
     if (state.castleLevel >= 50) { p = 1000000000; g = 200000000; }
@@ -374,7 +444,6 @@ export default function App() {
     } catch (e) { alert("출금 실패: " + e.message); }
   };
 
-  // 🚀 100% GOU 획득 그대로 유지
   const claimGOU = async () => {
     const estimatedGain = Math.floor(state.pendingGOU);
     if (estimatedGain < 10) return alert("최소 10 GOU 이상부터 획득 가능합니다.");
