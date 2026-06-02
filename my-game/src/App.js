@@ -3,7 +3,110 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TonConnectButton, useTonWallet } from '@tonconnect/ui-react';
 import { app } from './firebase'; 
 
-const MAX_SUPPLY = 10000000000000; // 🚨 10조 GOU
+const MAX_SUPPLY = 10000000000000; 
+
+// 🚀 다이내믹 스펙 보상 적용된 대장장이 미니게임
+const BlacksmithMinigame = ({ onClose, onReward, totalGearLevel, petLevel, castleLevel }) => {
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [cursorPos, setCursorDisplay] = useState(0);
+  const [result, setResult] = useState(null);
+  
+  const posRef = useRef(0);
+  const dirRef = useRef(1);
+  const requestRef = useRef();
+  const lastTimeRef = useRef();
+
+  // 🚨 사령관님 스펙 기반 다이내믹 보상 연산기
+  let perfectReward = 1000000; // 기본 100만
+  let goodReward = 200000;     // 기본 20만
+
+  if (castleLevel >= 50) {
+    perfectReward = 1000000000; // 성 50강: 10억
+    goodReward = 200000000;     // 성 50강: 2억
+  } else if (petLevel >= 50) {
+    perfectReward = 100000000;  // 펫 50강: 1억
+    goodReward = 20000000;      // 펫 50강: 2천만
+  } else if (totalGearLevel >= 210) {
+    perfectReward = 10000000;   // 장비 210강: 1000만
+    goodReward = 2000000;       // 장비 210강: 200만
+  }
+
+  const animate = useCallback((time) => {
+    if (lastTimeRef.current != null) {
+      const deltaTime = time - lastTimeRef.current;
+      const speed = 0.12; 
+      posRef.current += dirRef.current * speed * deltaTime;
+      if (posRef.current >= 100) { posRef.current = 100; dirRef.current = -1; }
+      if (posRef.current <= 0) { posRef.current = 0; dirRef.current = 1; }
+      setCursorDisplay(posRef.current);
+    }
+    lastTimeRef.current = time;
+    if (isPlaying) {
+      requestRef.current = requestAnimationFrame(animate);
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (isPlaying) requestRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [isPlaying, animate]);
+
+  const handleHit = () => {
+    setIsPlaying(false);
+    cancelAnimationFrame(requestRef.current);
+    const p = posRef.current;
+    let resType = 'MISS';
+    let rew = 0;
+    
+    if (p >= 45 && p <= 55) { resType = 'PERFECT'; rew = perfectReward; }
+    else if (p >= 30 && p <= 70) { resType = 'GOOD'; rew = goodReward; }
+    
+    setResult({ type: resType, reward: rew });
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(10, 12, 18, 0.95)', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 20000 }}>
+      <h2 style={{ color: '#fbbf24', fontSize: '28px', marginBottom: '10px' }}>🔨 대장장이 망치질</h2>
+      <p style={{ color: '#ccc', fontSize: '13px', marginBottom: '20px' }}>타이밍에 맞춰 [PERFECT] 존에 멈추세요!</p>
+      
+      {/* 🚨 현재 보상 티어 안내 UI 추가 */}
+      <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid #555', padding: '10px 20px', borderRadius: '10px', marginBottom: '40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold', marginBottom: '5px' }}>📈 현재 내 스펙 보상 티어</div>
+        <div style={{ fontSize: '14px', color: '#fff' }}>
+          PERFECT: <span style={{ color: '#10b981', fontWeight: 'bold' }}>{perfectReward.toLocaleString()}</span> GOU <br/>
+          GOOD: <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>{goodReward.toLocaleString()}</span> GOU
+        </div>
+      </div>
+      
+      <div style={{ position: 'relative', width: '90%', maxWidth: '400px', height: '40px', background: '#222', border: '2px solid #555', borderRadius: '20px', overflow: 'visible', marginBottom: '50px' }}>
+        <div style={{ position: 'absolute', left: '30%', width: '40%', height: '100%', background: 'rgba(251, 191, 36, 0.4)' }}></div>
+        <div style={{ position: 'absolute', left: '45%', width: '10%', height: '100%', background: 'rgba(6, 182, 212, 0.8)' }}></div>
+        <div style={{ position: 'absolute', left: `${cursorPos}%`, width: '6px', height: '60px', background: '#fff', top: '-10px', boxShadow: '0 0 15px #fff', transform: 'translateX(-50%)', borderRadius: '3px' }}></div>
+      </div>
+
+      {!result ? (
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <button onClick={onClose} style={{ background: '#333', color: '#fff', padding: '20px 30px', borderRadius: '15px', fontSize: '18px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>포기</button>
+          <button onClick={handleHit} style={{ background: 'linear-gradient(90deg, #ef4444, #b91c1c)', color: '#fff', padding: '20px 60px', borderRadius: '15px', fontSize: '24px', fontWeight: '900', border: 'none', boxShadow: '0 5px 20px rgba(239, 68, 68, 0.5)', cursor: 'pointer' }}>
+            💥 타격 (STOP)
+          </button>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', animation: 'flashSuccess 0.5s ease-out' }}>
+          <div style={{ fontSize: '36px', fontWeight: '900', color: result.type === 'PERFECT' ? '#06b6d4' : result.type === 'GOOD' ? '#fbbf24' : '#ef4444', marginBottom: '10px' }}>
+            {result.type}!!
+          </div>
+          <div style={{ fontSize: '18px', color: '#fff', marginBottom: '30px' }}>
+            보상: <span style={{ color: result.reward > 0 ? '#10b981' : '#ef4444' }}>+{result.reward.toLocaleString()} GOU</span>
+          </div>
+          <button onClick={() => onReward(result.reward)} style={{ background: '#fbbf24', color: '#000', padding: '15px 40px', borderRadius: '10px', fontSize: '18px', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(251,191,36,0.4)' }}>
+            보상 받고 나가기
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function App() {
   const hunts = useMemo(() => [
@@ -29,6 +132,8 @@ export default function App() {
   const [autoUI, setAutoUI] = useState({});
   const [lvlAnims, setLvlAnims] = useState({}); 
   const [anims, setAnims] = useState({});
+  
+  const [activeMinigame, setActiveMinigame] = useState(null); 
 
   const triggerAnim = useCallback((id, type) => {
     setAnims(prev => ({ ...prev, [id]: type }));
@@ -93,7 +198,6 @@ export default function App() {
     if (lvl >= 10) return 300; return 0;
   }, []);
 
-  // 🚀 반감기 Phase 연산 엔진
   const isPhase2 = state.burned >= MAX_SUPPLY * 0.6;
   const isPhase1 = !isPhase2 && state.burned >= MAX_SUPPLY * 0.3;
   const gainHalvingMult = isPhase2 ? 0.25 : (isPhase1 ? 0.5 : 1.0);
@@ -107,7 +211,6 @@ export default function App() {
   const totalBonusPct = gearGainBonus + setBonus + petGainBonus + petMilestone + castleGainBonus + castleMilestone; 
   const adMultiplier = state.isAdActive ? 2.0 : 1.0;
 
-  // 🚨 반감기 비용 절반 할인(costHalvingMult) 완벽 적용
   const calculateCost = (lvl, type, necklaceLvl) => {
     const step = (lvl % 10) + 1;
     const tier = Math.floor(lvl / 10);
@@ -158,7 +261,6 @@ export default function App() {
     } catch (e) { alert("동기화 실패: " + e.message); }
   };
 
-  // 💸 5% 출금 시스템 연동
   const withdrawGOU = async () => {
     if (state.balance < 10000000) return alert("최소 1,000만 GOU부터 출금 가능합니다!");
     const input = window.prompt(`출금할 GOU 수량을 입력하세요.\n(현재 잔고: ${Math.floor(state.balance).toLocaleString()})\n※ 출금액의 5%는 소각 수수료로 차감됩니다.`, 10000000);
@@ -185,6 +287,17 @@ export default function App() {
     const functions = getFunctions(app);
     try { await httpsCallable(functions, 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * adMultiplier }); } 
     catch (error) {}
+  };
+
+  // 🚀 미니게임 클리어 보상 처리 로직
+  const handleMinigameReward = (reward) => {
+    if (reward > 0) {
+      setState(s => ({ ...s, balance: s.balance + reward }));
+      alert(`🎉 축하합니다! 보상 ${reward.toLocaleString()} GOU를 획득했습니다!`);
+    } else {
+      alert("❌ 아쉽게도 빗나갔습니다. 보상을 획득하지 못했습니다.");
+    }
+    setActiveMinigame(null);
   };
 
   const handleUpgrade = async (type, id = null) => {
@@ -246,7 +359,6 @@ export default function App() {
     autoActiveRef.current[key] = true;
     setAutoUI(p => ({ ...p, [key]: true }));
     
-    // 🚨 오토 성공/실패 비용 분리 추적 (서버 분배용)
     let successCost = 0;
     let failCost = 0;
 
@@ -295,7 +407,6 @@ export default function App() {
       if (successCost > 0 || failCost > 0) {
           const finalLevel = levelsRef.current[key];
           const functions = getFunctions(app);
-          // 🚨 영수증 청구: 성공과 실패 비용을 따로 보내서 서버가 분배 비율을 계산하게 함!
           httpsCallable(functions, 'syncAutoUpgrade')({ 
               userId: getUserId(), type, id, finalLevel, successCost, failCost 
           }).catch(e => console.log("동기화 지연:", e));
@@ -426,7 +537,7 @@ export default function App() {
         .action-btn:active { transform: scale(0.92); }
         .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         
-        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: background 0.15s; }
         
         .img-box-gear { width: 100px; height: 100px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); position: relative; }
         .img-box-gear img { width: 90%; height: 90%; object-fit: contain; transition: opacity 0.2s; }
@@ -436,6 +547,17 @@ export default function App() {
           .gears-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
         }
       `}</style>
+
+      {/* 🚀 미니게임 모달 (스펙 동기화 완료) */}
+      {activeMinigame === 'blacksmith' && (
+        <BlacksmithMinigame 
+          onClose={() => setActiveMinigame(null)} 
+          onReward={handleMinigameReward} 
+          totalGearLevel={totalGearLevel}
+          petLevel={state.petLevel}
+          castleLevel={state.castleLevel}
+        />
+      )}
 
       {/* 상단 고정 헤더 */}
       <div className="fixed-header">
@@ -450,7 +572,8 @@ export default function App() {
             </span>
             <span style={{ fontSize: '12px', color: '#c5a059', marginLeft: '4px' }}>GOU</span>
           </div>
-          <button onClick={resetAndSyncDB} style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🔄 리셋</button>
+          <button onClick={() => setActiveMinigame('blacksmith')} style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid #10b981', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🎟️ 게임장</button>
+          
           <button onClick={() => setState(s => ({...s, isRankingOpen: true}))} style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding: '6px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}>🏆 RANK</button>
         </div>
       </div>
@@ -475,8 +598,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* 🚨 실시간 반감기/소각량 모니터링 패널 */}
-        <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row' }}>
+        {/* 실시간 소각량 및 시즌 잭팟 보상금 UI */}
+        <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px' }}>
           <div className="glass-panel" style={{ flex: 1, padding: '15px', margin: 0, border: '1px solid rgba(239, 68, 68, 0.5)', background: 'rgba(239, 68, 68, 0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '11px' }}>🔥 총 소각량 (Burned)</div>
