@@ -29,8 +29,6 @@ export default function App() {
   const levelsRef = useRef({}); 
   const [autoUI, setAutoUI] = useState({});
   const [lvlAnims, setLvlAnims] = useState({}); 
-  
-  // 🚨 [에러 완치] 빌드 실패 원인이었던 anims 변수와 triggerAnim 함수 완벽 복구
   const [anims, setAnims] = useState({});
 
   const triggerAnim = useCallback((id, type) => {
@@ -49,6 +47,7 @@ export default function App() {
   ]);
 
   const wallet = useTonWallet();
+  const latestUpgradeRef = useRef();
 
   useEffect(() => {
     gears.forEach(g => levelsRef.current[g.id] = g.lvl);
@@ -83,16 +82,17 @@ export default function App() {
     sum: totalGearLevel
   }), [gears, totalGearLevel]);
 
+  // 🚨 사령관님 오더: 펫 & 성 혜택 수치 완벽 튜닝
   const getPetBonus = useCallback((lvl) => {
-    if (lvl >= 50) return 500; if (lvl >= 40) return 400;
-    if (lvl >= 30) return 300; if (lvl >= 20) return 200;
-    if (lvl >= 10) return 100; return 0;
-  }, []);
-
-  const getCastleBonus = useCallback((lvl) => {
     if (lvl >= 50) return 1000; if (lvl >= 40) return 800;
     if (lvl >= 30) return 600; if (lvl >= 20) return 400;
     if (lvl >= 10) return 200; return 0;
+  }, []);
+
+  const getCastleBonus = useCallback((lvl) => {
+    if (lvl >= 50) return 1500; if (lvl >= 40) return 1200;
+    if (lvl >= 30) return 900; if (lvl >= 20) return 600;
+    if (lvl >= 10) return 300; return 0;
   }, []);
 
   const gearGainBonus = totalGearLevel * 2;
@@ -101,6 +101,7 @@ export default function App() {
   const petMilestone = getPetBonus(state.petLevel);
   const castleMilestone = getCastleBonus(state.castleLevel);
   const totalBonusPct = gearGainBonus + setBonus + petGainBonus + petMilestone + castleGainBonus + castleMilestone; 
+
   const isHalving = state.burned >= HALVING_BURN_THRESHOLD;
   const halvingMult = isHalving ? 0.5 : 1.0;
   const adMultiplier = state.isAdActive ? 2.0 : 1.0;
@@ -194,7 +195,7 @@ export default function App() {
     else if (type === 'castle') setState(s => ({ ...s, castleLevel: nextLvlSim }));
     
     triggerLvlAnim(key, simSuccess ? 'up' : 'down');
-    triggerAnim(key, simSuccess ? 'success' : 'fail'); // 버튼 모션 복구
+    triggerAnim(key, simSuccess ? 'success' : 'fail');
 
     const functions = getFunctions(app);
     httpsCallable(functions, 'upgradeItem')({ userId: getUserId(), type, id }).then(res => {
@@ -205,6 +206,8 @@ export default function App() {
         }
     }).catch(e => console.log(e));
   };
+
+  useEffect(() => { latestUpgradeRef.current = handleUpgrade; });
 
   const toggleAuto = async (type, id = null) => {
     const key = id || type;
@@ -263,9 +266,10 @@ export default function App() {
         else if (type === 'castle') setState(s => ({ ...s, castleLevel: simLvl }));
         
         triggerLvlAnim(key, isSuccess ? 'up' : 'down');
-        triggerAnim(key, isSuccess ? 'success' : 'fail'); // 버튼 모션 복구
+        triggerAnim(key, isSuccess ? 'success' : 'fail'); 
 
-        await new Promise(r => setTimeout(r, 250)); 
+        // 🚨 사령관님 오더: 약간 느리고 쫀득한 오토 속도 (400ms 적용!)
+        await new Promise(r => setTimeout(r, 400)); 
       }
 
       autoActiveRef.current[key] = false;
@@ -344,11 +348,12 @@ export default function App() {
         <>
           <div style={{ color: '#06b6d4', fontSize: '10px', fontWeight: 'bold', marginBottom: '6px', textAlign: 'center' }}>🐉 신수 성장 혜택</div>
           <div style={{ fontSize: '9px', color: '#aaa', display: 'grid', gap: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 10강</span><span style={{color:'#fff'}}>+100%</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 20강</span><span style={{color:'#fff'}}>+200%</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 30강</span><span style={{color:'#fff'}}>+300%</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 40강</span><span style={{color:'#fff'}}>+400%</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 50강</span><span style={{color:'#fbbf24', fontWeight:'bold'}}>+500%</span></div>
+            {/* 🚨 기획 적용 완료 (펫) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 10강</span><span style={{color:'#fff'}}>+200%</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 20강</span><span style={{color:'#fff'}}>+400%</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 30강</span><span style={{color:'#fff'}}>+600%</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 40강</span><span style={{color:'#fff'}}>+800%</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 50강</span><span style={{color:'#fbbf24', fontWeight:'bold'}}>+1000%</span></div>
           </div>
         </>
       );
@@ -357,11 +362,12 @@ export default function App() {
         <>
           <div style={{ color: '#a855f7', fontSize: '10px', fontWeight: 'bold', marginBottom: '6px', textAlign: 'center' }}>🏰 영지 성장 혜택</div>
           <div style={{ fontSize: '9px', color: '#aaa', display: 'grid', gap: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 10강</span><span style={{color:'#fff'}}>+200%</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 20강</span><span style={{color:'#fff'}}>+400%</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 30강</span><span style={{color:'#fff'}}>+600%</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 40강</span><span style={{color:'#fff'}}>+800%</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 50강</span><span style={{color:'#fbbf24', fontWeight:'bold'}}>+1000%</span></div>
+            {/* 🚨 기획 적용 완료 (성) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 10강</span><span style={{color:'#fff'}}>+300%</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 20강</span><span style={{color:'#fff'}}>+600%</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 30강</span><span style={{color:'#fff'}}>+900%</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 40강</span><span style={{color:'#fff'}}>+1200%</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 50강</span><span style={{color:'#fbbf24', fontWeight:'bold'}}>+1500%</span></div>
           </div>
         </>
       );
@@ -498,7 +504,7 @@ export default function App() {
             const isActive = !currentHuntData.isSpecial && currentHuntData.name === h.name;
             const isUnlocked = currentStats.atk >= h.req.atk && currentStats.hp >= h.req.hp && currentStats.def >= h.req.def && currentStats.acc >= h.req.acc && currentStats.sum >= h.reqSum;
             return (
-              <div key={h.name} style={{ background: isActive ? 'rgba(217, 119, 6, 0.3)' : 'rgba(15, 18, 25, 0.95)', border: `1px solid ${isActive ? '#fff' : (isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)')}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', opacity: isUnlocked ? 1 : 0.4 }}>
+              <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ background: 'rgba(15, 18, 25, 0.8)', border: `1px solid ${isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', opacity: isUnlocked ? 1 : 0.4 }}>
                 <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '12px', marginBottom: '5px' }}>{isActive ? '⚔️ ' : ''}{h.name}</b>
                 {h.name !== '초원 영지' && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', background: 'rgba(0,0,0,0.8)', padding: '4px', borderRadius: '4px', fontSize: '10px', color: '#ccc', marginBottom: '5px' }}>
@@ -539,13 +545,16 @@ export default function App() {
                   <span className={animClass} style={{ color: '#fbbf24', display: 'inline-block' }}>+{g.lvl}</span>
                 </div>
 
-                <div style={{ color: '#ccc', fontSize: '12px', lineHeight: '1.4', textAlign: 'center' }}>
-                  확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `80.0%`}</span><br/>
-                  비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
+                {/* 🚨 사령관님 지시: 장비별 획득량 보너스 수치 직관적 표시 및 비용/확률 다크 패널 디자인 */}
+                <div style={{ color: '#ccc', fontSize: '12px', lineHeight: '1.5', textAlign: 'center', background: 'rgba(0,0,0,0.4)', padding: '5px', borderRadius: '5px', width: '100%' }}>
+                  수익 버프: <span style={{color: '#10b981', fontWeight: 'bold'}}>+{g.lvl * 2}%</span><br/>
+                  확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4', fontWeight: 'bold'}}>{isMax ? 'MAX' : `80.0%`}</span><br/>
+                  비용: <span style={{color: '#fbbf24', fontWeight: 'bold'}}>{isMax ? 'MAX' : getCost(g.lvl, gears[5].lvl).toLocaleString()}</span>
                 </div>
+                
                 <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '12px' }}>
                   <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax || autoUI[timerKey]} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
-                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
+                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', color: autoUI[timerKey] ? '#06b6d4' : '#888', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
                 </div>
               </div>
             );
@@ -584,13 +593,17 @@ export default function App() {
                   <h3 style={{ color: '#fbbf24', margin: 0, fontSize: '20px' }}>
                     {name} <span className={animClass} style={{ color: '#fff', fontSize: '14px', display: 'inline-block', marginLeft: '5px' }}>Lv.{lvl}</span>
                   </h3>
-                  <div style={{ fontSize: '13px', color: '#ccc', margin: '8px 0', lineHeight: '1.5' }}>
-                    수익 보너스: <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>+{(isPet ? state.petLevel * 3 : state.castleLevel * 5) + (isPet ? petMilestone : castleMilestone)}%</span><br/>
-                    확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4'}}>{isMax ? 'MAX' : `80.0%`}</span> | 비용: <span style={{color: '#fff'}}>{isMax ? 'MAX' : cost.toLocaleString()}</span>
+
+                  {/* 🚨 비용 및 확률 강조 패널 */}
+                  <div style={{ fontSize: '13px', color: '#ccc', margin: '8px 0', lineHeight: '1.6', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
+                    수익 보너스: <span style={{ color: '#10b981', fontWeight: 'bold' }}>+{(isPet ? state.petLevel * 3 : state.castleLevel * 5) + (isPet ? petMilestone : castleMilestone)}%</span><br/>
+                    성공 확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4', fontWeight: 'bold'}}>{isMax ? 'MAX' : `80.0%`}</span><br/>
+                    강화 비용: <span style={{color: '#fbbf24', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${cost.toLocaleString()} GOU`}</span>
                   </div>
+                  
                   <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                     <button onClick={() => handleUpgrade(type)} disabled={!isUnlocked || isMax || autoUI[timerKey]} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
-                    <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
+                    <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', color: autoUI[timerKey] ? '#06b6d4' : '#888', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
                   </div>
                   
                   {isMax && (
