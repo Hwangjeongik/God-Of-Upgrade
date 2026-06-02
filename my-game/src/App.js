@@ -82,7 +82,6 @@ export default function App() {
     sum: totalGearLevel
   }), [gears, totalGearLevel]);
 
-  // 🚨 사령관님 오더: 펫 & 성 혜택 수치 완벽 튜닝
   const getPetBonus = useCallback((lvl) => {
     if (lvl >= 50) return 1000; if (lvl >= 40) return 800;
     if (lvl >= 30) return 600; if (lvl >= 20) return 400;
@@ -106,23 +105,21 @@ export default function App() {
   const halvingMult = isHalving ? 0.5 : 1.0;
   const adMultiplier = state.isAdActive ? 2.0 : 1.0;
 
+  // 🚀 [사령관 챕터 1] 기획표 기반 황금비율 공식 이식
   const calculateCost = (lvl, type, necklaceLvl) => {
-    const effectiveLvl = Math.max(1, lvl + 1);
-    const tier = Math.floor((effectiveLvl - 1) / 10);
-    const step = ((effectiveLvl - 1) % 10) + 1;
-    let baseMult = type === 'castle' ? 10 : 1;
-    let rawCost = step * Math.pow(10, tier) * 1000 * baseMult;
-    let cost = Math.floor(rawCost * (1 - (necklaceLvl * 0.005)));
+    const step = (lvl % 10) + 1;
+    const tier = Math.floor(lvl / 10);
+    const baseMult = type === 'castle' ? 10000 : 1000; // 성(Castle)만 10,000부터 시작, 장비/펫은 1,000부터 시작
     
-    if (type === 'pet') cost = Math.floor((lvl < 9 ? 100 + (lvl * 10) : lvl < 19 ? 1000 + ((lvl % 10) * 100) : lvl < 29 ? 10000 + ((lvl % 10) * 1000) : lvl < 39 ? 100000 + ((lvl % 10) * 10000) : 1000000 + ((lvl % 10) * 100000)) * (1 - (necklaceLvl * 0.005)) * halvingMult);
-    if (type === 'castle') cost = Math.floor((lvl < 9 ? 1000 + (lvl * 100) : lvl < 19 ? 10000 + ((lvl % 10) * 1000) : lvl < 29 ? 100000 + ((lvl % 10) * 10000) : lvl < 39 ? 1000000 + ((lvl % 10) * 100000) : 10000000 + ((lvl % 10) * 1000000)) * (1 - (necklaceLvl * 0.005)) * halvingMult);
-    if (type === 'gear') cost = Math.floor(((lvl < 10 ? 1000 : lvl < 20 ? 10000 : 100000) + ((lvl % 10) * 100)) * (1 - (necklaceLvl * 0.005)) * halvingMult);
-    return cost;
+    // 이 한 줄이 사령관님이 짜주신 표(10단위 10배수 점프)를 완벽하게 구동합니다.
+    let rawCost = step * Math.pow(10, tier) * baseMult;
+    
+    return Math.floor(rawCost * (1 - (necklaceLvl * 0.005)));
   };
 
-  const getCost = useCallback((lvl, nLvl) => calculateCost(lvl, 'gear', nLvl), [halvingMult]);
-  const getPetCost = useCallback((lvl, nLvl) => calculateCost(lvl, 'pet', nLvl), [halvingMult]);
-  const getCastleCost = useCallback((lvl, nLvl) => calculateCost(lvl, 'castle', nLvl), [halvingMult]);
+  const getCost = useCallback((lvl, nLvl) => calculateCost(lvl, 'gear', nLvl), []);
+  const getPetCost = useCallback((lvl, nLvl) => calculateCost(lvl, 'pet', nLvl), []);
+  const getCastleCost = useCallback((lvl, nLvl) => calculateCost(lvl, 'castle', nLvl), []);
 
   const checkHunt = useCallback((now, stats) => {
     if (state.castleHuntEndTime > now) return { name: '🏰 제국의 심장 (특수)', mult: 50, isSpecial: true };
@@ -268,7 +265,6 @@ export default function App() {
         triggerLvlAnim(key, isSuccess ? 'up' : 'down');
         triggerAnim(key, isSuccess ? 'success' : 'fail'); 
 
-        // 🚨 사령관님 오더: 약간 느리고 쫀득한 오토 속도 (400ms 적용!)
         await new Promise(r => setTimeout(r, 400)); 
       }
 
@@ -348,7 +344,6 @@ export default function App() {
         <>
           <div style={{ color: '#06b6d4', fontSize: '10px', fontWeight: 'bold', marginBottom: '6px', textAlign: 'center' }}>🐉 신수 성장 혜택</div>
           <div style={{ fontSize: '9px', color: '#aaa', display: 'grid', gap: '4px' }}>
-            {/* 🚨 기획 적용 완료 (펫) */}
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 10강</span><span style={{color:'#fff'}}>+200%</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 20강</span><span style={{color:'#fff'}}>+400%</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>펫 30강</span><span style={{color:'#fff'}}>+600%</span></div>
@@ -362,7 +357,6 @@ export default function App() {
         <>
           <div style={{ color: '#a855f7', fontSize: '10px', fontWeight: 'bold', marginBottom: '6px', textAlign: 'center' }}>🏰 영지 성장 혜택</div>
           <div style={{ fontSize: '9px', color: '#aaa', display: 'grid', gap: '4px' }}>
-            {/* 🚨 기획 적용 완료 (성) */}
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 10강</span><span style={{color:'#fff'}}>+300%</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 20강</span><span style={{color:'#fff'}}>+600%</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>성 30강</span><span style={{color:'#fff'}}>+900%</span></div>
@@ -410,7 +404,7 @@ export default function App() {
         .action-btn:active { transform: scale(0.92); }
         .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         
-        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+        .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: background 0.15s; }
         
         .img-box-gear { width: 100px; height: 100px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); position: relative; }
         .img-box-gear img { width: 90%; height: 90%; object-fit: contain; transition: opacity 0.2s; }
@@ -504,7 +498,7 @@ export default function App() {
             const isActive = !currentHuntData.isSpecial && currentHuntData.name === h.name;
             const isUnlocked = currentStats.atk >= h.req.atk && currentStats.hp >= h.req.hp && currentStats.def >= h.req.def && currentStats.acc >= h.req.acc && currentStats.sum >= h.reqSum;
             return (
-              <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ background: 'rgba(15, 18, 25, 0.8)', border: `1px solid ${isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)'}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', opacity: isUnlocked ? 1 : 0.4 }}>
+              <div key={h.name} style={{ background: isActive ? 'rgba(217, 119, 6, 0.3)' : 'rgba(15, 18, 25, 0.95)', border: `1px solid ${isActive ? '#fff' : (isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)')}`, padding: '12px 8px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', opacity: isUnlocked ? 1 : 0.4 }}>
                 <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '12px', marginBottom: '5px' }}>{isActive ? '⚔️ ' : ''}{h.name}</b>
                 {h.name !== '초원 영지' && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', background: 'rgba(0,0,0,0.8)', padding: '4px', borderRadius: '4px', fontSize: '10px', color: '#ccc', marginBottom: '5px' }}>
@@ -545,7 +539,7 @@ export default function App() {
                   <span className={animClass} style={{ color: '#fbbf24', display: 'inline-block' }}>+{g.lvl}</span>
                 </div>
 
-                {/* 🚨 사령관님 지시: 장비별 획득량 보너스 수치 직관적 표시 및 비용/확률 다크 패널 디자인 */}
+                {/* 🚨 다크 패널 및 획득량 보너스 표기 신설 */}
                 <div style={{ color: '#ccc', fontSize: '12px', lineHeight: '1.5', textAlign: 'center', background: 'rgba(0,0,0,0.4)', padding: '5px', borderRadius: '5px', width: '100%' }}>
                   수익 버프: <span style={{color: '#10b981', fontWeight: 'bold'}}>+{g.lvl * 2}%</span><br/>
                   확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4', fontWeight: 'bold'}}>{isMax ? 'MAX' : `80.0%`}</span><br/>
@@ -554,7 +548,7 @@ export default function App() {
                 
                 <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '12px' }}>
                   <button onClick={() => handleUpgrade('gear', g.id)} disabled={isMax || autoUI[timerKey]} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
-                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', color: autoUI[timerKey] ? '#06b6d4' : '#888', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
+                  <button onClick={() => toggleAuto('gear', g.id)} disabled={isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.4)', color: autoUI[timerKey] ? '#06b6d4' : '#aaa', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
                 </div>
               </div>
             );
@@ -593,14 +587,14 @@ export default function App() {
                   <h3 style={{ color: '#fbbf24', margin: 0, fontSize: '20px' }}>
                     {name} <span className={animClass} style={{ color: '#fff', fontSize: '14px', display: 'inline-block', marginLeft: '5px' }}>Lv.{lvl}</span>
                   </h3>
-
-                  {/* 🚨 비용 및 확률 강조 패널 */}
+                  
+                  {/* 🚨 펫/성 다크 패널 및 획득량 보너스 표기 신설 */}
                   <div style={{ fontSize: '13px', color: '#ccc', margin: '8px 0', lineHeight: '1.6', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '8px' }}>
                     수익 보너스: <span style={{ color: '#10b981', fontWeight: 'bold' }}>+{(isPet ? state.petLevel * 3 : state.castleLevel * 5) + (isPet ? petMilestone : castleMilestone)}%</span><br/>
                     성공 확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4', fontWeight: 'bold'}}>{isMax ? 'MAX' : `80.0%`}</span><br/>
                     강화 비용: <span style={{color: '#fbbf24', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${cost.toLocaleString()} GOU`}</span>
                   </div>
-                  
+
                   <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                     <button onClick={() => handleUpgrade(type)} disabled={!isUnlocked || isMax || autoUI[timerKey]} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444' }}>강화</button>
                     <button onClick={() => toggleAuto(type)} disabled={!isUnlocked || isMax} className="action-btn" style={{ background: autoUI[timerKey] ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', color: autoUI[timerKey] ? '#06b6d4' : '#888', border: `1px solid ${autoUI[timerKey] ? '#06b6d4' : '#555'}` }}>{autoUI[timerKey] ? 'STOP' : 'AUTO'}</button>
