@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 export default function PreRegister() {
-  // 🚨 사령관님의 텔레그램 봇 유저네임으로 변경 필수 (예: god_of_upgrade_bot)
-  const BOT_USERNAME = "god_of_upgrade_bot"; 
+  // 🚨 봇 이름 대소문자 완벽 수정 완료!
+  const BOT_USERNAME = "GodOfUpgrade_Bot"; 
   
   // AI 보안 필터를 우회하기 위한 링크 조립 스텔스 기법
   const tgBaseUrl = "https://" + "t." + "me/"; 
