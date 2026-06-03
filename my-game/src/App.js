@@ -9,7 +9,7 @@ const SAVE_POINTS = [10, 20, 30, 40];
 const ADMIN_WALLET_ADDRESS = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ"; // 사령관님 지갑 주소
 
 // =========================================================================
-// 🎟️ 핫타임 스크래치 복권 컴포넌트 (확률 및 당첨금 표기 UI 추가)
+// 🎟️ 핫타임 스크래치 복권 컴포넌트 
 // =========================================================================
 const ScratchLottery = ({ userRank, onReward, onClose }) => {
   const canvasRef = useRef(null);
@@ -105,7 +105,7 @@ const ScratchLottery = ({ userRank, onReward, onClose }) => {
 };
 
 // =========================================================================
-// 🚀 통합 미니게임 아케이드 엔진 V8 (유지)
+// 🚀 통합 미니게임 아케이드 엔진 V8 
 // =========================================================================
 const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const [status, setStatus] = useState('playing'); 
@@ -500,10 +500,26 @@ export default function App() {
   const getPetCost = useCallback((lvl) => calculateCost(lvl, 'pet', levelsRef.current['necklace']), [calculateCost]);
   const getCastleCost = useCallback((lvl) => calculateCost(lvl, 'castle', levelsRef.current['necklace']), [calculateCost]);
 
-  const getSuccessRate = (lvl) => {
+  // 🚨 [수정] 세밀하게 조정된 프론트엔드 UI용 성공 확률 표시 로직
+  const getSuccessRateDisplay = (lvl, type) => {
     const ringBonus = (levelsRef.current['ring'] || 0) * 0.1; 
-    let base = lvl >= 15 ? 50 : lvl >= 10 ? 60 : lvl >= 5 ? 70 : 100;
-    return (base + ringBonus).toFixed(1);
+    let base = 100;
+    if (type === 'gear') {
+      if (lvl >= 6 && lvl <= 10) base = 70;
+      else if (lvl >= 11 && lvl <= 15) base = 60;
+      else if (lvl >= 16 && lvl <= 20) base = 50;
+      else if (lvl >= 21) base = 50 - ((lvl - 20) * 2);
+    } else {
+      if (lvl >= 6 && lvl <= 10) base = 70;
+      else if (lvl >= 11 && lvl <= 15) base = 65;
+      else if (lvl >= 16 && lvl <= 20) base = 60;
+      else if (lvl >= 21 && lvl <= 25) base = 55;
+      else if (lvl >= 26 && lvl <= 30) base = 50;
+      else if (lvl >= 31 && lvl <= 35) base = 45;
+      else if (lvl >= 36 && lvl <= 40) base = 40;
+      else if (lvl >= 41) base = 40 - ((lvl - 40) * 2);
+    }
+    return Math.max(0, base + ringBonus).toFixed(1);
   };
 
   const checkHunt = useCallback((now, stats, huntState) => {
@@ -627,11 +643,31 @@ export default function App() {
     } catch (e) { alert("❌ 푸시 실패: " + e.message); }
   };
 
-  // 🚨 [수정] 프론트엔드 UI용 배분 수식 (서버와 동일한 비율로 정확하게 맞춤!)
+  // 🚨 [수정] 프론트엔드 실제 강화 확률 수식 로직 동기화
+  const getRealSuccessRate = (lvl, type) => {
+    let base = 1.0;
+    if (type === 'gear') {
+      if (lvl >= 6 && lvl <= 10) base = 0.70;
+      else if (lvl >= 11 && lvl <= 15) base = 0.60;
+      else if (lvl >= 16 && lvl <= 20) base = 0.50;
+      else if (lvl >= 21) base = 0.50 - ((lvl - 20) * 0.02);
+    } else {
+      if (lvl >= 6 && lvl <= 10) base = 0.70;
+      else if (lvl >= 11 && lvl <= 15) base = 0.65;
+      else if (lvl >= 16 && lvl <= 20) base = 0.60;
+      else if (lvl >= 21 && lvl <= 25) base = 0.55;
+      else if (lvl >= 26 && lvl <= 30) base = 0.50;
+      else if (lvl >= 31 && lvl <= 35) base = 0.45;
+      else if (lvl >= 36 && lvl <= 40) base = 0.40;
+      else if (lvl >= 41) base = 0.40 - ((lvl - 40) * 0.02);
+    }
+    return base;
+  };
+
   const getFrontendRates = (burned) => {
     if (burned >= MAX_SUPPLY * 0.6) return { burn: 0.22, jackpot: 0.23 };
     if (burned >= MAX_SUPPLY * 0.3) return { burn: 0.27, jackpot: 0.18 };
-    return { burn: 0.30, jackpot: 0.15 }; // 기본 (소각 30%, 잭팟 15%)
+    return { burn: 0.30, jackpot: 0.15 }; 
   };
 
   const handleUpgrade = async (type, id = null) => {
@@ -646,8 +682,7 @@ export default function App() {
     setTimeout(() => { lockRef.current[key] = false; }, 150);
 
     const ringBonus = (levelsRef.current['ring'] || 0) * 0.001;
-    let successRate = currentLvl >= 15 ? 0.5 : currentLvl >= 10 ? 0.6 : currentLvl >= 5 ? 0.7 : 1.0;
-    successRate += ringBonus;
+    let successRate = getRealSuccessRate(currentLvl, type) + ringBonus;
 
     const isSuccess = Math.random() < successRate;
     let nextLvl = currentLvl;
@@ -703,8 +738,7 @@ export default function App() {
         if (simBalance < cost) { alert(`잔고 부족!`); break; }
 
         const ringBonus = (levelsRef.current['ring'] || 0) * 0.001;
-        let successRate = simLvl >= 15 ? 0.5 : simLvl >= 10 ? 0.6 : simLvl >= 5 ? 0.7 : 1.0;
-        successRate += ringBonus;
+        let successRate = getRealSuccessRate(simLvl, type) + ringBonus;
 
         const isSuccess = Math.random() < successRate;
         let nextSimLvl = simLvl;
@@ -758,7 +792,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, [checkHunt, currentStats, totalBonusPct, gainHalvingMult]);
 
-  // 🚨 시간 체크 및 복권 상태 관리
   const currentHour = new Date().getHours();
   const isHotTime = (currentHour >= 12 && currentHour < 14) || (currentHour >= 18 && currentHour < 20);
   const currentLotterySlot = `${new Date().toDateString()}-${currentHour >= 12 && currentHour < 14 ? 'lunch' : (currentHour >= 18 && currentHour < 20 ? 'dinner' : 'none')}`;
@@ -802,11 +835,9 @@ export default function App() {
         .bottom-nav-btn { flex: 1; background: transparent; border: none; display: flex; flexDirection: column; alignItems: center; cursor: pointer; transition: 0.2s; padding: 5px 2px; }
       `}</style>
 
-      {/* 모달 */}
       {showLottery && <ScratchLottery userRank={userRankTitle} onReward={(amt) => { setState(s => ({...s, balance: s.balance + amt, lastLotterySlot: currentLotterySlot})); alert("국고 입금 완료!"); }} onClose={() => setShowLottery(false)} />}
       {activeModal && <ArcadeGames type={activeModal} onClose={() => setActiveModal(null)} onReward={(r) => { if(r>0) setState(s=>({...s, balance:s.balance+r})); setActiveModal(null); }} pReward={pReward} gReward={gReward} />}
       
-      {/* 🚨 상단 고정 복권 버튼 (시간 제한 적용) */}
       <div onClick={handleOpenLottery} style={{ position: 'fixed', top: '75px', left: '50%', transform:'translateX(-50%)', background: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'linear-gradient(45deg, #ffd700, #ff8c00)' : '#555', color: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '#000' : '#aaa', padding: '10px 20px', borderRadius: '20px', fontWeight: '900', zIndex: 9000, cursor: 'pointer', boxShadow: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '0 0 15px rgba(255, 215, 0, 0.8)' : 'none', animation: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'pulse 1.5s infinite' : 'none', border:'2px solid #fff', width:'max-content' }}>
         {isHotTime && state.lastLotterySlot !== currentLotterySlot ? '🎟️ 지금 당장 복권 긁기!' : '⏳ 복권 준비 중 (12~14 / 18~20)'}
       </div>
@@ -828,7 +859,6 @@ export default function App() {
 
       <div style={{ width: '100%', maxWidth: '850px', padding: '10px', flex: 1 }}>
         
-        {/* 1️⃣ 홈 탭 */}
         {activeTab === 'home' && (
           <div>
             <div className="big-banner-jackpot">
@@ -885,7 +915,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 2️⃣ 강화 탭 */}
         {activeTab === 'upgrade' && (
           <div>
             <h3 style={{ color: '#fbbf24', margin: '0 0 10px 5px', fontSize: '16px' }}>🗺️ 점령 영지 현황 (전투력 매칭)</h3>
@@ -918,7 +947,7 @@ export default function App() {
             <h3 style={{ color: '#fbbf24', margin: '10px 0 10px 5px', fontSize: '16px', borderTop: '1px solid #333', paddingTop: '20px' }}>⚔️ 신화 무기고 (총합: <span style={{color: '#fff'}}>{totalGearLevel}강</span>)</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '25px' }} className="gears-grid">
               {gears.map(g => (
-                <UpgradeCard key={g.id} type="gear" item={{...g, statText: `${g.stat}: ${(g.lvl * g.base).toFixed(1)}${g.unit}`, bonusText: `버프: +${g.lvl * 2}%`, successRateDisplay: getSuccessRate(g.lvl) }} isMax={g.lvl >= 30} cost={getCost(g.lvl)} onUpgrade={handleUpgrade} onAuto={toggleAuto} autoActive={autoUI[g.id]} animClass={lvlAnims[g.id] === 'up' ? 'lvl-up' : lvlAnims[g.id] === 'down' ? 'lvl-down' : ''} boxAnimClass={anims[g.id] === 'success' ? 'anim-success' : anims[g.id] === 'fail' ? 'anim-fail' : ''} />
+                <UpgradeCard key={g.id} type="gear" item={{...g, statText: `${g.stat}: ${(g.lvl * g.base).toFixed(1)}${g.unit}`, bonusText: `버프: +${g.lvl * 2}%`, successRateDisplay: getSuccessRateDisplay(g.lvl, 'gear') }} isMax={g.lvl >= 30} cost={getCost(g.lvl)} onUpgrade={handleUpgrade} onAuto={toggleAuto} autoActive={autoUI[g.id]} animClass={lvlAnims[g.id] === 'up' ? 'lvl-up' : lvlAnims[g.id] === 'down' ? 'lvl-down' : ''} boxAnimClass={anims[g.id] === 'success' ? 'anim-success' : anims[g.id] === 'fail' ? 'anim-fail' : ''} />
               ))}
             </div>
 
@@ -930,7 +959,7 @@ export default function App() {
               const isHunting = (isPet ? state.petHuntEndTime : state.castleHuntEndTime) > Date.now();
               return (
                 <UpgradeCard key={type} type={type} 
-                  item={{ id: type, name: isPet ? '고대 드래곤' : '위대한 군주의 성', imgFile: isPet ? 'pet.jpg' : 'castle.jpg', emoji: isPet ? '🐉' : '🏰', lvl: lvl, locked: !isUnlocked, lockMsg: isPet ? '장비 210강 달성 시 개방' : '펫 50강 달성 시 개방', bonusText: `수익 보너스: +${(isPet ? lvl * 3 : lvl * 5) + (isPet ? getPetBonus(lvl) : getCastleBonus(lvl))}%`, successRateDisplay: getSuccessRate(lvl) }} 
+                  item={{ id: type, name: isPet ? '고대 드래곤' : '위대한 군주의 성', imgFile: isPet ? 'pet.jpg' : 'castle.jpg', emoji: isPet ? '🐉' : '🏰', lvl: lvl, locked: !isUnlocked, lockMsg: isPet ? '장비 210강 달성 시 개방' : '펫 50강 달성 시 개방', bonusText: `수익 보너스: +${(isPet ? lvl * 3 : lvl * 5) + (isPet ? getPetBonus(lvl) : getCastleBonus(lvl))}%`, successRateDisplay: getSuccessRateDisplay(lvl, type) }} 
                   isMax={isMax} cost={cost} onUpgrade={handleUpgrade} onAuto={toggleAuto} autoActive={autoUI[type]} animClass={lvlAnims[type] === 'up' ? 'lvl-up' : lvlAnims[type] === 'down' ? 'lvl-down' : ''} boxAnimClass={anims[type] === 'success' ? 'anim-success' : anims[type] === 'fail' ? 'anim-fail' : ''}
                   specialHunt={{ isHunting, huntText: isPet ? '🐉 둥지 사냥 (12h)' : '🏰 천공 사냥 (12h)', onStart: () => startSpecialHunt(type) }}
                 />
@@ -939,7 +968,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 3️⃣ 랭킹 탭 */}
         {activeTab === 'rank' && (
           <div>
             <div className="big-banner-jackpot" style={{ padding: '20px' }}>
@@ -969,25 +997,27 @@ export default function App() {
           </div>
         )}
 
-        {/* 4️⃣ 상점 탭 */}
         {activeTab === 'shop' && (
           <div className="glass-panel" style={{ padding: '25px 20px', border: '2px solid #06b6d4', background: 'linear-gradient(180deg, rgba(20,24,34,0.9), rgba(6,182,212,0.1))' }}>
             <h2 style={{ textAlign: 'center', color: '#06b6d4', margin: '0 0 15px 0', textShadow: '0 0 10px rgba(6,182,212,0.5)' }}>💎 GOU 다이렉트 상점</h2>
-            <p style={{ color: '#ccc', fontSize: '13px', textAlign: 'center', marginBottom: '25px', lineHeight: '1.5' }}>
-              DEX의 악랄한 슬리피지와 봇들의 사재기를 피하십시오!<br/>
-              <span style={{color:'#fbbf24', fontWeight:'bold'}}>진짜 사령관님들께만 고정 교환비로 국고에서 즉시 GOU를 보급합니다.</span>
-            </p>
+            
+            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', padding: '15px', borderRadius: '10px', marginBottom: '25px' }}>
+              <h3 style={{ color: '#ef4444', margin: '0 0 8px 0', fontSize: '14px' }}>🚨 [사령관 특별 공지]</h3>
+              <p style={{ color: '#e6d5b8', fontSize: '12px', lineHeight: '1.6', margin: 0 }}>
+                DEX 상장 초기, 악랄한 <strong>스나이퍼 봇들의 사재기와 막대한 슬리피지(가격 변동)</strong>로부터 진성 홀더분들을 보호하기 위해 임시 개설된 다이렉트 보급소입니다.<br/><br/>
+                초기 봇들의 공격 위험이 사라지고, 진성 홀더분들이 DEX에서 안전하게 진입할 수 있는 생태계가 조성되면 <span style={{color: '#fbbf24', fontWeight: 'bold'}}>이 상점은 즉시 영구 폐쇄</span>됩니다.
+              </p>
+            </div>
 
             {[
-              { ton: 1, gou: 10000000, bonus: null },
-              { ton: 5, gou: 55000000, bonus: '10% BONUS' },
-              { ton: 10, gou: 120000000, bonus: '20% BONUS' }
+              { ton: 1, gou: 10000000 },
+              { ton: 5, gou: 50000000 },
+              { ton: 10, gou: 100000000 }
             ].map((pkg, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.6)', padding: '15px 20px', borderRadius: '12px', marginBottom: '15px', border: pkg.bonus ? '1px solid #fbbf24' : '1px solid #333', boxShadow: pkg.bonus ? '0 0 15px rgba(251,191,36,0.2)' : 'none' }}>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.6)', padding: '15px 20px', borderRadius: '12px', marginBottom: '15px', border: '1px solid #333' }}>
                 <div>
                   <div style={{ color: '#06b6d4', fontWeight: '900', fontSize: '20px' }}>{pkg.ton} TON</div>
                   <div style={{ color: '#fff', fontSize: '13px', marginTop: '4px' }}>= {pkg.gou.toLocaleString()} GOU</div>
-                  {pkg.bonus && <div style={{ color: '#fbbf24', fontSize: '12px', fontWeight: '900', marginTop: '6px', background: 'rgba(251,191,36,0.2)', display: 'inline-block', padding: '2px 6px', borderRadius: '4px' }}>🔥 {pkg.bonus}</div>}
                 </div>
                 <button onClick={() => handleBuyGOU(pkg.ton, pkg.gou)} className="action-btn" style={{ background: 'linear-gradient(90deg, #06b6d4, #3b82f6)', color: '#fff', maxWidth: '110px', fontSize: '15px', padding: '12px 0', boxShadow: '0 4px 15px rgba(6,182,212,0.4)' }}>
                   TON 결제
@@ -1000,7 +1030,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 5️⃣ 설정 탭 */}
         {activeTab === 'setting' && (
           <div className="glass-panel" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', marginBottom: '25px', background: 'rgba(0,0,0,0.5)', borderRadius: '10px', padding: '5px' }}>
@@ -1054,7 +1083,6 @@ export default function App() {
         )}
       </div>
 
-      {/* 🚨 5버튼 체제 하단 네비게이션 */}
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '850px', background: 'rgba(15, 20, 28, 0.98)', borderTop: '2px solid #333', display: 'flex', justifyContent: 'space-around', padding: '10px 2px 20px 2px', zIndex: 9999, boxShadow: '0 -5px 20px rgba(0,0,0,0.8)' }}>
         <button className="bottom-nav-btn" onClick={() => setActiveTab('home')} style={{ color: activeTab === 'home' ? '#06b6d4' : '#666' }}>
           <div style={{ fontSize: '22px', marginBottom: '4px', filter: activeTab === 'home' ? 'drop-shadow(0 0 5px rgba(6,182,212,0.5))' : 'none', transform: activeTab === 'home' ? 'scale(1.15)' : 'scale(1)' }}>🏠</div>
