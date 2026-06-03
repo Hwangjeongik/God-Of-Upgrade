@@ -556,7 +556,7 @@ export default function App() {
 
     setState(s => ({...s, balance: s.balance - amount, burned: s.burned + (amount * 0.05) }));
     try {
-        const res = await httpsCallable(getFunctions(app), 'withdrawGOU')({ userId: getUserId(), amount });
+        onst res = await httpsCallable(getFunctions(app), 'withdrawGOU')({ userId: getUserId(), amount, initData: window.Telegram?.WebApp?.initData || "" });
         alert(`출금 완료! 수수료 ${res.data.feeBurned.toLocaleString()} 소각됨.`);
     } catch (e) { alert("출금 실패: " + e.message); }
   };
@@ -571,7 +571,7 @@ export default function App() {
 
     try {
         const result = await tonConnectUI.sendTransaction(transaction);
-        const res = await httpsCallable(getFunctions(app), 'buyGOU')({ 
+        const res = await httpsCallable(getFunctions(app), 'buyGOU')({ userId: getUserId(), amount: gouAmount, txHash: result.boc, initData: window.Telegram?.WebApp?.initData || "" });
             userId: getUserId(), amount: gouAmount, txHash: result.boc 
         });
         
@@ -587,7 +587,7 @@ export default function App() {
     if (gain < 10) return alert("최소 10 GOU 이상 획득 가능합니다.");
     setState(s => ({ ...s, balance: s.balance + gain, pendingGOU: 0, unclaimedTime: 0 }));
     triggerAnim('claim', 'success');
-    try { await httpsCallable(getFunctions(app), 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * (state.isAdActive ? 2.0 : 1.0) }); } catch (error) {}
+    try { await httpsCallable(getFunctions(app), 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * (state.isAdActive ? 2.0 : 1.0), initData: window.Telegram?.WebApp?.initData || "" });
   };
 
   const startSpecialHunt = (type) => {
@@ -702,7 +702,7 @@ export default function App() {
     else triggerLvlAnim(key, isSuccess ? 'up' : 'down');
     triggerAnim(key, isSuccess ? 'success' : 'fail');
 
-    httpsCallable(getFunctions(app), 'upgradeItem')({ userId: getUserId(), type, id }).catch(e => console.log(e));
+    httpsCallable(getFunctions(app), 'upgradeItem')({ userId: getUserId(), type, id, initData: window.Telegram?.WebApp?.initData || "" }).catch(e => console.log(e));
   };
 
   useEffect(() => { latestUpgradeRef.current = handleUpgrade; });
