@@ -8,7 +8,7 @@ const MAX_SUPPLY = 10000000000000;
 const SAVE_POINTS = [10, 20, 30, 40]; 
 
 // 🚨 사령관님의 실제 운영비 지갑 주소 (TON 입금받을 주소)를 여기에 넣으십시오!
-const ADMIN_WALLET_ADDRESS = "UQD0eayBYATj1UVMLmgXEynXcu8I87LKlylgdQODY1aNUPv6"; // 임시 주소, 반드시 수정!
+const ADMIN_WALLET_ADDRESS = "UQBeUaO9-hrCsfk8UWtaafeu3EXV08Gnoww4bbMdanCZwgmQ"; // 임시 주소, 반드시 수정!
 
 // =========================================================================
 // 🎟️ 핫타임 스크래치 복권 컴포넌트
