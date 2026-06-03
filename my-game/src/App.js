@@ -2,16 +2,14 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TonConnectButton, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
-import { app } from './firebase';
-import PreRegister from './PreRegister'; // 👈 이거 추가!
+import { app } from './firebase'; 
+import PreRegister from './PreRegister'; // 🚨 사전예약 페이지 임포트
 
 const MAX_SUPPLY = 10000000000000; 
 const SAVE_POINTS = [10, 20, 30, 40]; 
-const ADMIN_WALLET_ADDRESS = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ"; // 사령관님 지갑 주소
+const ADMIN_WALLET_ADDRESS = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ";
 
-// =========================================================================
-// 🎟️ 핫타임 스크래치 복권 컴포넌트 
-// =========================================================================
+// 🎟️ 핫타임 복권
 const ScratchLottery = ({ userRank, onReward, onClose }) => {
   const canvasRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -75,7 +73,6 @@ const ScratchLottery = ({ userRank, onReward, onClose }) => {
   return (
     <div style={{ position: 'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.95)', zIndex:99999, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column' }}>
        <h2 style={{color:'#fbbf24', textShadow:'0 0 10px #fbbf24', marginBottom:'15px', animation:'pulse 1.5s infinite'}}>🔥 핫타임 보급 복권 🔥</h2>
-       
        <div style={{ background:'rgba(255,255,255,0.1)', padding:'15px', borderRadius:'10px', marginBottom:'20px', width:'300px', border:'1px solid #555' }}>
           <div style={{ color:'#06b6d4', fontSize:'14px', fontWeight:'bold', textAlign:'center', marginBottom:'10px' }}>[{userRank}] 확률표</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', fontSize:'12px', color:'#fff' }}>
@@ -87,7 +84,6 @@ const ScratchLottery = ({ userRank, onReward, onClose }) => {
              ))}
           </div>
        </div>
-
        <div style={{ position:'relative', width:'300px', height:'150px', background:'#222', borderRadius:'15px', border:'3px solid #fbbf24', overflow:'hidden', boxShadow:'0 0 30px rgba(251,191,36,0.6)' }}>
            <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', width:'100%' }}>
                <div style={{ color:'#fbbf24', fontSize:'24px', fontWeight:'900' }}>🎉 당첨 🎉</div>
@@ -105,9 +101,7 @@ const ScratchLottery = ({ userRank, onReward, onClose }) => {
   );
 };
 
-// =========================================================================
-// 🚀 통합 미니게임 아케이드 엔진 V8 
-// =========================================================================
+// 🚀 통합 미니게임 아케이드 엔진 V8 (블록/기억력 속도 상향)
 const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const [status, setStatus] = useState('playing'); 
   const [pos, setPos] = useState(0);
@@ -130,7 +124,8 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const animate = useCallback((time) => {
     if (lastTimeRef.current != null) {
       const dt = time - lastTimeRef.current;
-      let speed = type === 'blacksmith' ? 0.26 : 0.21 + (stacked * 0.055); 
+      // 🚨 블록쌓기(tower) 난이도 살짝 상승! (속도 증가)
+      let speed = type === 'blacksmith' ? 0.26 : 0.24 + (stacked * 0.06); 
       posRef.current += dirRef.current * speed * dt;
       if (posRef.current >= 100) { posRef.current = 100; dirRef.current = -1; }
       if (posRef.current <= 0) { posRef.current = 0; dirRef.current = 1; }
@@ -182,15 +177,16 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
       setMemSeq(seq);
       setUserSeq([]);
       let i = 0;
+      // 🚨 기억력(memory) 난이도 살짝 상승! (깜빡임 속도 증가)
       const interval = setInterval(() => {
         if(i < seq.length) {
           setFlashIdx(seq[i]);
-          setTimeout(() => setFlashIdx(-1), 75); 
+          setTimeout(() => setFlashIdx(-1), 60); // 더 빠르게 깜빡임
           i++;
         } else {
           clearInterval(interval);
         }
-      }, 220); 
+      }, 180); // 간격 단축
       return () => clearInterval(interval);
     }
   }, [type, status]);
@@ -332,41 +328,39 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   );
 };
 
-// =========================================================================
-// ⚔️ 업그레이드 카드
-// =========================================================================
+// ⚔️ 업그레이드 카드 (UI 크기 축소 패치)
 const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, animClass, boxAnimClass, specialHunt }) => (
-  <div className={`glass-panel ${boxAnimClass}`} style={{ padding: '15px', display: 'flex', flexDirection: type === 'gear' ? 'column' : 'row', alignItems: 'center', gap: type === 'gear' ? '0' : '25px', marginBottom: type === 'gear' ? 0 : '15px', borderTop: type === 'gear' ? '4px solid rgba(197,160,89,0.8)' : 'none', position:'relative', overflow:'hidden' }}>
+  <div className={`glass-panel ${boxAnimClass}`} style={{ padding: '12px', display: 'flex', flexDirection: type === 'gear' ? 'column' : 'row', alignItems: 'center', gap: type === 'gear' ? '0' : '20px', marginBottom: type === 'gear' ? 0 : '12px', borderTop: type === 'gear' ? '4px solid rgba(197,160,89,0.8)' : 'none', position:'relative', overflow:'hidden' }}>
     {item.locked && (
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-        <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px', padding: '10px 20px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)' }}>🔒 {item.lockMsg}</div>
+        <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '11px', padding: '8px 15px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)' }}>🔒 {item.lockMsg}</div>
       </div>
     )}
-    <div className="img-box-gear" style={type !== 'gear' ? { width: '150px', height: '150px', margin: '0' } : {}}>
+    <div className="img-box-gear" style={type !== 'gear' ? { width: '130px', height: '130px', margin: '0' } : {}}>
       <img src={`${process.env.PUBLIC_URL}/${item.imgFile}`} alt={item.name} onError={(e)=>{e.target.style.opacity='0'; e.target.nextSibling.style.display='block';}} />
-      <span style={{ display: 'none', fontSize: '40px', position: 'absolute' }}>{item.emoji}</span>
+      <span style={{ display: 'none', fontSize: '35px', position: 'absolute' }}>{item.emoji}</span>
     </div>
     
     <div style={type !== 'gear' ? { flex: 1 } : { width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {type === 'gear' && <div style={{ fontSize: '11px', color: '#c5a059', fontWeight: 'bold', marginTop: '8px' }}>[{item.statText}]</div>}
+      {type === 'gear' && <div style={{ fontSize: '10px', color: '#c5a059', fontWeight: 'bold', marginTop: '6px' }}>[{item.statText}]</div>}
       
-      <div style={{ fontSize: type === 'gear' ? '13px' : '20px', fontWeight: '900', margin: '6px 0', color: type === 'gear' ? '#fff' : '#fbbf24', textAlign: type === 'gear' ? 'center' : 'left' }}>
-        {item.name} <span className={animClass} style={{ color: type === 'gear' ? '#fbbf24' : '#fff', fontSize: type === 'gear' ? 'inherit' : '14px', display: 'inline-block', marginLeft: type !== 'gear' ? '5px' : '0' }}><br/>+{item.lvl}</span>
+      <div style={{ fontSize: type === 'gear' ? '12px' : '18px', fontWeight: '900', margin: '4px 0', color: type === 'gear' ? '#fff' : '#fbbf24', textAlign: type === 'gear' ? 'center' : 'left' }}>
+        {item.name} <span className={animClass} style={{ color: type === 'gear' ? '#fbbf24' : '#fff', fontSize: type === 'gear' ? 'inherit' : '13px', display: 'inline-block', marginLeft: type !== 'gear' ? '5px' : '0' }}><br/>+{item.lvl}</span>
       </div>
 
-      <div style={{ color: '#ccc', fontSize: '12px', lineHeight: '1.5', textAlign: type === 'gear' ? 'center' : 'left', background: 'rgba(0,0,0,0.4)', padding: '5px', borderRadius: '5px', width: '100%' }}>
+      <div style={{ color: '#ccc', fontSize: '11px', lineHeight: '1.4', textAlign: type === 'gear' ? 'center' : 'left', background: 'rgba(0,0,0,0.4)', padding: '5px', borderRadius: '5px', width: '100%' }}>
         {item.bonusText}<br/>
         확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${item.successRateDisplay}%`}</span><br/>
         비용: <span style={{color: '#fbbf24', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${cost.toLocaleString()}${type !== 'gear' ? ' GOU' : ''}`}</span>
       </div>
       
-      <div style={{ display: 'flex', width: '100%', gap: '6px', marginTop: '12px' }}>
-        <button onClick={() => onUpgrade(type, item.id)} disabled={isMax || autoActive} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24' }}>강화</button>
-        <button onClick={() => onAuto(type, item.id)} disabled={isMax} className="action-btn" style={{ background: autoActive ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', color: autoActive ? '#06b6d4' : '#888', border: `1px solid ${autoActive ? '#06b6d4' : '#555'}` }}>{autoActive ? 'STOP' : 'AUTO'}</button>
+      <div style={{ display: 'flex', width: '100%', gap: '4px', marginTop: '8px' }}>
+        <button onClick={() => onUpgrade(type, item.id)} disabled={isMax || autoActive} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding:'8px', fontSize:'12px' }}>강화</button>
+        <button onClick={() => onAuto(type, item.id)} disabled={isMax} className="action-btn" style={{ background: autoActive ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', color: autoActive ? '#06b6d4' : '#888', border: `1px solid ${autoActive ? '#06b6d4' : '#555'}`, padding:'8px', fontSize:'12px' }}>{autoActive ? 'STOP' : 'AUTO'}</button>
       </div>
 
       {specialHunt && isMax && (
-        <button onClick={specialHunt.onStart} disabled={specialHunt.isHunting} className="action-btn" style={{ width: '100%', marginTop: '10px', background: specialHunt.isHunting ? '#333' : 'rgba(147,51,234,0.3)', color: specialHunt.isHunting ? '#888' : '#a855f7', border: `1px solid ${specialHunt.isHunting ? '#444' : '#a855f7'}` }}>
+        <button onClick={specialHunt.onStart} disabled={specialHunt.isHunting} className="action-btn" style={{ width: '100%', marginTop: '8px', padding:'10px', fontSize:'12px', background: specialHunt.isHunting ? '#333' : 'rgba(147,51,234,0.3)', color: specialHunt.isHunting ? '#888' : '#a855f7', border: `1px solid ${specialHunt.isHunting ? '#444' : '#a855f7'}` }}>
           {specialHunt.isHunting ? '진행 중 ⚔️' : specialHunt.huntText}
         </button>
       )}
@@ -374,16 +368,14 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
   </div>
 );
 
-// =========================================================================
 // 👑 메인 사령부 APP
-// =========================================================================
 export default function App() {
-  // 👇 런칭일 체크 로직 추가!
-  const launchDate = new Date('2026-06-20T00:00:00+09:00').getTime();
+  // 🚨 6월 20일 오전 11시(KST) 전에는 사전예약 페이지 노출!
+  const launchDate = new Date('2026-06-20T11:00:00+09:00').getTime();
   if (Date.now() < launchDate) {
     return <PreRegister />;
   }
-  // 👆 여기까지 추가! (이 아래로는 기존 state 등 그대로 둠)
+
   const [activeTab, setActiveTab] = useState('home');
   const [settingTab, setSettingTab] = useState('friend'); 
   const [invitedFriends, setInvitedFriends] = useState([
@@ -400,8 +392,9 @@ export default function App() {
     {name: '황혼 화산', mult: 12, reqSum: 150, req: {atk:230, hp:2300, def:115, acc:46}}
   ], []);
 
+  // 🚨 기본 자본 50,000 / 잭팟 0원 세팅 완료
   const [state, setState] = useState({ 
-    screen: 'wallet', walletAddress: '', balance: 1000000000, burned: 0, jackpot: 50000000, 
+    screen: 'wallet', walletAddress: '', balance: 50000, burned: 0, jackpot: 0, 
     pendingGOU: 0, unclaimedTime: 0, userName: "사령관",
     petLevel: 0, castleLevel: 0, petHuntEndTime: 0, castleHuntEndTime: 0, isAdActive: false, adTimeLeft: 0,
     tickets: 3, adViewsLeft: 3, nextAdChargeTime: 0, 
@@ -459,15 +452,11 @@ export default function App() {
     return "훈련병";
   }, [state.castleLevel, state.petLevel, totalGearLevel, state.customGodTitle]);
 
+  // 🚨 랭킹판 테스트용 봇 완벽 제거
   const rankings = useMemo(() => {
     const myScore = state.castleLevel * 100000 + state.petLevel * 1000 + totalGearLevel;
     const myData = { name: state.userName, title: userRankTitle, score: myScore, isMe: true, c: state.castleLevel, p: state.petLevel, g: totalGearLevel };
-    const bots = [
-      { name: "KOREA", title: "LEGENDARY GOD", score: 50 * 100000 + 50 * 1000 + 210, c: 50, p: 50, g: 210 },
-      { name: "UPGRADE", title: "KING OF LUCK", score: 40 * 100000 + 50 * 1000 + 210, c: 40, p: 50, g: 210 },
-      { name: "CHAMPION", title: "IRON KNIGHT", score: 30 * 100000 + 20 * 1000 + 150, c: 30, p: 20, g: 150 },
-    ];
-    return [...bots, myData].sort((a, b) => b.score - a.score).map((r, i) => ({ ...r, rank: i + 1 }));
+    return [myData].sort((a, b) => b.score - a.score).map((r, i) => ({ ...r, rank: i + 1 }));
   }, [state.userName, userRankTitle, state.castleLevel, state.petLevel, totalGearLevel]);
 
   const currentStats = useMemo(() => ({
@@ -507,7 +496,6 @@ export default function App() {
   const getPetCost = useCallback((lvl) => calculateCost(lvl, 'pet', levelsRef.current['necklace']), [calculateCost]);
   const getCastleCost = useCallback((lvl) => calculateCost(lvl, 'castle', levelsRef.current['necklace']), [calculateCost]);
 
-  // 🚨 [수정] 세밀하게 조정된 프론트엔드 UI용 성공 확률 표시 로직
   const getSuccessRateDisplay = (lvl, type) => {
     const ringBonus = (levelsRef.current['ring'] || 0) * 0.1; 
     let base = 100;
@@ -643,14 +631,12 @@ export default function App() {
 
   const testPushNotification = async () => {
     const uid = getUserId();
-    if (uid === "test_commander_123") return alert("🚨 에러: 텔레그램 앱에서 실행했는지 확인하세요.");
     try {
       await httpsCallable(getFunctions(app), 'testPushNotification')({ userId: uid, title: userRankTitle, name: state.userName });
       alert("✅ 백엔드로 실제 알림 전송 명령을 꽂아 넣었습니다!");
     } catch (e) { alert("❌ 푸시 실패: " + e.message); }
   };
 
-  // 🚨 [수정] 프론트엔드 실제 강화 확률 수식 로직 동기화
   const getRealSuccessRate = (lvl, type) => {
     let base = 1.0;
     if (type === 'gear') {
@@ -826,7 +812,7 @@ export default function App() {
         .action-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; transition: transform 0.05s, opacity 0.2s; }
         .action-btn:active { transform: scale(0.92); } .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .glass-panel { background: rgba(20, 24, 34, 0.85); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
-        .img-box-gear { width: 135px; height: 135px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; position: relative; }
+        .img-box-gear { width: 100px; height: 100px; background: rgba(0,0,0,0.9); border: 1px solid rgba(197,160,89,0.5); border-radius: 15px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto 10px auto; position: relative; }
         .img-box-gear img { width: 90%; height: 90%; object-fit: contain; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -901,7 +887,7 @@ export default function App() {
 
               <div className="glass-panel" style={{ flex: 1, margin: 0, padding: '20px', display: 'flex', flexDirection: 'column', border: '2px solid #10b981' }}>
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
-                  <h3 style={{color:'#10b981', margin:0, fontSize:'18px'}}>🎰 아케이드 게임장</h3>
+                  <h3 style={{color:'#10b981', margin:0, fontSize:'18px'}}>🎰 랜덤 아케이드 게임장</h3>
                   <button onClick={() => setShowGuide(true)} style={{ background: 'transparent', color: '#ccc', border: '1px solid #555', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}>ℹ️ 가이드</button>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', background: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '10px', border:'1px solid #333' }}>
@@ -910,13 +896,17 @@ export default function App() {
                   <div style={{textAlign:'center', flex:1}}><div style={{fontSize:'11px', color:'#aaa', marginBottom:'4px'}}>남은 광고</div><div style={{color:'#06b6d4', fontWeight:'bold', fontSize:'18px'}}>📺 {state.adViewsLeft}/3</div></div>
                 </div>
                 <button onClick={watchAdForTicket} style={{ width:'100%', background: 'linear-gradient(90deg, #06b6d4, #3b82f6)', color: '#fff', border:'none', padding:'12px', borderRadius:'10px', fontWeight:'bold', marginBottom:'15px', cursor:'pointer' }}>📺 광고 보고 티켓 충전</button>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  {['blacksmith', 'tower', 'catch', 'memory'].map(t => (
-                    <button key={t} onClick={() => { if(state.tickets<=0)return alert("티켓 부족!"); setState(s=>({...s,tickets:s.tickets-1})); setActiveModal(t); }} className="action-btn" style={{background:'rgba(255,255,255,0.1)', color:'#fff', border:'1px solid #555', fontSize:'12px', padding:'10px'}}>
-                      {t==='blacksmith'?'🔨 망치질':t==='tower'?'🏗️ 블록쌓기':t==='catch'?'📦 상자잡기':'🧠 기억력'}
-                    </button>
-                  ))}
-                </div>
+                
+                {/* 🚨 단일 랜덤 아케이드 버튼 */}
+                <button onClick={() => { 
+                  if(state.tickets <= 0) return alert("티켓이 부족합니다!"); 
+                  setState(s => ({...s, tickets: s.tickets - 1})); 
+                  const games = ['blacksmith', 'tower', 'catch', 'memory'];
+                  const randGame = games[Math.floor(Math.random() * games.length)];
+                  setActiveModal(randGame); 
+                }} className="action-btn" style={{ background: 'linear-gradient(90deg, #a855f7, #ec4899)', color: '#fff', padding: '18px 0', fontSize: '16px', border: 'none', width: '100%', borderRadius: '10px', fontWeight: '900', boxShadow: '0 5px 15px rgba(236, 72, 153, 0.4)' }}>
+                  🎲 랜덤 아케이드 입장 (티켓 1장)
+                </button>
               </div>
             </div>
           </div>
@@ -925,25 +915,26 @@ export default function App() {
         {activeTab === 'upgrade' && (
           <div>
             <h3 style={{ color: '#fbbf24', margin: '0 0 10px 5px', fontSize: '16px' }}>🗺️ 점령 영지 현황 (전투력 매칭)</h3>
-            <div className="hide-scrollbar" style={{ display: 'flex', overflowX: 'auto', gap: '12px', paddingBottom: '15px', WebkitOverflowScrolling: 'touch' }}>
+            <div className="hide-scrollbar" style={{ display: 'flex', overflowX: 'auto', gap: '15px', paddingBottom: '15px', WebkitOverflowScrolling: 'touch' }}>
               {activeHuntsToRender.map(h => {
                 const isActive = !h.isSpecial ? (!currentHuntData.isSpecial && currentHuntData.name === h.name) : true;
                 const isUnlocked = h.isSpecial ? true : (currentStats.atk >= h.req.atk && currentStats.hp >= h.req.hp && currentStats.def >= h.req.def && currentStats.acc >= h.req.acc && currentStats.sum >= h.reqSum);
                 return (
-                  <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ minWidth: '150px', flexShrink: 0, background: h.isSpecial ? 'rgba(147, 51, 234, 0.2)' : 'rgba(15, 18, 25, 0.8)', border: `1px solid ${isActive ? (h.isSpecial ? '#a855f7' : '#fff') : (isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)')}`, padding: '12px 10px', borderRadius: '12px', opacity: isUnlocked ? 1 : 0.4, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  // 🚨 사냥터 UI 박스 확대 패치 (minWidth 170px, padding 확대)
+                  <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ minWidth: '170px', flexShrink: 0, background: h.isSpecial ? 'rgba(147, 51, 234, 0.2)' : 'rgba(15, 18, 25, 0.8)', border: `1px solid ${isActive ? (h.isSpecial ? '#a855f7' : '#fff') : (isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)')}`, padding: '16px 12px', borderRadius: '12px', opacity: isUnlocked ? 1 : 0.4, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div style={{ textAlign: 'center' }}>
-                      <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '13px' }}>{isActive && !h.isSpecial ? '⚔️ ' : ''}{h.name}</b>
-                      <div style={{ color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', marginTop: '5px', fontSize: '12px' }}>수익 X{h.mult}</div>
+                      <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '14px' }}>{isActive && !h.isSpecial ? '⚔️ ' : ''}{h.name}</b>
+                      <div style={{ color: isActive ? '#fbbf24' : '#c5a059', fontWeight: 'bold', marginTop: '6px', fontSize: '13px' }}>수익 X{h.mult}</div>
                     </div>
                     {!h.isSpecial && (
-                      <div style={{ marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', background: 'rgba(0,0,0,0.6)', padding: '6px', borderRadius: '6px', fontSize: '10px', color: '#ccc', textAlign: 'center' }}>
+                      <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', background: 'rgba(0,0,0,0.6)', padding: '8px', borderRadius: '6px', fontSize: '11px', color: '#ccc', textAlign: 'center' }}>
                           <div>공 <span style={{color: currentStats.atk >= h.req.atk ? '#06b6d4' : '#ef4444', fontWeight:'bold'}}>{h.req.atk}</span></div>
                           <div>체 <span style={{color: currentStats.hp >= h.req.hp ? '#06b6d4' : '#ef4444', fontWeight:'bold'}}>{h.req.hp}</span></div>
                           <div>방 <span style={{color: currentStats.def >= h.req.def ? '#06b6d4' : '#ef4444', fontWeight:'bold'}}>{h.req.def}</span></div>
                           <div>명 <span style={{color: currentStats.acc >= h.req.acc ? '#06b6d4' : '#ef4444', fontWeight:'bold'}}>{h.req.acc}</span></div>
                         </div>
-                        <div style={{ fontSize: '10px', color: isUnlocked ? '#aaa' : '#666', marginTop: '6px', textAlign: 'center' }}>필요 강화 합: <span style={{color: isUnlocked?'#fff':'#666', fontWeight:'bold'}}>{h.reqSum}강</span></div>
+                        <div style={{ fontSize: '11px', color: isUnlocked ? '#aaa' : '#666', marginTop: '8px', textAlign: 'center' }}>필요 강화 합: <span style={{color: isUnlocked?'#fff':'#666', fontWeight:'bold'}}>{h.reqSum}강</span></div>
                       </div>
                     )}
                   </div>
@@ -998,6 +989,9 @@ export default function App() {
                       </td>
                     </tr>
                   ))}
+                  {rankings.length === 0 && (
+                     <tr><td colSpan="3" style={{textAlign:'center', padding:'20px', color:'#888'}}>아직 랭커가 없습니다.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1007,7 +1001,6 @@ export default function App() {
         {activeTab === 'shop' && (
           <div className="glass-panel" style={{ padding: '25px 20px', border: '2px solid #06b6d4', background: 'linear-gradient(180deg, rgba(20,24,34,0.9), rgba(6,182,212,0.1))' }}>
             <h2 style={{ textAlign: 'center', color: '#06b6d4', margin: '0 0 15px 0', textShadow: '0 0 10px rgba(6,182,212,0.5)' }}>💎 GOU 다이렉트 상점</h2>
-            
             <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', padding: '15px', borderRadius: '10px', marginBottom: '25px' }}>
               <h3 style={{ color: '#ef4444', margin: '0 0 8px 0', fontSize: '14px' }}>🚨 [사령관 특별 공지]</h3>
               <p style={{ color: '#e6d5b8', fontSize: '12px', lineHeight: '1.6', margin: 0 }}>
@@ -1047,7 +1040,12 @@ export default function App() {
             {settingTab === 'my' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 <button onClick={handleTitleEdit} className="action-btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid #555' }}>🛡️ 나만의 GOD 칭호 변경 (성 50강 필요)</button>
-                <button onClick={testPushNotification} className="action-btn" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #3b82f6' }}>🔔 텔레그램 알림 시스템 테스트</button>
+                
+                {/* 🚨 오직 사령관님 전용 관리자 권한 버튼! */}
+                {getUserId() === 'test_commander_123' && (
+                  <button onClick={testPushNotification} className="action-btn" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #3b82f6' }}>🔔 [관리자 전용] 텔레그램 알림 발송 테스트</button>
+                )}
+                
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={() => setActiveTab('shop')} className="action-btn" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid #22c55e' }}>📥 GOU 다이렉트 구매</button>
                   <button onClick={withdrawGOU} className="action-btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>📤 GOU 국고 출금 (140강 필요)</button>
