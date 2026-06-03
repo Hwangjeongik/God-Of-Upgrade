@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TonConnectButton, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
-import { app } from './firebase'; 
+import { app } from './firebase';
+import PreRegister from './PreRegister'; // 👈 이거 추가!
 
 const MAX_SUPPLY = 10000000000000; 
 const SAVE_POINTS = [10, 20, 30, 40]; 
@@ -377,6 +378,12 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
 // 👑 메인 사령부 APP
 // =========================================================================
 export default function App() {
+  // 👇 런칭일 체크 로직 추가!
+  const launchDate = new Date('2026-06-20T00:00:00+09:00').getTime();
+  if (Date.now() < launchDate) {
+    return <PreRegister />;
+  }
+  // 👆 여기까지 추가! (이 아래로는 기존 state 등 그대로 둠)
   const [activeTab, setActiveTab] = useState('home');
   const [settingTab, setSettingTab] = useState('friend'); 
   const [invitedFriends, setInvitedFriends] = useState([
