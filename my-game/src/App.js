@@ -11,20 +11,40 @@ const SAVE_POINTS = [10, 20, 30, 40];
 const ADMIN_WALLET_ADDRESS = "UQBeUaO9-hrCsfk8UWtaafeu3EXV08Gnoww4bbMdanCZwgmQ"; // 임시 주소, 반드시 수정!
 
 // =========================================================================
-// 🎟️ 핫타임 스크래치 복권 컴포넌트
+// 🎟️ 핫타임 스크래치 복권 컴포넌트 (계급별 고정 보상 완벽 적용)
 // =========================================================================
-const ScratchLottery = ({ onReward, onClose }) => {
+const ScratchLottery = ({ userRank, onReward, onClose }) => {
   const canvasRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [reward, setReward] = useState(0);
 
   useEffect(() => {
-    let r = Math.random() * 100;
+    // 🚨 사령관님의 헌법: 계급별 정확한 고정 확률과 보상금
+    const roll = Math.random() * 100;
     let amt = 0;
-    if(r < 80) amt = Math.floor(Math.random()*(10000000-500000)+500000);
-    else if(r < 95) amt = Math.floor(Math.random()*(100000000-5000000)+5000000);
-    else if(r < 99) amt = Math.floor(Math.random()*(1000000000-50000000)+50000000);
-    else amt = Math.floor(Math.random()*(10000000000-100000000)+100000000);
+
+    if (userRank.includes('GOD')) {
+      if (roll < 80) amt = 100000000;       // 80%: 1억
+      else if (roll < 95) amt = 1000000000;  // 15%: 10억
+      else if (roll < 99) amt = 5000000000;  // 4%: 50억
+      else amt = 10000000000;                // 1%: 100억
+    } else if (userRank.includes('사령관')) {
+      if (roll < 80) amt = 50000000;        // 80%: 5천만
+      else if (roll < 95) amt = 100000000;   // 15%: 1억
+      else if (roll < 99) amt = 500000000;   // 4%: 5억
+      else amt = 1000000000;                 // 1%: 10억
+    } else if (userRank.includes('기사')) {
+      if (roll < 80) amt = 5000000;         // 80%: 500만
+      else if (roll < 95) amt = 10000000;    // 15%: 1천만
+      else if (roll < 99) amt = 50000000;    // 4%: 5천만
+      else amt = 100000000;                  // 1%: 1억
+    } else { // 훈련병
+      if (roll < 80) amt = 500000;          // 80%: 50만
+      else if (roll < 95) amt = 1000000;     // 15%: 100만
+      else if (roll < 99) amt = 5000000;     // 4%: 500만
+      else amt = 10000000;                   // 1%: 1천만
+    }
+    
     setReward(amt);
 
     const canvas = canvasRef.current;
@@ -35,7 +55,7 @@ const ScratchLottery = ({ onReward, onClose }) => {
     ctx.fillStyle = '#78909c';
     ctx.textAlign = 'center';
     ctx.fillText('손가락으로 긁으세요!', canvas.width/2, canvas.height/2 + 7);
-  }, []);
+  }, [userRank]); // userRank 변경 시 재계산
 
   const handleScratch = (e) => {
     if(isCompleted) return;
@@ -791,7 +811,8 @@ export default function App() {
         .bottom-nav-btn { flex: 1; background: transparent; border: none; display: flex; flexDirection: column; alignItems: center; cursor: pointer; transition: 0.2s; padding: 5px 2px; }
       `}</style>
 
-      {showLottery && <ScratchLottery onReward={(amt) => { setState(s => ({...s, balance: s.balance + amt, lastLotterySlot: currentLotterySlot})); alert("국고 입금 완료!"); }} onClose={() => setShowLottery(false)} />}
+      {/* 🚨 여기에 userRank={userRankTitle} 가 추가되었습니다! */}
+{showLottery && <ScratchLottery userRank={userRankTitle} onReward={(amt) => { setState(s => ({...s, balance: s.balance + amt, lastLotterySlot: currentLotterySlot})); alert("국고 입금 완료!"); }} onClose={() => setShowLottery(false)} />}
       {activeModal && <ArcadeGames type={activeModal} onClose={() => setActiveModal(null)} onReward={(r) => { if(r>0) setState(s=>({...s, balance:s.balance+r})); setActiveModal(null); }} pReward={pReward} gReward={gReward} />}
       
       {canPlayLottery && activeTab === 'home' && (
