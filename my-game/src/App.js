@@ -3,13 +3,15 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TonConnectButton, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
 import { app } from './firebase'; 
-import PreRegister from './PreRegister'; // 🚨 사전예약 페이지 임포트
+import PreRegister from './PreRegister'; 
 
 const MAX_SUPPLY = 10000000000000; 
 const SAVE_POINTS = [10, 20, 30, 40]; 
 const ADMIN_WALLET_ADDRESS = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ";
 
-// 🎟️ 핫타임 복권
+// =========================================================================
+// 🎟️ 핫타임 스크래치 복권 컴포넌트
+// =========================================================================
 const ScratchLottery = ({ userRank, onReward, onClose }) => {
   const canvasRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -101,7 +103,9 @@ const ScratchLottery = ({ userRank, onReward, onClose }) => {
   );
 };
 
-// 🚀 통합 미니게임 아케이드 엔진 V8 (블록/기억력 속도 상향)
+// =========================================================================
+// 🚀 미니게임 아케이드 엔진
+// =========================================================================
 const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const [status, setStatus] = useState('playing'); 
   const [pos, setPos] = useState(0);
@@ -124,7 +128,6 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const animate = useCallback((time) => {
     if (lastTimeRef.current != null) {
       const dt = time - lastTimeRef.current;
-      // 🚨 블록쌓기(tower) 난이도 살짝 상승! (속도 증가)
       let speed = type === 'blacksmith' ? 0.26 : 0.24 + (stacked * 0.06); 
       posRef.current += dirRef.current * speed * dt;
       if (posRef.current >= 100) { posRef.current = 100; dirRef.current = -1; }
@@ -177,16 +180,15 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
       setMemSeq(seq);
       setUserSeq([]);
       let i = 0;
-      // 🚨 기억력(memory) 난이도 살짝 상승! (깜빡임 속도 증가)
       const interval = setInterval(() => {
         if(i < seq.length) {
           setFlashIdx(seq[i]);
-          setTimeout(() => setFlashIdx(-1), 60); // 더 빠르게 깜빡임
+          setTimeout(() => setFlashIdx(-1), 60); 
           i++;
         } else {
           clearInterval(interval);
         }
-      }, 180); // 간격 단축
+      }, 180); 
       return () => clearInterval(interval);
     }
   }, [type, status]);
@@ -328,7 +330,9 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   );
 };
 
-// ⚔️ 업그레이드 카드 (UI 크기 축소 패치)
+// =========================================================================
+// ⚔️ 업그레이드 카드
+// =========================================================================
 const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, animClass, boxAnimClass, specialHunt }) => (
   <div className={`glass-panel ${boxAnimClass}`} style={{ padding: '12px', display: 'flex', flexDirection: type === 'gear' ? 'column' : 'row', alignItems: 'center', gap: type === 'gear' ? '0' : '20px', marginBottom: type === 'gear' ? 0 : '12px', borderTop: type === 'gear' ? '4px solid rgba(197,160,89,0.8)' : 'none', position:'relative', overflow:'hidden' }}>
     {item.locked && (
@@ -368,9 +372,10 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
   </div>
 );
 
+// =========================================================================
 // 👑 메인 사령부 APP
+// =========================================================================
 export default function App() {
-  // 🚨 6월 20일 오전 11시(KST) 전에는 사전예약 페이지 노출!
   const launchDate = new Date('2026-06-20T11:00:00+09:00').getTime();
   if (Date.now() < launchDate) {
     return <PreRegister />;
@@ -378,11 +383,11 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState('home');
   const [settingTab, setSettingTab] = useState('friend'); 
-  const [invitedFriends, setInvitedFriends] = useState([
+  const [invitedFriends] = useState([
     { name: "홍길동", rank: "훈련병", petLvl: 0, castleLvl: 0 },
     { name: "KOREA", rank: "기사", petLvl: 50, castleLvl: 10 }
   ]);
-  const [validInvites, setValidInvites] = useState(1); 
+  const [validInvites] = useState(1); 
 
   const hunts = useMemo(() => [
     {name: '초원 영지', mult: 1, reqSum: 0, req: {atk:0, hp:0, def:0, acc:0}},
@@ -392,7 +397,6 @@ export default function App() {
     {name: '황혼 화산', mult: 12, reqSum: 150, req: {atk:230, hp:2300, def:115, acc:46}}
   ], []);
 
-  // 🚨 기본 자본 50,000 / 잭팟 0원 세팅 완료
   const [state, setState] = useState({ 
     screen: 'wallet', walletAddress: '', balance: 50000, burned: 0, jackpot: 0, 
     pendingGOU: 0, unclaimedTime: 0, userName: "사령관",
@@ -452,7 +456,6 @@ export default function App() {
     return "훈련병";
   }, [state.castleLevel, state.petLevel, totalGearLevel, state.customGodTitle]);
 
-  // 🚨 랭킹판 테스트용 봇 완벽 제거
   const rankings = useMemo(() => {
     const myScore = state.castleLevel * 100000 + state.petLevel * 1000 + totalGearLevel;
     const myData = { name: state.userName, title: userRankTitle, score: myScore, isMe: true, c: state.castleLevel, p: state.petLevel, g: totalGearLevel };
@@ -539,7 +542,7 @@ export default function App() {
   useEffect(() => {
     if (wallet) {
       setState(s => ({ ...s, walletAddress: wallet.account.address.substring(0, 6) + '...' + wallet.account.address.substring(wallet.account.address.length - 4), screen: 'game' }));
-      httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName }).catch(e => console.log(e));
+      httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName, initData: window.Telegram?.WebApp?.initData || "" }).catch(e => console.log(e));
     } else {
       setState(s => ({ ...s, screen: 'wallet' }));
     }
@@ -556,7 +559,7 @@ export default function App() {
 
     setState(s => ({...s, balance: s.balance - amount, burned: s.burned + (amount * 0.05) }));
     try {
-        onst res = await httpsCallable(getFunctions(app), 'withdrawGOU')({ userId: getUserId(), amount, initData: window.Telegram?.WebApp?.initData || "" });
+        const res = await httpsCallable(getFunctions(app), 'withdrawGOU')({ userId: getUserId(), amount, initData: window.Telegram?.WebApp?.initData || "" });
         alert(`출금 완료! 수수료 ${res.data.feeBurned.toLocaleString()} 소각됨.`);
     } catch (e) { alert("출금 실패: " + e.message); }
   };
@@ -571,8 +574,8 @@ export default function App() {
 
     try {
         const result = await tonConnectUI.sendTransaction(transaction);
-        const res = await httpsCallable(getFunctions(app), 'buyGOU')({ userId: getUserId(), amount: gouAmount, txHash: result.boc, initData: window.Telegram?.WebApp?.initData || "" });
-            userId: getUserId(), amount: gouAmount, txHash: result.boc 
+        const res = await httpsCallable(getFunctions(app), 'buyGOU')({ 
+            userId: getUserId(), amount: gouAmount, txHash: result.boc, initData: window.Telegram?.WebApp?.initData || "" 
         });
         
         if (res.data.success) {
@@ -587,7 +590,7 @@ export default function App() {
     if (gain < 10) return alert("최소 10 GOU 이상 획득 가능합니다.");
     setState(s => ({ ...s, balance: s.balance + gain, pendingGOU: 0, unclaimedTime: 0 }));
     triggerAnim('claim', 'success');
-    try { await httpsCallable(getFunctions(app), 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * (state.isAdActive ? 2.0 : 1.0), initData: window.Telegram?.WebApp?.initData || "" });
+    try { await httpsCallable(getFunctions(app), 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * (state.isAdActive ? 2.0 : 1.0), initData: window.Telegram?.WebApp?.initData || "" }); } catch (error) {}
   };
 
   const startSpecialHunt = (type) => {
@@ -762,7 +765,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (window.Telegram?.WebApp) { window.Telegram.WebApp.ready(); window.Telegram.WebApp.expand(); }
     const timer = setInterval(() => {
       setState(s => {
         const currentKSTDay = Math.floor((Date.now() + 9 * 3600000) / 86400000);
@@ -825,7 +827,7 @@ export default function App() {
         @keyframes lvlDown { 0% { transform: scale(1); color: #fbbf24; } 50% { transform: scale(0.7); color: #ef4444; } 100% { transform: scale(1); color: #fbbf24; } }
         .anim-success { animation: flashSuccess 0.2s ease-out; } .anim-fail { animation: flashFail 0.2s ease-out; }
         .lvl-up { animation: lvlUp 0.25s ease-out; display: inline-block; } .lvl-down { animation: lvlDown 0.25s ease-out; display: inline-block; }
-        .bottom-nav-btn { flex: 1; background: transparent; border: none; display: flex; flexDirection: column; alignItems: center; cursor: pointer; transition: 0.2s; padding: 5px 2px; }
+        .bottom-nav-btn { flex: 1; background: transparent; border: none; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; padding: 5px 2px; }
       `}</style>
 
       {showLottery && <ScratchLottery userRank={userRankTitle} onReward={(amt) => { setState(s => ({...s, balance: s.balance + amt, lastLotterySlot: currentLotterySlot})); alert("국고 입금 완료!"); }} onClose={() => setShowLottery(false)} />}
@@ -896,8 +898,6 @@ export default function App() {
                   <div style={{textAlign:'center', flex:1}}><div style={{fontSize:'11px', color:'#aaa', marginBottom:'4px'}}>남은 광고</div><div style={{color:'#06b6d4', fontWeight:'bold', fontSize:'18px'}}>📺 {state.adViewsLeft}/3</div></div>
                 </div>
                 <button onClick={watchAdForTicket} style={{ width:'100%', background: 'linear-gradient(90deg, #06b6d4, #3b82f6)', color: '#fff', border:'none', padding:'12px', borderRadius:'10px', fontWeight:'bold', marginBottom:'15px', cursor:'pointer' }}>📺 광고 보고 티켓 충전</button>
-                
-                {/* 🚨 단일 랜덤 아케이드 버튼 */}
                 <button onClick={() => { 
                   if(state.tickets <= 0) return alert("티켓이 부족합니다!"); 
                   setState(s => ({...s, tickets: s.tickets - 1})); 
@@ -920,7 +920,6 @@ export default function App() {
                 const isActive = !h.isSpecial ? (!currentHuntData.isSpecial && currentHuntData.name === h.name) : true;
                 const isUnlocked = h.isSpecial ? true : (currentStats.atk >= h.req.atk && currentStats.hp >= h.req.hp && currentStats.def >= h.req.def && currentStats.acc >= h.req.acc && currentStats.sum >= h.reqSum);
                 return (
-                  // 🚨 사냥터 UI 박스 확대 패치 (minWidth 170px, padding 확대)
                   <div key={h.name} className={isActive ? 'hunt-active' : ''} style={{ minWidth: '170px', flexShrink: 0, background: h.isSpecial ? 'rgba(147, 51, 234, 0.2)' : 'rgba(15, 18, 25, 0.8)', border: `1px solid ${isActive ? (h.isSpecial ? '#a855f7' : '#fff') : (isUnlocked ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)')}`, padding: '16px 12px', borderRadius: '12px', opacity: isUnlocked ? 1 : 0.4, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div style={{ textAlign: 'center' }}>
                       <b style={{ color: isActive ? '#fff' : (isUnlocked ? '#06b6d4' : '#666'), fontSize: '14px' }}>{isActive && !h.isSpecial ? '⚔️ ' : ''}{h.name}</b>
@@ -1024,7 +1023,7 @@ export default function App() {
                 </button>
               </div>
             ))}
-            <div style={{ textAlign: 'center', fontSize: '11px', color: '#666', marginTop: '20px' }}>
+            <div style={{ textalign: 'center', fontSize: '11px', color: '#666', marginTop: '20px' }}>
               결제 즉시 사령관님의 계정(GOU 국고)으로 전송됩니다.<br/>추후 DEX(Ston.fi) 오라클이 연동되어 실시간 가격으로 자동 환산될 예정입니다.
             </div>
           </div>
@@ -1040,12 +1039,9 @@ export default function App() {
             {settingTab === 'my' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 <button onClick={handleTitleEdit} className="action-btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid #555' }}>🛡️ 나만의 GOD 칭호 변경 (성 50강 필요)</button>
-                
-                {/* 🚨 오직 사령관님 전용 관리자 권한 버튼! */}
                 {getUserId() === 'test_commander_123' && (
                   <button onClick={testPushNotification} className="action-btn" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #3b82f6' }}>🔔 [관리자 전용] 텔레그램 알림 발송 테스트</button>
                 )}
-                
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={() => setActiveTab('shop')} className="action-btn" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid #22c55e' }}>📥 GOU 다이렉트 구매</button>
                   <button onClick={withdrawGOU} className="action-btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>📤 GOU 국고 출금 (140강 필요)</button>
@@ -1058,14 +1054,12 @@ export default function App() {
                 <button onClick={() => alert("초대 링크가 복사되었습니다!\n(백엔드 봇 시스템 연결 시 실제 링크가 생성됩니다.)")} style={{ width: '100%', padding: '15px', background: 'linear-gradient(90deg, #a855f7, #7e22ce)', color: '#fff', borderRadius: '10px', fontWeight: 'bold', fontSize: '16px', border: 'none', marginBottom: '20px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(168,85,247,0.4)' }}>
                   🔗 초대 링크 복사하기<br/><span style={{fontSize:'12px', fontWeight:'normal'}}>(접속만 해도 나와 친구 모두 50만 GOU)</span>
                 </button>
-                
                 <div style={{ background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '10px', marginBottom: '15px', border: '1px solid #333' }}>
                   <h4 style={{ color: '#fbbf24', margin: '0 0 10px 0', fontSize: '14px' }}>🔥 기사(210강) 달성 친구 초대 현황</h4>
                   <div style={{ color: '#fff', fontWeight: '900', fontSize: '24px', textAlign: 'center', marginBottom: '5px' }}>{validInvites} / 10 명</div>
                   <div style={{ textAlign: 'center', color: '#a855f7', fontSize: '12px', fontWeight: 'bold', marginBottom: '10px' }}>다음 목표 달성 시: 2,000만 GOU 지급!</div>
                   <div style={{ width: '100%', height: '10px', background: '#222', borderRadius: '5px', overflow: 'hidden' }}><div style={{ width: `${(validInvites/10)*100}%`, height: '100%', background: 'linear-gradient(90deg, #fbbf24, #d97706)' }}></div></div>
                 </div>
-
                 <div style={{ background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '10px', border: '1px solid #333' }}>
                   <h4 style={{ color: '#06b6d4', margin: '0 0 10px 0', fontSize: '14px' }}>🤝 내 친구 육성 현황</h4>
                   <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '15px' }}>친구 펫 50강 시 <b style={{color:'#10b981'}}>1억</b> / 성 50강 시 <b style={{color:'#fbbf24'}}>10억</b> 자동 지급!</div>
