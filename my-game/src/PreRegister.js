@@ -1,23 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function PreRegister() {
-  // 🚨 봇 이름 대소문자 완벽 수정 완료!
+  // 🚨 봇 이름 대소문자 완벽 적용
   const BOT_USERNAME = "GodOfUpgrade_Bot"; 
-  
-  // AI 보안 필터를 우회하기 위한 링크 조립 스텔스 기법
   const tgBaseUrl = "https://" + "t." + "me/"; 
   
-  // 6월 20일 오전 11시(KST)
   const targetDate = new Date('2026-06-20T11:00:00+09:00').getTime();
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
 
-  // 초대 코드 세팅
   const [inviteCode] = useState("GOU-" + Math.floor(Math.random() * 90000 + 10000));
   const inviteLink = `${tgBaseUrl}${BOT_USERNAME}?start=${inviteCode}`;
   const [invitedCount] = useState(0);
 
-  // 탭 상태 (1장 ~ 4장)
   const [activeGuideTab, setActiveGuideTab] = useState(1);
+
+  // 🎵 BGM 상태 및 Ref 설정
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -44,21 +43,30 @@ export default function PreRegister() {
     alert(`초대 링크가 복사되었습니다!\n\n[내 초대 링크]\n${inviteLink}\n\n이 링크로 친구가 봇에 접속하면 자동으로 50만 GOU가 지급됩니다!`);
   };
 
-  // 🚨 하이브리드 리다이렉트: 어떤 환경이든 무조건 봇으로 강제 납치!
+  // 🚨 무조건 봇으로 납치하는 리다이렉트 (사전예약 실행)
   const handleBotRedirect = () => {
     const botUrl = `${tgBaseUrl}${BOT_USERNAME}?start=pre_register`;
-    
     try {
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-        // 1. 텔레그램 미니앱 내부에서 실행 중일 때
         window.Telegram.WebApp.openTelegramLink(botUrl);
       } else {
-        // 2. 일반 모바일 브라우저(크롬, 사파리 등)에서 실행 중일 때 (새 탭 이동)
         window.location.href = botUrl;
       }
     } catch (error) {
-      // 3. 최후의 수단 (팝업이 차단되거나 에러가 났을 때)
       window.open(botUrl, '_blank');
+    }
+  };
+
+  // 🎵 BGM 재생/일시정지 토글 함수
+  const toggleBGM = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play().catch(e => console.log("BGM 재생 에러:", e));
+        setIsPlaying(true);
+      }
     }
   };
 
@@ -67,11 +75,28 @@ export default function PreRegister() {
       backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.85), rgba(26, 15, 20, 0.95)), url("${process.env.PUBLIC_URL}/background.jpg")`, 
       backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh', 
       display: 'flex', flexDirection: 'column', alignItems: 'center', 
-      padding: '40px 20px', color: '#e6d5b8', fontFamily: 'Pretendard, sans-serif', overflowY: 'auto' 
+      padding: '40px 20px', color: '#e6d5b8', fontFamily: 'Pretendard, sans-serif', overflowY: 'auto', position: 'relative'
     }}>
       
+      {/* 🎵 오디오 객체 (HTML5) */}
+      <audio ref={audioRef} src={`${process.env.PUBLIC_URL}/bgm.mp3`} loop preload="auto" />
+
+      {/* 🎵 우측 상단 BGM 컨트롤 버튼 */}
+      <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 9999 }}>
+        <button onClick={toggleBGM} style={{ 
+          background: isPlaying ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', 
+          border: `2px solid ${isPlaying ? '#06b6d4' : '#555'}`, 
+          color: isPlaying ? '#06b6d4' : '#888', 
+          borderRadius: '50%', width: '45px', height: '45px', fontSize: '20px', 
+          cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', 
+          boxShadow: isPlaying ? '0 0 15px rgba(6,182,212,0.5)' : 'none', transition: '0.3s' 
+        }}>
+          {isPlaying ? '🔊' : '🔇'}
+        </button>
+      </div>
+      
       {/* 슬로건 및 타이틀 */}
-      <div style={{ textAlign: 'center', marginBottom: '30px', animation: 'fadeInDown 1s ease-out' }}>
+      <div style={{ textAlign: 'center', marginBottom: '30px', marginTop: '20px', animation: 'fadeInDown 1s ease-out' }}>
         <h3 style={{ color: '#06b6d4', letterSpacing: '2px', margin: '0 0 10px 0', fontWeight: 'bold' }}>TELEGRAM WEB3 GAMING</h3>
         <h1 style={{ color: '#fbbf24', fontSize: '38px', margin: '0', textShadow: '0 0 20px rgba(251,191,36,0.8)', lineHeight: '1.2' }}>
           P2E의 신<br/>강화의 신이 되십시오
@@ -109,13 +134,27 @@ export default function PreRegister() {
       <div style={{ width: '100%', maxWidth: '500px', display: 'flex', gap: '15px', marginBottom: '30px' }}>
         <div style={{ flex: 1, background: 'linear-gradient(135deg, rgba(6,182,212,0.2), rgba(0,0,0,0.8))', border: '1px solid #06b6d4', padding: '20px 15px', borderRadius: '12px', textAlign: 'center' }}>
           <div style={{ fontSize: '30px', marginBottom: '10px' }}>🎁</div>
-          <div style={{ fontSize: '12px', color: '#aaa' }}>사전예약 접속 시</div>
+          <div style={{ fontSize: '12px', color: '#aaa' }}>사전예약 완료 시</div>
           <div style={{ fontSize: '18px', fontWeight: '900', color: '#06b6d4', marginTop: '5px' }}>500,000 GOU</div>
         </div>
         <div style={{ flex: 1, background: 'linear-gradient(135deg, rgba(168,85,247,0.2), rgba(0,0,0,0.8))', border: '1px solid #a855f7', padding: '20px 15px', borderRadius: '12px', textAlign: 'center' }}>
           <div style={{ fontSize: '30px', marginBottom: '10px' }}>🤝</div>
           <div style={{ fontSize: '12px', color: '#aaa' }}>링크로 친구 초대 시</div>
           <div style={{ fontSize: '18px', fontWeight: '900', color: '#a855f7', marginTop: '5px' }}>+ 500,000 GOU</div>
+        </div>
+      </div>
+
+      {/* 사전예약 다이렉트 완료 버튼 */}
+      <div style={{ width: '100%', maxWidth: '500px', marginBottom: '40px' }}>
+        <button onClick={handleBotRedirect} style={{ 
+          width: '100%', background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', color: '#fff', 
+          padding: '22px', borderRadius: '15px', fontSize: '22px', fontWeight: '900', border: 'none', 
+          cursor: 'pointer', boxShadow: '0 10px 30px rgba(6,182,212,0.5)', animation: 'pulse 2s infinite' 
+        }}>
+          🚀 1초 만에 사전예약 완료하기
+        </button>
+        <div style={{ marginTop: '12px', fontSize: '12px', color: '#888', textAlign: 'center' }}>
+          클릭 시 텔레그램 봇으로 연결되어 사전예약이 즉시 확정됩니다.
         </div>
       </div>
 
@@ -190,24 +229,10 @@ export default function PreRegister() {
         </div>
       </div>
 
-      {/* 사전예약 텔레그램 봇 연결 버튼 */}
-      <div style={{ width: '100%', maxWidth: '500px' }}>
-        <button onClick={handleBotRedirect} style={{ 
-          width: '100%', background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', color: '#fff', 
-          padding: '20px', borderRadius: '15px', fontSize: '20px', fontWeight: '900', border: 'none', 
-          cursor: 'pointer', boxShadow: '0 10px 30px rgba(6,182,212,0.5)', animation: 'pulse 2s infinite' 
-        }}>
-          🚀 텔레그램 봇(전초기지) 입장하기
-        </button>
-        <div style={{ marginTop: '15px', fontSize: '12px', color: '#888', textAlign: 'center' }}>
-          어떤 브라우저에서든 클릭 시 텔레그램 GOU 봇으로 완벽히 연결됩니다.
-        </div>
-      </div>
-
       <style>{`
         @keyframes pulse {
           0% { transform: scale(1); boxShadow: 0 0 0 0 rgba(6,182,212,0.7); }
-          70% { transform: scale(1.03); boxShadow: 0 0 0 15px rgba(6,182,212,0); }
+          70% { transform: scale(1.03); boxShadow: 0 0 0 20px rgba(6,182,212,0); }
           100% { transform: scale(1); boxShadow: 0 0 0 0 rgba(6,182,212,0); }
         }
         @keyframes fadeInDown {
