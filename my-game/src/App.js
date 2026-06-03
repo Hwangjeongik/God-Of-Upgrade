@@ -1,14 +1,17 @@
 /* eslint-disable */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { TonConnectButton, useTonWallet } from '@tonconnect/ui-react';
+import { TonConnectButton, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
 import { app } from './firebase'; 
 
 const MAX_SUPPLY = 10000000000000; 
-const SAVE_POINTS = [10, 20, 30, 40]; // 🚨 10단위 주차장 방어선
+const SAVE_POINTS = [10, 20, 30, 40]; 
+
+// 🚨 사령관님의 실제 운영비 지갑 주소 (TON 입금받을 주소)를 여기에 넣으십시오!
+const ADMIN_WALLET_ADDRESS = "UQD0eayBYATj1UVMLmgXEynXcu8I87LKlylgdQODY1aNUPv6"; // 임시 주소, 반드시 수정!
 
 // =========================================================================
-// 🎟️ 핫타임 스크래치 복권 컴포넌트 (V11 신규)
+// 🎟️ 핫타임 스크래치 복권 컴포넌트
 // =========================================================================
 const ScratchLottery = ({ onReward, onClose }) => {
   const canvasRef = useRef(null);
@@ -16,7 +19,6 @@ const ScratchLottery = ({ onReward, onClose }) => {
   const [reward, setReward] = useState(0);
 
   useEffect(() => {
-    // 잭팟 확률 계산 (훈련병 80%, 기사 15%, 사령관 4%, GOD 1%)
     let r = Math.random() * 100;
     let amt = 0;
     if(r < 80) amt = Math.floor(Math.random()*(10000000-500000)+500000);
@@ -77,7 +79,7 @@ const ScratchLottery = ({ onReward, onClose }) => {
 };
 
 // =========================================================================
-// 🚀 통합 미니게임 아케이드 엔진 V8 (유지)
+// 🚀 통합 미니게임 아케이드 엔진 V8
 // =========================================================================
 const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   const [status, setStatus] = useState('playing'); 
@@ -304,7 +306,7 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
 };
 
 // =========================================================================
-// ⚔️ 업그레이드 카드 (유지)
+// ⚔️ 업그레이드 카드
 // =========================================================================
 const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, animClass, boxAnimClass, specialHunt }) => (
   <div className={`glass-panel ${boxAnimClass}`} style={{ padding: '15px', display: 'flex', flexDirection: type === 'gear' ? 'column' : 'row', alignItems: 'center', gap: type === 'gear' ? '0' : '25px', marginBottom: type === 'gear' ? 0 : '15px', borderTop: type === 'gear' ? '4px solid rgba(197,160,89,0.8)' : 'none', position:'relative', overflow:'hidden' }}>
@@ -346,7 +348,7 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
 );
 
 // =========================================================================
-// 👑 메인 사령부 APP (전체 시스템)
+// 👑 메인 사령부 APP
 // =========================================================================
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -365,14 +367,13 @@ export default function App() {
     {name: '황혼 화산', mult: 12, reqSum: 150, req: {atk:230, hp:2300, def:115, acc:46}}
   ], []);
 
-  // 🚨 상태(State) V11 확장
   const [state, setState] = useState({ 
     screen: 'wallet', walletAddress: '', balance: 1000000000, burned: 0, jackpot: 50000000, 
     pendingGOU: 0, unclaimedTime: 0, userName: "사령관",
     petLevel: 0, castleLevel: 0, petHuntEndTime: 0, castleHuntEndTime: 0, isAdActive: false, adTimeLeft: 0,
     tickets: 3, adViewsLeft: 3, nextAdChargeTime: 0, 
-    nextBuffAdTime: 0, // 버프 광고 3시간 쿨타임
-    lastLotterySlot: "", // 복권 중복 참여 방지
+    nextBuffAdTime: 0, 
+    lastLotterySlot: "", 
     lastDailyReset: Math.floor((Date.now() + 9 * 3600000) / 86400000), customGodTitle: "UPGRADE" 
   });
 
@@ -384,7 +385,7 @@ export default function App() {
   const [anims, setAnims] = useState({});
   const [activeModal, setActiveModal] = useState(null); 
   const [showGuide, setShowGuide] = useState(false); 
-  const [showLottery, setShowLottery] = useState(false); // 복권 모달 표시 여부
+  const [showLottery, setShowLottery] = useState(false);
 
   const [gears, setGears] = useState([
     {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'sword.jpg', emoji: '⚡'},
@@ -397,6 +398,7 @@ export default function App() {
   ]);
 
   const wallet = useTonWallet();
+  const [tonConnectUI] = useTonConnectUI(); // 🚨 TON 결제를 위한 UI 훅 추가
   const latestUpgradeRef = useRef();
 
   useEffect(() => {
@@ -405,7 +407,7 @@ export default function App() {
     levelsRef.current['castle'] = state.castleLevel;
     levelsRef.current['balance'] = state.balance;
     levelsRef.current['necklace'] = gears.find(g => g.id === 'necklace')?.lvl || 0;
-    levelsRef.current['ring'] = gears.find(g => g.id === 'ring')?.lvl || 0; // 반지 정보 캐싱
+    levelsRef.current['ring'] = gears.find(g => g.id === 'ring')?.lvl || 0;
   });
 
   const triggerAnim = useCallback((id, type) => { setAnims(p => ({ ...p, [id]: type })); setTimeout(() => setAnims(p => ({ ...p, [id]: null })), 250); }, []);
@@ -473,7 +475,7 @@ export default function App() {
   const getCastleCost = useCallback((lvl) => calculateCost(lvl, 'castle', levelsRef.current['necklace']), [calculateCost]);
 
   const getSuccessRate = (lvl) => {
-    const ringBonus = (levelsRef.current['ring'] || 0) * 0.1; // 화면 표기용 %
+    const ringBonus = (levelsRef.current['ring'] || 0) * 0.1; 
     let base = lvl >= 15 ? 50 : lvl >= 10 ? 60 : lvl >= 5 ? 70 : 100;
     return (base + ringBonus).toFixed(1);
   };
@@ -506,7 +508,6 @@ export default function App() {
     }
   }, [wallet, userRankTitle, state.userName]);
 
-  // 🚨 140강 출금 락업
   const withdrawGOU = async () => {
     if (totalGearLevel < 140) return alert(`🚨 출금 불가: 장비 총합 140강 이상 달성 시에만 국고 출금이 가능합니다! (현재: ${totalGearLevel}강)`);
     if (state.balance < 10000000) return alert("최소 1,000만 GOU부터 출금 가능합니다!");
@@ -521,6 +522,42 @@ export default function App() {
         const res = await httpsCallable(getFunctions(app), 'withdrawGOU')({ userId: getUserId(), amount });
         alert(`출금 완료! 수수료 ${res.data.feeBurned.toLocaleString()} 소각됨.`);
     } catch (e) { alert("출금 실패: " + e.message); }
+  };
+
+  // 🚨 다이렉트 상점: TON 결제 연동 함수
+  const handleBuyGOU = async (tonAmount, gouAmount) => {
+    if (!wallet) return alert("지갑 연결이 필요합니다!");
+    
+    // 블록체인 트랜잭션 데이터 생성 (tonAmount를 나노톤 단위로 변환)
+    const transaction = {
+        validUntil: Math.floor(Date.now() / 1000) + 60, // 60초 내 유효
+        messages: [
+            {
+                address: ADMIN_WALLET_ADDRESS,
+                amount: String(tonAmount * 1e9), // 1 TON = 1,000,000,000 nanotons
+            }
+        ]
+    };
+
+    try {
+        // 톤키퍼 등 지갑으로 결제 승인 요청
+        const result = await tonConnectUI.sendTransaction(transaction);
+        
+        // 결제 성공 시 서버에 GOU 지급 요청
+        const res = await httpsCallable(getFunctions(app), 'buyGOU')({ 
+            userId: getUserId(), 
+            amount: gouAmount, 
+            txHash: result.boc // 영수증 해시
+        });
+        
+        if (res.data.success) {
+            setState(s => ({...s, balance: s.balance + gouAmount}));
+            alert(`🎉 결제 완료! ${gouAmount.toLocaleString()} GOU가 즉시 보급되었습니다!`);
+        }
+    } catch (e) {
+        console.error("결제 에러:", e);
+        alert("결제가 취소되었거나 오류가 발생했습니다.");
+    }
   };
 
   const claimGOU = async () => {
@@ -552,7 +589,6 @@ export default function App() {
     } else { alert("🔒 성 50강 달성 시 나만의 GOD 호칭을 부여할 수 있습니다!"); }
   };
 
-  // 🚨 시간 포맷 함수
   const formatTimeStr = (targetTime) => {
     const diff = Math.max(0, targetTime - Date.now());
     const h = Math.floor(diff / 3600000);
@@ -570,7 +606,6 @@ export default function App() {
     alert("📺 광고 시청 완료! 게임장 티켓 1장이 충전되었습니다.");
   };
 
-  // 🚨 2배 버프 광고 (3시간 쿨타임)
   const watchBuffAd = () => {
     if (Date.now() < state.nextBuffAdTime) {
       return alert(`🚨 버프 쿨타임 중입니다! 남은 시간: ${formatTimeStr(state.nextBuffAdTime)}`);
@@ -590,7 +625,6 @@ export default function App() {
     } catch (e) { alert("❌ 푸시 실패: " + e.message); }
   };
 
-  // 🚨 극악 확률 + 주차장 + 반지 보정
   const handleUpgrade = async (type, id = null) => {
     const key = id || type;
     if (lockRef.current[key]) return; 
@@ -629,7 +663,7 @@ export default function App() {
     if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextLvl } : g));
     
     if (!isSuccess && SAVE_POINTS.includes(currentLvl)) {
-      triggerLvlAnim(key, 'up'); // 주차장 방어 시뮬레이션
+      triggerLvlAnim(key, 'up'); 
     } else {
       triggerLvlAnim(key, isSuccess ? 'up' : 'down');
     }
@@ -718,7 +752,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, [checkHunt, currentStats, totalBonusPct, gainHalvingMult]);
 
-  // 🚨 복권 핫타임 체크 (12~14시, 18~20시)
   const currentHour = new Date().getHours();
   const isHotTime = (currentHour >= 12 && currentHour < 14) || (currentHour >= 18 && currentHour < 20);
   const currentLotterySlot = `${new Date().toDateString()}-${currentHour >= 12 && currentHour < 14 ? 'lunch' : 'dinner'}`;
@@ -754,13 +787,13 @@ export default function App() {
         @keyframes lvlDown { 0% { transform: scale(1); color: #fbbf24; } 50% { transform: scale(0.7); color: #ef4444; } 100% { transform: scale(1); color: #fbbf24; } }
         .anim-success { animation: flashSuccess 0.2s ease-out; } .anim-fail { animation: flashFail 0.2s ease-out; }
         .lvl-up { animation: lvlUp 0.25s ease-out; display: inline-block; } .lvl-down { animation: lvlDown 0.25s ease-out; display: inline-block; }
+        /* 하단 네비게이션 5개 버튼 정렬용 */
+        .bottom-nav-btn { flex: 1; background: transparent; border: none; display: flex; flexDirection: column; alignItems: center; cursor: pointer; transition: 0.2s; padding: 5px 2px; }
       `}</style>
 
-      {/* 모달 렌더링 */}
       {showLottery && <ScratchLottery onReward={(amt) => { setState(s => ({...s, balance: s.balance + amt, lastLotterySlot: currentLotterySlot})); alert("국고 입금 완료!"); }} onClose={() => setShowLottery(false)} />}
       {activeModal && <ArcadeGames type={activeModal} onClose={() => setActiveModal(null)} onReward={(r) => { if(r>0) setState(s=>({...s, balance:s.balance+r})); setActiveModal(null); }} pReward={pReward} gReward={gReward} />}
       
-      {/* 🚨 핫타임 복권 플로팅 버튼 */}
       {canPlayLottery && activeTab === 'home' && (
         <div onClick={() => setShowLottery(true)} style={{ position: 'fixed', top: '75px', left: '50%', transform:'translateX(-50%)', background: 'linear-gradient(45deg, #ffd700, #ff8c00)', color: '#000', padding: '10px 20px', borderRadius: '20px', fontWeight: '900', zIndex: 9000, cursor: 'pointer', boxShadow: '0 0 15px rgba(255, 215, 0, 0.8)', animation: 'pulse 1.5s infinite', border:'2px solid #fff' }}>
           🎟️ 점심/저녁 핫타임 복권 긁기!
@@ -784,7 +817,7 @@ export default function App() {
 
       <div style={{ width: '100%', maxWidth: '850px', padding: '10px', flex: 1 }}>
         
-        {/* ===================== 1️⃣ 홈 탭 ===================== */}
+        {/* 1️⃣ 홈 탭 */}
         {activeTab === 'home' && (
           <div style={{ marginTop: canPlayLottery ? '40px' : '0' }}>
             <div className="big-banner-jackpot">
@@ -805,8 +838,6 @@ export default function App() {
                   <div style={{ textAlign: 'center', marginBottom: '15px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
                     <div style={{ color: '#ccc', fontSize: '11px' }}>일일 자동 채굴량</div>
                     <div style={{ color: '#fbbf24', fontWeight: '900', fontSize: '28px', textShadow: '0 0 10px rgba(251,191,36,0.5)' }}>+{dailyGainDisplay.toLocaleString()}</div>
-                    
-                    {/* 🚨 버프 광고 쿨타임 버튼 연동 */}
                     <button onClick={watchBuffAd} style={{ background: state.isAdActive ? 'rgba(16,185,129,0.8)' : 'transparent', color: state.isAdActive ? '#fff' : '#10b981', border: '1px solid #10b981', padding: '8px 12px', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer', width: '100%' }}>
                       {state.isAdActive ? `🔥 버프 가동 중 (${Math.floor(state.adTimeLeft/60)}분 남음)` : Date.now() < state.nextBuffAdTime ? `⏳ 쿨타임 (${formatTimeStr(state.nextBuffAdTime)})` : "📺 광고: 1시간 채굴량 2배"}
                     </button>
@@ -843,7 +874,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ===================== 2️⃣ 강화 탭 ===================== */}
+        {/* 2️⃣ 강화 탭 */}
         {activeTab === 'upgrade' && (
           <div>
             <h3 style={{ color: '#fbbf24', margin: '0 0 10px 5px', fontSize: '16px' }}>🗺️ 점령 영지 현황 (전투력 매칭)</h3>
@@ -888,7 +919,8 @@ export default function App() {
               const isHunting = (isPet ? state.petHuntEndTime : state.castleHuntEndTime) > Date.now();
               return (
                 <UpgradeCard key={type} type={type} 
-                  item={{ id: type, name: isPet ? '고대 황금 드래곤' : '위대한 군주의 성', imgFile: isPet ? 'pet.jpg' : 'castle.jpg', emoji: isPet ? '🐉' : '🏰', lvl: lvl, locked: !isUnlocked, lockMsg: isPet ? '장비 210강 달성 시 개방' : '펫 50강 달성 시 개방', bonusText: `수익 보너스: +${(isPet ? lvl * 3 : lvl * 5) + (isPet ? getPetBonus(lvl) : getCastleBonus(lvl))}%`, successRateDisplay: getSuccessRate(lvl) }} 
+                  // 🚨 펫 이름 "고대 드래곤" 으로 수정 완료!
+                  item={{ id: type, name: isPet ? '고대 드래곤' : '위대한 군주의 성', imgFile: isPet ? 'pet.jpg' : 'castle.jpg', emoji: isPet ? '🐉' : '🏰', lvl: lvl, locked: !isUnlocked, lockMsg: isPet ? '장비 210강 달성 시 개방' : '펫 50강 달성 시 개방', bonusText: `수익 보너스: +${(isPet ? lvl * 3 : lvl * 5) + (isPet ? getPetBonus(lvl) : getCastleBonus(lvl))}%`, successRateDisplay: getSuccessRate(lvl) }} 
                   isMax={isMax} cost={cost} onUpgrade={handleUpgrade} onAuto={toggleAuto} autoActive={autoUI[type]} animClass={lvlAnims[type] === 'up' ? 'lvl-up' : lvlAnims[type] === 'down' ? 'lvl-down' : ''} boxAnimClass={anims[type] === 'success' ? 'anim-success' : anims[type] === 'fail' ? 'anim-fail' : ''}
                   specialHunt={{ isHunting, huntText: isPet ? '🐉 둥지 사냥 (12h)' : '🏰 천공 사냥 (12h)', onStart: () => startSpecialHunt(type) }}
                 />
@@ -897,7 +929,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ===================== 3️⃣ 랭킹 탭 ===================== */}
+        {/* 3️⃣ 랭킹 탭 */}
         {activeTab === 'rank' && (
           <div>
             <div className="big-banner-jackpot" style={{ padding: '20px' }}>
@@ -927,7 +959,38 @@ export default function App() {
           </div>
         )}
 
-        {/* ===================== 4️⃣ 설정 탭 ===================== */}
+        {/* 🚨 4️⃣ 신규 탭: 다이렉트 상점 (고래 사냥터) 🚨 */}
+        {activeTab === 'shop' && (
+          <div className="glass-panel" style={{ padding: '25px 20px', border: '2px solid #06b6d4', background: 'linear-gradient(180deg, rgba(20,24,34,0.9), rgba(6,182,212,0.1))' }}>
+            <h2 style={{ textAlign: 'center', color: '#06b6d4', margin: '0 0 15px 0', textShadow: '0 0 10px rgba(6,182,212,0.5)' }}>💎 GOU 다이렉트 상점</h2>
+            <p style={{ color: '#ccc', fontSize: '13px', textAlign: 'center', marginBottom: '25px', lineHeight: '1.5' }}>
+              DEX의 악랄한 슬리피지와 봇들의 사재기를 피하십시오!<br/>
+              <span style={{color:'#fbbf24', fontWeight:'bold'}}>진짜 사령관님들께만 고정 교환비로 국고에서 즉시 GOU를 보급합니다.</span>
+            </p>
+
+            {[
+              { ton: 1, gou: 10000000, bonus: null },
+              { ton: 5, gou: 55000000, bonus: '10% BONUS' },
+              { ton: 10, gou: 120000000, bonus: '20% BONUS' }
+            ].map((pkg, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.6)', padding: '15px 20px', borderRadius: '12px', marginBottom: '15px', border: pkg.bonus ? '1px solid #fbbf24' : '1px solid #333', boxShadow: pkg.bonus ? '0 0 15px rgba(251,191,36,0.2)' : 'none' }}>
+                <div>
+                  <div style={{ color: '#06b6d4', fontWeight: '900', fontSize: '20px' }}>{pkg.ton} TON</div>
+                  <div style={{ color: '#fff', fontSize: '13px', marginTop: '4px' }}>= {pkg.gou.toLocaleString()} GOU</div>
+                  {pkg.bonus && <div style={{ color: '#fbbf24', fontSize: '12px', fontWeight: '900', marginTop: '6px', background: 'rgba(251,191,36,0.2)', display: 'inline-block', padding: '2px 6px', borderRadius: '4px' }}>🔥 {pkg.bonus}</div>}
+                </div>
+                <button onClick={() => handleBuyGOU(pkg.ton, pkg.gou)} className="action-btn" style={{ background: 'linear-gradient(90deg, #06b6d4, #3b82f6)', color: '#fff', maxWidth: '110px', fontSize: '15px', padding: '12px 0', boxShadow: '0 4px 15px rgba(6,182,212,0.4)' }}>
+                  TON 결제
+                </button>
+              </div>
+            ))}
+            <div style={{ textAlign: 'center', fontSize: '11px', color: '#666', marginTop: '20px' }}>
+              결제 즉시 사령관님의 계정(GOU 국고)으로 전송됩니다.<br/>블록체인 네트워크 상황에 따라 약 10~30초 소요될 수 있습니다.
+            </div>
+          </div>
+        )}
+
+        {/* 5️⃣ 설정 탭 */}
         {activeTab === 'setting' && (
           <div className="glass-panel" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', marginBottom: '25px', background: 'rgba(0,0,0,0.5)', borderRadius: '10px', padding: '5px' }}>
@@ -940,7 +1003,7 @@ export default function App() {
                 <button onClick={handleTitleEdit} className="action-btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid #555' }}>🛡️ 나만의 GOD 칭호 변경 (성 50강 필요)</button>
                 <button onClick={testPushNotification} className="action-btn" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #3b82f6' }}>🔔 텔레그램 알림 시스템 테스트</button>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => alert('준비 중')} className="action-btn" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid #22c55e' }}>📥 GOU 입금</button>
+                  <button onClick={() => setActiveTab('shop')} className="action-btn" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid #22c55e' }}>📥 GOU 다이렉트 구매</button>
                   <button onClick={withdrawGOU} className="action-btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>📤 GOU 국고 출금 (140강 필요)</button>
                 </div>
               </div>
@@ -981,22 +1044,27 @@ export default function App() {
         )}
       </div>
 
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '850px', background: 'rgba(15, 20, 28, 0.98)', borderTop: '2px solid #333', display: 'flex', justifyContent: 'space-around', padding: '12px 5px 25px 5px', zIndex: 9999, boxShadow: '0 -5px 20px rgba(0,0,0,0.8)' }}>
-        <button onClick={() => setActiveTab('home')} style={{ flex: 1, background: 'transparent', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', color: activeTab === 'home' ? '#06b6d4' : '#666', cursor: 'pointer', transition: '0.2s' }}>
-          <div style={{ fontSize: '24px', marginBottom: '4px', filter: activeTab === 'home' ? 'drop-shadow(0 0 5px rgba(6,182,212,0.5))' : 'none', transform: activeTab === 'home' ? 'scale(1.15)' : 'scale(1)' }}>🏠</div>
-          <span style={{ fontSize: '11px', fontWeight: 'bold' }}>홈 (수확)</span>
+      {/* 🚨 5버튼 체제 하단 네비게이션 */}
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '850px', background: 'rgba(15, 20, 28, 0.98)', borderTop: '2px solid #333', display: 'flex', justifyContent: 'space-around', padding: '10px 2px 20px 2px', zIndex: 9999, boxShadow: '0 -5px 20px rgba(0,0,0,0.8)' }}>
+        <button className="bottom-nav-btn" onClick={() => setActiveTab('home')} style={{ color: activeTab === 'home' ? '#06b6d4' : '#666' }}>
+          <div style={{ fontSize: '22px', marginBottom: '4px', filter: activeTab === 'home' ? 'drop-shadow(0 0 5px rgba(6,182,212,0.5))' : 'none', transform: activeTab === 'home' ? 'scale(1.15)' : 'scale(1)' }}>🏠</div>
+          <span style={{ fontSize: '10px', fontWeight: 'bold' }}>홈(수확)</span>
         </button>
-        <button onClick={() => setActiveTab('upgrade')} style={{ flex: 1, background: 'transparent', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', color: activeTab === 'upgrade' ? '#ef4444' : '#666', cursor: 'pointer', transition: '0.2s' }}>
-          <div style={{ fontSize: '24px', marginBottom: '4px', filter: activeTab === 'upgrade' ? 'drop-shadow(0 0 5px rgba(239,68,68,0.5))' : 'none', transform: activeTab === 'upgrade' ? 'scale(1.15)' : 'scale(1)' }}>⚔️</div>
-          <span style={{ fontSize: '11px', fontWeight: 'bold' }}>강화 (전투)</span>
+        <button className="bottom-nav-btn" onClick={() => setActiveTab('upgrade')} style={{ color: activeTab === 'upgrade' ? '#ef4444' : '#666' }}>
+          <div style={{ fontSize: '22px', marginBottom: '4px', filter: activeTab === 'upgrade' ? 'drop-shadow(0 0 5px rgba(239,68,68,0.5))' : 'none', transform: activeTab === 'upgrade' ? 'scale(1.15)' : 'scale(1)' }}>⚔️</div>
+          <span style={{ fontSize: '10px', fontWeight: 'bold' }}>강화</span>
         </button>
-        <button onClick={() => setActiveTab('rank')} style={{ flex: 1, background: 'transparent', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', color: activeTab === 'rank' ? '#fbbf24' : '#666', cursor: 'pointer', transition: '0.2s' }}>
-          <div style={{ fontSize: '24px', marginBottom: '4px', filter: activeTab === 'rank' ? 'drop-shadow(0 0 5px rgba(251,191,36,0.5))' : 'none', transform: activeTab === 'rank' ? 'scale(1.15)' : 'scale(1)' }}>🏆</div>
-          <span style={{ fontSize: '11px', fontWeight: 'bold' }}>명예의전당</span>
+        <button className="bottom-nav-btn" onClick={() => setActiveTab('shop')} style={{ color: activeTab === 'shop' ? '#3b82f6' : '#666' }}>
+          <div style={{ fontSize: '22px', marginBottom: '4px', filter: activeTab === 'shop' ? 'drop-shadow(0 0 5px rgba(59,130,246,0.5))' : 'none', transform: activeTab === 'shop' ? 'scale(1.15)' : 'scale(1)' }}>💎</div>
+          <span style={{ fontSize: '10px', fontWeight: 'bold' }}>상점</span>
         </button>
-        <button onClick={() => setActiveTab('setting')} style={{ flex: 1, background: 'transparent', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', color: activeTab === 'setting' ? '#a855f7' : '#666', cursor: 'pointer', transition: '0.2s' }}>
-          <div style={{ fontSize: '24px', marginBottom: '4px', filter: activeTab === 'setting' ? 'drop-shadow(0 0 5px rgba(168,85,247,0.5))' : 'none', transform: activeTab === 'setting' ? 'scale(1.15)' : 'scale(1)' }}>⚙️</div>
-          <span style={{ fontSize: '11px', fontWeight: 'bold' }}>시스템/초대</span>
+        <button className="bottom-nav-btn" onClick={() => setActiveTab('rank')} style={{ color: activeTab === 'rank' ? '#fbbf24' : '#666' }}>
+          <div style={{ fontSize: '22px', marginBottom: '4px', filter: activeTab === 'rank' ? 'drop-shadow(0 0 5px rgba(251,191,36,0.5))' : 'none', transform: activeTab === 'rank' ? 'scale(1.15)' : 'scale(1)' }}>🏆</div>
+          <span style={{ fontSize: '10px', fontWeight: 'bold' }}>랭킹</span>
+        </button>
+        <button className="bottom-nav-btn" onClick={() => setActiveTab('setting')} style={{ color: activeTab === 'setting' ? '#a855f7' : '#666' }}>
+          <div style={{ fontSize: '22px', marginBottom: '4px', filter: activeTab === 'setting' ? 'drop-shadow(0 0 5px rgba(168,85,247,0.5))' : 'none', transform: activeTab === 'setting' ? 'scale(1.15)' : 'scale(1)' }}>⚙️</div>
+          <span style={{ fontSize: '10px', fontWeight: 'bold' }}>시스템</span>
         </button>
       </div>
     </div>
