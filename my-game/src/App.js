@@ -9,9 +9,6 @@ const MAX_SUPPLY = 10000000000000;
 const SAVE_POINTS = [10, 20, 30, 40]; 
 const ADMIN_WALLET_ADDRESS = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ";
 
-// =========================================================================
-// 🎟️ 핫타임 스크래치 복권 컴포넌트
-// =========================================================================
 const ScratchLottery = ({ userRank, onReward, onClose }) => {
   const canvasRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -27,49 +24,26 @@ const ScratchLottery = ({ userRank, onReward, onClose }) => {
   useEffect(() => {
     const roll = Math.random() * 100;
     let amt = 0;
-
-    if (userRank.includes('GOD')) {
-      if (roll < 80) amt = 100000000; else if (roll < 95) amt = 1000000000; else if (roll < 99) amt = 5000000000; else amt = 10000000000;
-    } else if (userRank.includes('사령관')) {
-      if (roll < 80) amt = 50000000; else if (roll < 95) amt = 100000000; else if (roll < 99) amt = 500000000; else amt = 1000000000;
-    } else if (userRank.includes('기사')) {
-      if (roll < 80) amt = 5000000; else if (roll < 95) amt = 10000000; else if (roll < 99) amt = 50000000; else amt = 100000000;
-    } else { 
-      if (roll < 80) amt = 500000; else if (roll < 95) amt = 1000000; else if (roll < 99) amt = 5000000; else amt = 10000000;
-    }
-    
+    if (userRank.includes('GOD')) { if (roll < 80) amt = 100000000; else if (roll < 95) amt = 1000000000; else if (roll < 99) amt = 5000000000; else amt = 10000000000; }
+    else if (userRank.includes('사령관')) { if (roll < 80) amt = 50000000; else if (roll < 95) amt = 100000000; else if (roll < 99) amt = 500000000; else amt = 1000000000; }
+    else if (userRank.includes('기사')) { if (roll < 80) amt = 5000000; else if (roll < 95) amt = 10000000; else if (roll < 99) amt = 50000000; else amt = 100000000; }
+    else { if (roll < 80) amt = 500000; else if (roll < 95) amt = 1000000; else if (roll < 99) amt = 5000000; else amt = 10000000; }
     setReward(amt);
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#b0bec5'; 
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.font = 'bold 22px Pretendard, sans-serif';
-    ctx.fillStyle = '#78909c';
-    ctx.textAlign = 'center';
+    const canvas = canvasRef.current; const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#b0bec5'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = 'bold 22px Pretendard, sans-serif'; ctx.fillStyle = '#78909c'; ctx.textAlign = 'center';
     ctx.fillText('손가락으로 긁으세요!', canvas.width/2, canvas.height/2 + 7);
   }, [userRank]);
 
   const handleScratch = (e) => {
     if(isCompleted) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.arc(x, y, 25, 0, Math.PI * 2);
-    ctx.fill();
-
-    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    let transparent = 0;
+    const canvas = canvasRef.current; const ctx = canvas.getContext('2d'); const rect = canvas.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    ctx.globalCompositeOperation = 'destination-out'; ctx.beginPath(); ctx.arc(x, y, 25, 0, Math.PI * 2); ctx.fill();
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data; let transparent = 0;
     for(let i=3; i<pixels.length; i+=4) if(pixels[i] === 0) transparent++;
-    if(transparent / (canvas.width * canvas.height) > 0.5) {
-      setIsCompleted(true);
-      ctx.clearRect(0, 0, canvas.width, canvas.height); 
-    }
+    if(transparent / (canvas.width * canvas.height) > 0.5) { setIsCompleted(true); ctx.clearRect(0, 0, canvas.width, canvas.height); }
   };
 
   return (
@@ -78,12 +52,7 @@ const ScratchLottery = ({ userRank, onReward, onClose }) => {
        <div style={{ background:'rgba(255,255,255,0.1)', padding:'15px', borderRadius:'10px', marginBottom:'20px', width:'300px', border:'1px solid #555' }}>
           <div style={{ color:'#06b6d4', fontSize:'14px', fontWeight:'bold', textAlign:'center', marginBottom:'10px' }}>[{userRank}] 확률표</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', fontSize:'12px', color:'#fff' }}>
-             {rankInfo.map((info, idx) => (
-                <div key={idx} style={{ display:'flex', justifyContent:'space-between', background:'rgba(0,0,0,0.5)', padding:'5px 10px', borderRadius:'5px' }}>
-                   <span style={{color: idx===3 ? '#fbbf24' : '#ccc'}}>{info.p}</span>
-                   <span style={{fontWeight:'bold', color: idx===3 ? '#fbbf24' : '#fff'}}>{info.amt}</span>
-                </div>
-             ))}
+             {rankInfo.map((info, idx) => ( <div key={idx} style={{ display:'flex', justifyContent:'space-between', background:'rgba(0,0,0,0.5)', padding:'5px 10px', borderRadius:'5px' }}> <span style={{color: idx===3 ? '#fbbf24' : '#ccc'}}>{info.p}</span> <span style={{fontWeight:'bold', color: idx===3 ? '#fbbf24' : '#fff'}}>{info.amt}</span> </div> ))}
           </div>
        </div>
        <div style={{ position:'relative', width:'300px', height:'150px', background:'#222', borderRadius:'15px', border:'3px solid #fbbf24', overflow:'hidden', boxShadow:'0 0 30px rgba(251,191,36,0.6)' }}>
@@ -91,11 +60,7 @@ const ScratchLottery = ({ userRank, onReward, onClose }) => {
                <div style={{ color:'#fbbf24', fontSize:'24px', fontWeight:'900' }}>🎉 당첨 🎉</div>
                <div style={{ color:'#fff', fontSize:'22px', fontWeight:'bold', marginTop:'5px' }}>{reward.toLocaleString()} GOU</div>
            </div>
-           <canvas ref={canvasRef} width={300} height={150} style={{ position:'absolute', top:0, left:0, cursor:'crosshair', touchAction:'none' }} 
-             onPointerDown={(e)=>{e.target.setPointerCapture(e.pointerId); handleScratch(e);}} 
-             onPointerMove={(e)=>{if(e.buttons>0) handleScratch(e);}} 
-             onTouchMove={(e)=>{e.preventDefault(); handleScratch(e);}} 
-           />
+           <canvas ref={canvasRef} width={300} height={150} style={{ position:'absolute', top:0, left:0, cursor:'crosshair', touchAction:'none' }} onPointerDown={(e)=>{e.target.setPointerCapture(e.pointerId); handleScratch(e);}} onPointerMove={(e)=>{if(e.buttons>0) handleScratch(e);}} onTouchMove={(e)=>{e.preventDefault(); handleScratch(e);}} />
        </div>
        {isCompleted && <button onClick={()=>{ onReward(reward); onClose(); }} style={{ marginTop:'30px', background:'linear-gradient(90deg, #fbbf24, #d97706)', color:'#000', padding:'15px 40px', borderRadius:'10px', fontSize:'18px', fontWeight:'900', border:'none', boxShadow:'0 5px 15px rgba(251,191,36,0.5)', cursor:'pointer' }}>국고로 입금하기</button>}
        {!isCompleted && <button onClick={onClose} style={{ marginTop:'20px', background:'transparent', border:'none', color:'#888', textDecoration:'underline', cursor:'pointer' }}>나중에 긁기</button>}
@@ -103,27 +68,12 @@ const ScratchLottery = ({ userRank, onReward, onClose }) => {
   );
 };
 
-// =========================================================================
-// 🚀 미니게임 아케이드 엔진
-// =========================================================================
 const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
-  const [status, setStatus] = useState('playing'); 
-  const [pos, setPos] = useState(0);
-  const posRef = useRef(0);
-  const dirRef = useRef(1);
-  const reqRef = useRef();
-  const lastTimeRef = useRef();
-
-  const [stacked, setStacked] = useState(0);
-  const [basePos, setBasePos] = useState(50); 
-
-  const [targets, setTargets] = useState([]);
-  const catchScoreRef = useRef(0);
-  const catchSpawnRef = useRef(0);
-  
-  const [memSeq, setMemSeq] = useState([]);
-  const [userSeq, setUserSeq] = useState([]);
-  const [flashIdx, setFlashIdx] = useState(-1);
+  const [status, setStatus] = useState('playing'); const [pos, setPos] = useState(0);
+  const posRef = useRef(0); const dirRef = useRef(1); const reqRef = useRef(); const lastTimeRef = useRef();
+  const [stacked, setStacked] = useState(0); const [basePos, setBasePos] = useState(50); 
+  const [targets, setTargets] = useState([]); const catchScoreRef = useRef(0); const catchSpawnRef = useRef(0);
+  const [memSeq, setMemSeq] = useState([]); const [userSeq, setUserSeq] = useState([]); const [flashIdx, setFlashIdx] = useState(-1);
 
   const animate = useCallback((time) => {
     if (lastTimeRef.current != null) {
@@ -135,40 +85,25 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
       setPos(posRef.current);
     }
     lastTimeRef.current = time;
-    if (status === 'playing' && (type === 'blacksmith' || type === 'tower')) {
-      reqRef.current = requestAnimationFrame(animate);
-    }
+    if (status === 'playing' && (type === 'blacksmith' || type === 'tower')) { reqRef.current = requestAnimationFrame(animate); }
   }, [status, type, stacked]);
 
   useEffect(() => {
-    if (status === 'playing' && (type === 'blacksmith' || type === 'tower')) {
-      reqRef.current = requestAnimationFrame(animate);
-    }
+    if (status === 'playing' && (type === 'blacksmith' || type === 'tower')) { reqRef.current = requestAnimationFrame(animate); }
     return () => cancelAnimationFrame(reqRef.current);
   }, [status, animate, type]);
 
   useEffect(() => {
     if(type === 'catch' && status === 'playing') {
-      catchScoreRef.current = 0;
-      catchSpawnRef.current = 0;
+      catchScoreRef.current = 0; catchSpawnRef.current = 0;
       const spawnNext = () => {
         if (catchSpawnRef.current >= 5) {
-           setTimeout(() => {
-             const score = catchScoreRef.current;
-             if(score === 5) setStatus('perfect');
-             else if(score >= 3) setStatus('good');
-             else setStatus('miss');
-           }, 250); 
+           setTimeout(() => { const score = catchScoreRef.current; if(score === 5) setStatus('perfect'); else if(score >= 3) setStatus('good'); else setStatus('miss'); }, 250); 
            return;
         }
-        const id = catchSpawnRef.current;
-        const newTarget = { id, top: Math.random()*60 + 10 + '%', left: Math.random()*70 + 10 + '%' };
-        setTargets([newTarget]); 
-        catchSpawnRef.current++;
-        setTimeout(() => {
-          setTargets(prev => prev.filter(t => t.id !== id));
-          setTimeout(spawnNext, 90); 
-        }, 380); 
+        const id = catchSpawnRef.current; const newTarget = { id, top: Math.random()*60 + 10 + '%', left: Math.random()*70 + 10 + '%' };
+        setTargets([newTarget]); catchSpawnRef.current++;
+        setTimeout(() => { setTargets(prev => prev.filter(t => t.id !== id)); setTimeout(spawnNext, 90); }, 380); 
       };
       setTimeout(spawnNext, 250); 
     }
@@ -177,91 +112,48 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
   useEffect(() => {
     if(type === 'memory' && status === 'playing') {
       const seq = [Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4)];
-      setMemSeq(seq);
-      setUserSeq([]);
-      let i = 0;
+      setMemSeq(seq); setUserSeq([]); let i = 0;
       const interval = setInterval(() => {
-        if(i < seq.length) {
-          setFlashIdx(seq[i]);
-          setTimeout(() => setFlashIdx(-1), 60); 
-          i++;
-        } else {
-          clearInterval(interval);
-        }
+        if(i < seq.length) { setFlashIdx(seq[i]); setTimeout(() => setFlashIdx(-1), 60); i++; } 
+        else { clearInterval(interval); }
       }, 180); 
       return () => clearInterval(interval);
     }
   }, [type, status]);
 
   const handleHit = (e) => {
-    if (e) e.preventDefault();
-    if(status !== 'playing') return;
+    if (e) e.preventDefault(); if(status !== 'playing') return;
     if (type === 'blacksmith') {
       cancelAnimationFrame(reqRef.current);
-      if (posRef.current >= 45 && posRef.current <= 55) setStatus('perfect');
-      else if (posRef.current >= 30 && posRef.current <= 70) setStatus('good');
-      else setStatus('miss');
-    } 
-    else if (type === 'tower') {
-      if (stacked === 0) {
-        setBasePos(posRef.current); 
-        setStacked(1);
-      } else {
+      if (posRef.current >= 45 && posRef.current <= 55) setStatus('perfect'); else if (posRef.current >= 30 && posRef.current <= 70) setStatus('good'); else setStatus('miss');
+    } else if (type === 'tower') {
+      if (stacked === 0) { setBasePos(posRef.current); setStacked(1); } 
+      else {
         const diff = Math.abs(posRef.current - basePos);
-        if (diff <= 15) { 
-          const nextStacked = stacked + 1;
-          setStacked(nextStacked);
-          if (nextStacked === 3) {
-             cancelAnimationFrame(reqRef.current);
-             setStatus('perfect');
-          }
-        } else {
-          cancelAnimationFrame(reqRef.current);
-          if (stacked === 2) setStatus('good');
-          else setStatus('miss'); 
-        }
+        if (diff <= 15) { const nextStacked = stacked + 1; setStacked(nextStacked); if (nextStacked === 3) { cancelAnimationFrame(reqRef.current); setStatus('perfect'); } } 
+        else { cancelAnimationFrame(reqRef.current); if (stacked === 2) setStatus('good'); else setStatus('miss'); }
       }
     }
   };
 
-  const handleCatch = (e, id) => {
-    if (e) e.preventDefault();
-    if(status !== 'playing') return;
-    catchScoreRef.current++;
-    setTargets([]); 
-  };
+  const handleCatch = (e, id) => { if (e) e.preventDefault(); if(status !== 'playing') return; catchScoreRef.current++; setTargets([]); };
 
   const handleMemoryClick = (e, idx) => {
-    if (e) e.preventDefault();
-    if(status !== 'playing' || memSeq.length === 0 || flashIdx !== -1) return;
-    const newSeq = [...userSeq, idx];
-    setUserSeq(newSeq);
-    if(newSeq[newSeq.length-1] !== memSeq[newSeq.length-1]) {
-       if (newSeq.length - 1 >= 3) setStatus('good');
-       else setStatus('miss');
-    } else if(newSeq.length === memSeq.length) {
-       setStatus('perfect');
-    }
+    if (e) e.preventDefault(); if(status !== 'playing' || memSeq.length === 0 || flashIdx !== -1) return;
+    const newSeq = [...userSeq, idx]; setUserSeq(newSeq);
+    if(newSeq[newSeq.length-1] !== memSeq[newSeq.length-1]) { if (newSeq.length - 1 >= 3) setStatus('good'); else setStatus('miss'); } 
+    else if(newSeq.length === memSeq.length) { setStatus('perfect'); }
   };
 
-  const getTitle = () => {
-    if(type==='blacksmith') return '🔨 대장장이 망치질';
-    if(type==='tower') return '🏗️ 블록 쌓기';
-    if(type==='catch') return '📦 보물 상자 잡기';
-    if(type==='memory') return '🧠 기억력 테스트';
-  };
+  const getTitle = () => { if(type==='blacksmith') return '🔨 대장장이 망치질'; if(type==='tower') return '🏗️ 블록 쌓기'; if(type==='catch') return '📦 보물 상자 잡기'; if(type==='memory') return '🧠 기억력 테스트'; };
 
   return (
     <div style={{ position: 'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(10,12,18,0.95)', backdropFilter: 'blur(10px)', zIndex:20000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
        <h2 style={{color:'#fbbf24', fontSize:'28px', marginBottom:'20px'}}>{getTitle()}</h2>
        <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid #555', padding: '10px 20px', borderRadius: '10px', marginBottom: '30px', textAlign: 'center' }}>
           <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold', marginBottom: '5px' }}>📈 현재 스펙 보상 티어</div>
-          <div style={{ fontSize: '14px', color: '#fff' }}>
-            PERFECT: <span style={{ color: '#10b981', fontWeight: 'bold' }}>{pReward.toLocaleString()}</span> GOU <br/>
-            GOOD: <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>{gReward.toLocaleString()}</span> GOU
-          </div>
+          <div style={{ fontSize: '14px', color: '#fff' }}>PERFECT: <span style={{ color: '#10b981', fontWeight: 'bold' }}>{pReward.toLocaleString()}</span> GOU <br/> GOOD: <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>{gReward.toLocaleString()}</span> GOU</div>
         </div>
-
        <div style={{width:'90%', maxWidth:'400px', height:'200px', position:'relative', display:'flex', justifyContent:'center', alignItems:'center', marginBottom:'30px'}}>
          {type === 'blacksmith' && (
             <div style={{ position: 'relative', width: '100%', height: '40px', background: '#222', border: '2px solid #555', borderRadius: '20px' }}>
@@ -273,9 +165,7 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
          {type === 'tower' && (
             <div style={{ position: 'relative', width: '100%', height: '180px', borderBottom: '4px solid #fff' }}>
               {stacked > 0 && <div style={{position:'absolute', left:`${basePos}%`, width:'2px', height:'100%', background:'rgba(255,255,255,0.2)', transform:'translateX(-50%)'}}></div>}
-              {Array.from({length: stacked}).map((_, i) => (
-                 <div key={i} style={{ position: 'absolute', left: `${basePos}%`, width: '25%', height: '30px', background: '#fbbf24', bottom: `${i*30}px`, transform: 'translateX(-50%)', borderRadius:'4px', border:'1px solid #000' }}></div>
-              ))}
+              {Array.from({length: stacked}).map((_, i) => ( <div key={i} style={{ position: 'absolute', left: `${basePos}%`, width: '25%', height: '30px', background: '#fbbf24', bottom: `${i*30}px`, transform: 'translateX(-50%)', borderRadius:'4px', border:'1px solid #000' }}></div> ))}
               {status === 'playing' && stacked > 0 && <div style={{ position: 'absolute', left: `${basePos}%`, width: '25%', height: '30px', bottom: `${stacked*30}px`, background: 'rgba(6, 182, 212, 0.3)', border: '2px dashed #06b6d4', transform: 'translateX(-50%)' }}></div>}
               {status === 'playing' && <div style={{ position: 'absolute', left: `${pos}%`, width: '25%', height: '30px', background: '#fbbf24', bottom: `${stacked*30}px`, border:'2px solid #fff', transform: 'translateX(-50%)', borderRadius:'4px' }}></div>}
               {stacked === 0 && <div style={{position:'absolute', width:'100%', textAlign:'center', color:'#aaa', bottom:'40px', fontSize:'12px'}}>첫 블록은 자유롭게 1층을 만드세요!</div>}
@@ -284,21 +174,15 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
          {type === 'catch' && (
             <div style={{ width: '100%', height: '100%', position: 'relative', background:'rgba(0,0,0,0.5)', borderRadius:'15px', border:'1px solid #333', overflow:'hidden', touchAction: 'none' }}>
               <div style={{position:'absolute', top:10, left:10, color:'#fbbf24', fontWeight:'bold', zIndex:10}}>적중: {catchScoreRef.current} / 5</div>
-              {targets.map(t => (
-                <div key={t.id} onPointerDown={(e) => handleCatch(e, t.id)} style={{ position:'absolute', top:t.top, left:t.left, fontSize:'50px', cursor:'pointer', padding:'10px', filter:'drop-shadow(0 0 10px #fbbf24)', transition: 'top 0.1s, left 0.1s', userSelect: 'none' }}>📦</div>
-              ))}
+              {targets.map(t => ( <div key={t.id} onPointerDown={(e) => handleCatch(e, t.id)} style={{ position:'absolute', top:t.top, left:t.left, fontSize:'50px', cursor:'pointer', padding:'10px', filter:'drop-shadow(0 0 10px #fbbf24)', transition: 'top 0.1s, left 0.1s', userSelect: 'none' }}>📦</div> ))}
               {status === 'playing' && targets.length === 0 && <div style={{position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', color:'#555', fontWeight:'bold'}}>집중하세요!</div>}
             </div>
          )}
          {type === 'memory' && (
             <div style={{display:'flex', flexDirection:'column', alignItems:'center', touchAction: 'none'}}>
-              <div style={{color:'#06b6d4', marginBottom:'15px', fontWeight:'bold', fontSize:'16px'}}>
-                {flashIdx !== -1 ? '패턴을 외우세요!' : '순서대로 터치하세요!'} ({userSeq.length}/5)
-              </div>
+              <div style={{color:'#06b6d4', marginBottom:'15px', fontWeight:'bold', fontSize:'16px'}}>{flashIdx !== -1 ? '패턴을 외우세요!' : '순서대로 터치하세요!'} ({userSeq.length}/5)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                {[0,1,2,3].map(i => (
-                  <div key={i} onPointerDown={(e) => handleMemoryClick(e, i)} style={{ width: '80px', height: '80px', borderRadius: '15px', background: flashIdx === i ? '#fff' : ['#ef4444','#3b82f6','#10b981','#fbbf24'][i], opacity: flashIdx === i ? 1 : 0.6, cursor: 'pointer', transition: 'background 0.1s, opacity 0.1s', boxShadow: flashIdx === i ? '0 0 20px #fff' : 'none', userSelect: 'none' }}></div>
-                ))}
+                {[0,1,2,3].map(i => ( <div key={i} onPointerDown={(e) => handleMemoryClick(e, i)} style={{ width: '80px', height: '80px', borderRadius: '15px', background: flashIdx === i ? '#fff' : ['#ef4444','#3b82f6','#10b981','#fbbf24'][i], opacity: flashIdx === i ? 1 : 0.6, cursor: 'pointer', transition: 'background 0.1s, opacity 0.1s', boxShadow: flashIdx === i ? '0 0 20px #fff' : 'none', userSelect: 'none' }}></div> ))}
               </div>
             </div>
          )}
@@ -307,87 +191,51 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward }) => {
        {status === 'playing' ? (
          <div style={{ display: 'flex', gap: '15px' }}>
            <button onClick={onClose} style={{ background: '#333', color: '#fff', padding: '15px 30px', borderRadius: '15px', fontSize: '16px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>도망치기</button>
-           {(type === 'blacksmith' || type === 'tower') && (
-             <button onPointerDown={handleHit} style={{ background: 'linear-gradient(90deg, #ef4444, #b91c1c)', color: '#fff', padding: '15px 50px', borderRadius: '15px', fontSize: '20px', fontWeight: '900', border: 'none', boxShadow: '0 5px 20px rgba(239, 68, 68, 0.5)', cursor: 'pointer', userSelect: 'none', touchAction: 'none' }}>
-               💥 멈추기!
-             </button>
-           )}
+           {(type === 'blacksmith' || type === 'tower') && ( <button onPointerDown={handleHit} style={{ background: 'linear-gradient(90deg, #ef4444, #b91c1c)', color: '#fff', padding: '15px 50px', borderRadius: '15px', fontSize: '20px', fontWeight: '900', border: 'none', boxShadow: '0 5px 20px rgba(239, 68, 68, 0.5)', cursor: 'pointer', userSelect: 'none', touchAction: 'none' }}>💥 멈추기!</button> )}
          </div>
        ) : (
          <div style={{ textAlign: 'center', animation: 'flashSuccess 0.5s ease-out' }}>
-            <div style={{ fontSize: '36px', fontWeight: '900', color: status === 'perfect' ? '#06b6d4' : status === 'good' ? '#fbbf24' : '#ef4444', marginBottom: '10px' }}>
-              {status.toUpperCase()}!!
-            </div>
-            <div style={{ fontSize: '18px', color: '#fff', marginBottom: '30px' }}>
-              결과 보상: <span style={{ color: status !== 'miss' ? '#10b981' : '#ef4444', fontWeight:'bold' }}>{status !== 'miss' ? `+${(status === 'perfect' ? pReward : gReward).toLocaleString()} GOU` : '보상 없음'}</span>
-            </div>
-            <button onClick={() => onReward(status === 'perfect' ? pReward : status === 'good' ? gReward : 0)} style={{ background: '#fbbf24', color: '#000', padding: '15px 40px', borderRadius: '10px', fontSize: '18px', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(251,191,36,0.4)' }}>
-              보상 획득 및 복귀
-            </button>
+            <div style={{ fontSize: '36px', fontWeight: '900', color: status === 'perfect' ? '#06b6d4' : status === 'good' ? '#fbbf24' : '#ef4444', marginBottom: '10px' }}>{status.toUpperCase()}!!</div>
+            <div style={{ fontSize: '18px', color: '#fff', marginBottom: '30px' }}>결과 보상: <span style={{ color: status !== 'miss' ? '#10b981' : '#ef4444', fontWeight:'bold' }}>{status !== 'miss' ? `+${(status === 'perfect' ? pReward : gReward).toLocaleString()} GOU` : '보상 없음'}</span></div>
+            <button onClick={() => onReward(status === 'perfect' ? pReward : status === 'good' ? gReward : 0)} style={{ background: '#fbbf24', color: '#000', padding: '15px 40px', borderRadius: '10px', fontSize: '18px', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(251,191,36,0.4)' }}>보상 획득 및 복귀</button>
          </div>
        )}
     </div>
   );
 };
 
-// =========================================================================
-// ⚔️ 업그레이드 카드
-// =========================================================================
 const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, animClass, boxAnimClass, specialHunt }) => (
   <div className={`glass-panel ${boxAnimClass}`} style={{ padding: '12px', display: 'flex', flexDirection: type === 'gear' ? 'column' : 'row', alignItems: 'center', gap: type === 'gear' ? '0' : '20px', marginBottom: type === 'gear' ? 0 : '12px', borderTop: type === 'gear' ? '4px solid rgba(197,160,89,0.8)' : 'none', position:'relative', overflow:'hidden' }}>
-    {item.locked && (
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-        <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '11px', padding: '8px 15px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)' }}>🔒 {item.lockMsg}</div>
-      </div>
-    )}
+    {item.locked && ( <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}> <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '11px', padding: '8px 15px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)' }}>🔒 {item.lockMsg}</div> </div> )}
     <div className="img-box-gear" style={type !== 'gear' ? { width: '130px', height: '130px', margin: '0' } : {}}>
       <img src={`${process.env.PUBLIC_URL}/${item.imgFile}`} alt={item.name} onError={(e)=>{e.target.style.opacity='0'; e.target.nextSibling.style.display='block';}} />
       <span style={{ display: 'none', fontSize: '35px', position: 'absolute' }}>{item.emoji}</span>
     </div>
-    
     <div style={type !== 'gear' ? { flex: 1 } : { width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {type === 'gear' && <div style={{ fontSize: '10px', color: '#c5a059', fontWeight: 'bold', marginTop: '6px' }}>[{item.statText}]</div>}
-      
       <div style={{ fontSize: type === 'gear' ? '12px' : '18px', fontWeight: '900', margin: '4px 0', color: type === 'gear' ? '#fff' : '#fbbf24', textAlign: type === 'gear' ? 'center' : 'left' }}>
         {item.name} <span className={animClass} style={{ color: type === 'gear' ? '#fbbf24' : '#fff', fontSize: type === 'gear' ? 'inherit' : '13px', display: 'inline-block', marginLeft: type !== 'gear' ? '5px' : '0' }}><br/>+{item.lvl}</span>
       </div>
-
       <div style={{ color: '#ccc', fontSize: '11px', lineHeight: '1.4', textAlign: type === 'gear' ? 'center' : 'left', background: 'rgba(0,0,0,0.4)', padding: '5px', borderRadius: '5px', width: '100%' }}>
-        {item.bonusText}<br/>
-        확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${item.successRateDisplay}%`}</span><br/>
-        비용: <span style={{color: '#fbbf24', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${cost.toLocaleString()}${type !== 'gear' ? ' GOU' : ''}`}</span>
+        {item.bonusText}<br/>확률: <span style={{color: isMax ? '#fbbf24' : '#06b6d4', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${item.successRateDisplay}%`}</span><br/>비용: <span style={{color: '#fbbf24', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${cost.toLocaleString()}${type !== 'gear' ? ' GOU' : ''}`}</span>
       </div>
-      
       <div style={{ display: 'flex', width: '100%', gap: '4px', marginTop: '8px' }}>
         <button onClick={() => onUpgrade(type, item.id)} disabled={isMax || autoActive} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding:'8px', fontSize:'12px' }}>강화</button>
         <button onClick={() => onAuto(type, item.id)} disabled={isMax} className="action-btn" style={{ background: autoActive ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', color: autoActive ? '#06b6d4' : '#888', border: `1px solid ${autoActive ? '#06b6d4' : '#555'}`, padding:'8px', fontSize:'12px' }}>{autoActive ? 'STOP' : 'AUTO'}</button>
       </div>
-
-      {specialHunt && isMax && (
-        <button onClick={specialHunt.onStart} disabled={specialHunt.isHunting} className="action-btn" style={{ width: '100%', marginTop: '8px', padding:'10px', fontSize:'12px', background: specialHunt.isHunting ? '#333' : 'rgba(147,51,234,0.3)', color: specialHunt.isHunting ? '#888' : '#a855f7', border: `1px solid ${specialHunt.isHunting ? '#444' : '#a855f7'}` }}>
-          {specialHunt.isHunting ? '진행 중 ⚔️' : specialHunt.huntText}
-        </button>
-      )}
+      {specialHunt && isMax && ( <button onClick={specialHunt.onStart} disabled={specialHunt.isHunting} className="action-btn" style={{ width: '100%', marginTop: '8px', padding:'10px', fontSize:'12px', background: specialHunt.isHunting ? '#333' : 'rgba(147,51,234,0.3)', color: specialHunt.isHunting ? '#888' : '#a855f7', border: `1px solid ${specialHunt.isHunting ? '#444' : '#a855f7'}` }}>{specialHunt.isHunting ? '진행 중 ⚔️' : specialHunt.huntText}</button> )}
     </div>
   </div>
 );
 
-// =========================================================================
-// 👑 메인 사령부 APP
-// =========================================================================
 export default function App() {
   const launchDate = new Date('2026-06-20T11:00:00+09:00').getTime();
-  if (Date.now() < launchDate) {
-    return <PreRegister />;
-  }
+  if (Date.now() < launchDate) { return <PreRegister />; }
 
   const [activeTab, setActiveTab] = useState('home');
   const [settingTab, setSettingTab] = useState('friend'); 
-  const [invitedFriends] = useState([
-    { name: "홍길동", rank: "훈련병", petLvl: 0, castleLvl: 0 },
-    { name: "KOREA", rank: "기사", petLvl: 50, castleLvl: 10 }
-  ]);
-  const [validInvites] = useState(1); 
+  const [invitedFriends] = useState([{ name: "홍길동", rank: "훈련병", petLvl: 0, castleLvl: 0 }]);
+  const [validInvites] = useState(0); 
 
   const hunts = useMemo(() => [
     {name: '초원 영지', mult: 1, reqSum: 0, req: {atk:0, hp:0, def:0, acc:0}},
@@ -398,24 +246,17 @@ export default function App() {
   ], []);
 
   const [state, setState] = useState({ 
-    screen: 'wallet', walletAddress: '', balance: 50000, burned: 0, jackpot: 0, 
+    screen: 'wallet', walletAddress: '', balance: 0, burned: 0, jackpot: 0, 
     pendingGOU: 0, unclaimedTime: 0, userName: "사령관",
     petLevel: 0, castleLevel: 0, petHuntEndTime: 0, castleHuntEndTime: 0, isAdActive: false, adTimeLeft: 0,
-    tickets: 3, adViewsLeft: 3, nextAdChargeTime: 0, 
-    nextBuffAdTime: 0, 
-    lastLotterySlot: "", 
+    tickets: 3, adViewsLeft: 3, nextAdChargeTime: 0, nextBuffAdTime: 0, lastLotterySlot: "", 
     lastDailyReset: Math.floor((Date.now() + 9 * 3600000) / 86400000), customGodTitle: "UPGRADE" 
   });
 
-  const lockRef = useRef({}); 
-  const autoActiveRef = useRef({}); 
-  const levelsRef = useRef({}); 
-  const [autoUI, setAutoUI] = useState({});
-  const [lvlAnims, setLvlAnims] = useState({}); 
-  const [anims, setAnims] = useState({});
-  const [activeModal, setActiveModal] = useState(null); 
-  const [showGuide, setShowGuide] = useState(false); 
-  const [showLottery, setShowLottery] = useState(false);
+  const lockRef = useRef({}); const autoActiveRef = useRef({}); const levelsRef = useRef({}); 
+  const [autoUI, setAutoUI] = useState({}); const [lvlAnims, setLvlAnims] = useState({}); 
+  const [anims, setAnims] = useState({}); const [activeModal, setActiveModal] = useState(null); 
+  const [showGuide, setShowGuide] = useState(false); const [showLottery, setShowLottery] = useState(false);
 
   const [gears, setGears] = useState([
     {id: 'sword', name: '제우스의 검', lvl: 0, stat: '공격력', base: 10, unit: '', imgFile: 'sword.jpg', emoji: '⚡'},
@@ -427,16 +268,12 @@ export default function App() {
     {id: 'ring', name: '포세이돈의 반지', lvl: 0, stat: '성공확률', base: 0.1, unit: '%', imgFile: 'ring.jpg', emoji: '🌊'}
   ]);
 
-  const wallet = useTonWallet();
-  const [tonConnectUI] = useTonConnectUI(); 
-  const latestUpgradeRef = useRef();
+  const wallet = useTonWallet(); const [tonConnectUI] = useTonConnectUI(); const latestUpgradeRef = useRef();
 
   useEffect(() => {
     gears.forEach(g => levelsRef.current[g.id] = g.lvl);
-    levelsRef.current['pet'] = state.petLevel;
-    levelsRef.current['castle'] = state.castleLevel;
-    levelsRef.current['balance'] = state.balance;
-    levelsRef.current['necklace'] = gears.find(g => g.id === 'necklace')?.lvl || 0;
+    levelsRef.current['pet'] = state.petLevel; levelsRef.current['castle'] = state.castleLevel;
+    levelsRef.current['balance'] = state.balance; levelsRef.current['necklace'] = gears.find(g => g.id === 'necklace')?.lvl || 0;
     levelsRef.current['ring'] = gears.find(g => g.id === 'ring')?.lvl || 0;
   });
 
@@ -446,8 +283,7 @@ export default function App() {
   const totalGearLevel = gears.reduce((a, b) => a + b.lvl, 0); 
   const minLvl = Math.min(...gears.map(g => g.lvl));
   const setBonus = minLvl >= 30 ? 500 : minLvl >= 20 ? 200 : minLvl >= 10 ? 100 : 0;
-  const isPetUnlocked = totalGearLevel >= 210;
-  const isCastleUnlocked = state.petLevel >= 50;
+  const isPetUnlocked = totalGearLevel >= 210; const isCastleUnlocked = state.petLevel >= 50;
 
   const userRankTitle = useMemo(() => {
     if (state.castleLevel >= 50) return `${state.customGodTitle} GOD`;
@@ -462,61 +298,30 @@ export default function App() {
     return [myData].sort((a, b) => b.score - a.score).map((r, i) => ({ ...r, rank: i + 1 }));
   }, [state.userName, userRankTitle, state.castleLevel, state.petLevel, totalGearLevel]);
 
-  const currentStats = useMemo(() => ({
-    atk: gears[0].lvl * gears[0].base, hp: gears[1].lvl * gears[1].base, def: gears[2].lvl * gears[2].base, acc: gears[3].lvl * gears[3].base, sum: totalGearLevel
-  }), [gears, totalGearLevel]);
+  const currentStats = useMemo(() => ({ atk: gears[0].lvl * gears[0].base, hp: gears[1].lvl * gears[1].base, def: gears[2].lvl * gears[2].base, acc: gears[3].lvl * gears[3].base, sum: totalGearLevel }), [gears, totalGearLevel]);
 
   const { pReward, gReward } = useMemo(() => {
     let p = 1000000; let g = 200000;
-    if (state.castleLevel >= 50) { p = 1000000000; g = 200000000; }
-    else if (state.petLevel >= 50) { p = 100000000; g = 20000000; }
-    else if (totalGearLevel >= 210) { p = 10000000; g = 2000000; }
+    if (state.castleLevel >= 50) { p = 1000000000; g = 200000000; } else if (state.petLevel >= 50) { p = 100000000; g = 20000000; } else if (totalGearLevel >= 210) { p = 10000000; g = 2000000; }
     return { pReward: p, gReward: g };
   }, [state.castleLevel, state.petLevel, totalGearLevel]);
 
   const getPetBonus = useCallback((lvl) => { if (lvl >= 50) return 1000; if (lvl >= 40) return 800; if (lvl >= 30) return 600; if (lvl >= 20) return 400; if (lvl >= 10) return 200; return 0; }, []);
   const getCastleBonus = useCallback((lvl) => { if (lvl >= 50) return 1500; if (lvl >= 40) return 1200; if (lvl >= 30) return 900; if (lvl >= 20) return 600; if (lvl >= 10) return 300; return 0; }, []);
 
-  const isPhase2 = state.burned >= MAX_SUPPLY * 0.6;
-  const isPhase1 = !isPhase2 && state.burned >= MAX_SUPPLY * 0.3;
-  const gainHalvingMult = isPhase2 ? 0.25 : (isPhase1 ? 0.5 : 1.0);
-  const costHalvingMult = isPhase2 ? 0.5 : 1.0; 
-
-  const gearGainBonus = totalGearLevel * 2;
-  const petGainBonus = isPetUnlocked ? state.petLevel * 3 : 0;
-  const castleGainBonus = isCastleUnlocked ? state.castleLevel * 5 : 0;
-  const petMilestone = getPetBonus(state.petLevel);
-  const castleMilestone = getCastleBonus(state.castleLevel);
-  const totalBonusPct = gearGainBonus + setBonus + petGainBonus + petMilestone + castleGainBonus + castleMilestone; 
+  const isPhase2 = state.burned >= MAX_SUPPLY * 0.6; const isPhase1 = !isPhase2 && state.burned >= MAX_SUPPLY * 0.3;
+  const gainHalvingMult = isPhase2 ? 0.25 : (isPhase1 ? 0.5 : 1.0); const costHalvingMult = isPhase2 ? 0.5 : 1.0; 
+  const totalBonusPct = (totalGearLevel * 2) + setBonus + (isPetUnlocked ? state.petLevel * 3 : 0) + getPetBonus(state.petLevel) + (isCastleUnlocked ? state.castleLevel * 5 : 0) + getCastleBonus(state.castleLevel); 
   
-  const calculateCost = useCallback((lvl, type, nLvl) => {
-    const tier = Math.floor(lvl / 10);
-    const baseMult = type === 'castle' ? 10000 : 1000;
-    return Math.floor(((lvl % 10) + 1) * Math.pow(10, tier) * baseMult * (1 - (nLvl * 0.005)) * costHalvingMult);
-  }, [costHalvingMult]);
-
+  const calculateCost = useCallback((lvl, type, nLvl) => { const tier = Math.floor(lvl / 10); const baseMult = type === 'castle' ? 10000 : 1000; return Math.floor(((lvl % 10) + 1) * Math.pow(10, tier) * baseMult * (1 - (nLvl * 0.005)) * costHalvingMult); }, [costHalvingMult]);
   const getCost = useCallback((lvl) => calculateCost(lvl, 'gear', levelsRef.current['necklace']), [calculateCost]);
   const getPetCost = useCallback((lvl) => calculateCost(lvl, 'pet', levelsRef.current['necklace']), [calculateCost]);
   const getCastleCost = useCallback((lvl) => calculateCost(lvl, 'castle', levelsRef.current['necklace']), [calculateCost]);
 
   const getSuccessRateDisplay = (lvl, type) => {
-    const ringBonus = (levelsRef.current['ring'] || 0) * 0.1; 
-    let base = 100;
-    if (type === 'gear') {
-      if (lvl >= 6 && lvl <= 10) base = 70;
-      else if (lvl >= 11 && lvl <= 15) base = 60;
-      else if (lvl >= 16 && lvl <= 20) base = 50;
-      else if (lvl >= 21) base = 50 - ((lvl - 20) * 2);
-    } else {
-      if (lvl >= 6 && lvl <= 10) base = 70;
-      else if (lvl >= 11 && lvl <= 15) base = 65;
-      else if (lvl >= 16 && lvl <= 20) base = 60;
-      else if (lvl >= 21 && lvl <= 25) base = 55;
-      else if (lvl >= 26 && lvl <= 30) base = 50;
-      else if (lvl >= 31 && lvl <= 35) base = 45;
-      else if (lvl >= 36 && lvl <= 40) base = 40;
-      else if (lvl >= 41) base = 40 - ((lvl - 40) * 2);
-    }
+    const ringBonus = (levelsRef.current['ring'] || 0) * 0.1; let base = 100;
+    if (type === 'gear') { if (lvl >= 6 && lvl <= 10) base = 70; else if (lvl >= 11 && lvl <= 15) base = 60; else if (lvl >= 16 && lvl <= 20) base = 50; else if (lvl >= 21) base = 50 - ((lvl - 20) * 2); } 
+    else { if (lvl >= 6 && lvl <= 10) base = 70; else if (lvl >= 11 && lvl <= 15) base = 65; else if (lvl >= 16 && lvl <= 20) base = 60; else if (lvl >= 21 && lvl <= 25) base = 55; else if (lvl >= 26 && lvl <= 30) base = 50; else if (lvl >= 31 && lvl <= 35) base = 45; else if (lvl >= 36 && lvl <= 40) base = 40; else if (lvl >= 41) base = 40 - ((lvl - 40) * 2); }
     return Math.max(0, base + ringBonus).toFixed(1);
   };
 
@@ -530,8 +335,7 @@ export default function App() {
   const dailyGainDisplay = Math.floor(300000 * currentHuntData.mult * (1 + totalBonusPct / 100) * gainHalvingMult * (state.isAdActive ? 2.0 : 1.0));
 
   const activeHuntsToRender = useMemo(() => {
-    const arr = [...hunts];
-    const now = Date.now();
+    const arr = [...hunts]; const now = Date.now();
     if (state.castleHuntEndTime > now) arr.unshift({ name: '🏰 제국의 심장', mult: 50, isSpecial: true, endTime: state.castleHuntEndTime });
     if (state.petHuntEndTime > now) arr.unshift({ name: '🐉 신수의 둥지', mult: 30, isSpecial: true, endTime: state.petHuntEndTime });
     return arr;
@@ -539,227 +343,159 @@ export default function App() {
 
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
+  // 🚨 [동기화 패치] 접속 즉시 내 정보 100% 로드
   useEffect(() => {
     if (wallet) {
       setState(s => ({ ...s, walletAddress: wallet.account.address.substring(0, 6) + '...' + wallet.account.address.substring(wallet.account.address.length - 4), screen: 'game' }));
-      httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName, initData: window.Telegram?.WebApp?.initData || "" }).catch(e => console.log(e));
-    } else {
-      setState(s => ({ ...s, screen: 'wallet' }));
-    }
-  }, [wallet, userRankTitle, state.userName]);
+      httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName, initData: window.Telegram?.WebApp?.initData || "" })
+      .then(res => {
+         if (res.data && res.data.userData) {
+            const d = res.data.userData;
+            setState(s => ({ ...s, balance: d.balance ?? 50000, petLevel: d.petLevel ?? 0, castleLevel: d.castleLevel ?? 0, tickets: d.tickets ?? 3, adViewsLeft: d.adViewsLeft ?? 3, nextAdChargeTime: d.nextAdChargeTime ?? 0, nextBuffAdTime: d.nextBuffAdTime ?? 0, lastLotterySlot: d.lastLotterySlot ?? "" }));
+            if (d.gears && d.gears.length > 0) {
+               setGears(prev => prev.map(g => { const saved = d.gears.find(sg => sg.id === g.id); return saved ? { ...g, lvl: saved.lvl } : g; }));
+            }
+         }
+      }).catch(e => console.log(e));
+    } else { setState(s => ({ ...s, screen: 'wallet' })); }
+  }, [wallet]);
 
   const withdrawGOU = async () => {
     if (totalGearLevel < 140) return alert(`🚨 출금 불가: 장비 총합 140강 이상 달성 시에만 국고 출금이 가능합니다! (현재: ${totalGearLevel}강)`);
     if (state.balance < 10000000) return alert("최소 1,000만 GOU부터 출금 가능합니다!");
     const input = window.prompt(`출금할 수량을 입력하세요.\n(현재 잔고: ${Math.floor(state.balance).toLocaleString()})\n※ 5% 소각 수수료 차감`, 10000000);
-    if (!input) return;
-    const amount = parseInt(input, 10);
+    if (!input) return; const amount = parseInt(input, 10);
     if (isNaN(amount) || amount < 10000000 || amount > state.balance) return alert("올바른 수량을 입력해주세요.");
     if (!window.confirm(`${amount.toLocaleString()} GOU 출금 (수수료 5% 차감 후 ${(amount * 0.95).toLocaleString()} 지급)`)) return;
-
     setState(s => ({...s, balance: s.balance - amount, burned: s.burned + (amount * 0.05) }));
-    try {
-        const res = await httpsCallable(getFunctions(app), 'withdrawGOU')({ userId: getUserId(), amount, initData: window.Telegram?.WebApp?.initData || "" });
-        alert(`출금 완료! 수수료 ${res.data.feeBurned.toLocaleString()} 소각됨.`);
-    } catch (e) { alert("출금 실패: " + e.message); }
+    try { const res = await httpsCallable(getFunctions(app), 'withdrawGOU')({ userId: getUserId(), amount, initData: window.Telegram?.WebApp?.initData || "" }); alert(`출금 완료! 수수료 ${res.data.feeBurned.toLocaleString()} 소각됨.`); } catch (e) { alert("출금 실패: " + e.message); }
   };
 
   const handleBuyGOU = async (tonAmount, gouAmount) => {
     if (!wallet) return alert("지갑 연결이 필요합니다!");
-    
-    const transaction = {
-        validUntil: Math.floor(Date.now() / 1000) + 60,
-        messages: [{ address: ADMIN_WALLET_ADDRESS, amount: String(tonAmount * 1e9) }]
-    };
-
+    const transaction = { validUntil: Math.floor(Date.now() / 1000) + 60, messages: [{ address: ADMIN_WALLET_ADDRESS, amount: String(tonAmount * 1e9) }] };
     try {
         const result = await tonConnectUI.sendTransaction(transaction);
-        const res = await httpsCallable(getFunctions(app), 'buyGOU')({ 
-            userId: getUserId(), amount: gouAmount, txHash: result.boc, initData: window.Telegram?.WebApp?.initData || "" 
-        });
-        
-        if (res.data.success) {
-            setState(s => ({...s, balance: s.balance + gouAmount}));
-            alert(`🎉 결제 완료! ${gouAmount.toLocaleString()} GOU가 즉시 보급되었습니다!`);
-        }
-    } catch (e) { console.error("결제 에러:", e); alert("결제가 취소되었거나 오류가 발생했습니다."); }
+        const res = await httpsCallable(getFunctions(app), 'buyGOU')({ userId: getUserId(), amount: gouAmount, txHash: result.boc, initData: window.Telegram?.WebApp?.initData || "" });
+        if (res.data.success) { setState(s => ({...s, balance: s.balance + gouAmount})); alert(`🎉 결제 완료! ${gouAmount.toLocaleString()} GOU가 즉시 보급되었습니다!`); }
+    } catch (e) { alert("결제가 취소되었거나 오류가 발생했습니다."); }
   };
 
   const claimGOU = async () => {
     const gain = Math.floor(state.pendingGOU);
     if (gain < 10) return alert("최소 10 GOU 이상 획득 가능합니다.");
-    setState(s => ({ ...s, balance: s.balance + gain, pendingGOU: 0, unclaimedTime: 0 }));
-    triggerAnim('claim', 'success');
+    setState(s => ({ ...s, balance: s.balance + gain, pendingGOU: 0, unclaimedTime: 0 })); triggerAnim('claim', 'success');
     try { await httpsCallable(getFunctions(app), 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * (state.isAdActive ? 2.0 : 1.0), initData: window.Telegram?.WebApp?.initData || "" }); } catch (error) {}
   };
 
-  const startSpecialHunt = (type) => {
-    const now = Date.now();
-    if (state.petHuntEndTime > now || state.castleHuntEndTime > now) {
-      alert("🔒 중복 실행 불가! 이미 다른 특수 사냥터 작전이 진행 중입니다."); return;
-    }
-    const duration = 12 * 60 * 60 * 1000;
-    if (type === 'pet') setState(s => ({ ...s, petHuntEndTime: now + duration }));
-    else if (type === 'castle') setState(s => ({ ...s, castleHuntEndTime: now + duration }));
-    alert("특수 사냥터 활성화! 12시간 동안 최고 배율의 수익이 국고로 자동 입금됩니다.");
-  };
-
   const handleTitleEdit = () => {
-    if (state.castleLevel >= 50) {
-      const newPrefix = window.prompt("자신만의 호칭(영문/한글)을 입력하세요! (예: KOREA)\n입력하신 단어 뒤에 ' GOD'이 고정으로 붙습니다.", state.customGodTitle);
-      if (newPrefix && newPrefix.trim() !== "") setState(s => ({ ...s, customGodTitle: newPrefix.trim().toUpperCase() }));
-    } else { alert("🔒 성 50강 달성 시 나만의 GOD 호칭을 부여할 수 있습니다!"); }
+    if (state.castleLevel >= 50) { const newPrefix = window.prompt("자신만의 호칭(영문/한글)을 입력하세요! (예: KOREA)", state.customGodTitle); if (newPrefix && newPrefix.trim() !== "") setState(s => ({ ...s, customGodTitle: newPrefix.trim().toUpperCase() })); } 
+    else { alert("🔒 성 50강 달성 시 나만의 GOD 호칭을 부여할 수 있습니다!"); }
   };
 
   const formatTimeStr = (targetTime) => {
-    const diff = Math.max(0, targetTime - Date.now());
-    const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000);
+    const diff = Math.max(0, targetTime - Date.now()); const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000);
     return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
   };
 
-  const watchAdForTicket = () => {
+  // 🚨 [동기화 패치] 티켓/광고/버프 영구 저장
+  const watchAdForTicket = async () => {
     if (state.adViewsLeft <= 0) return alert("현재 광고 충전 중입니다! (3시간마다 1장씩 충전, 매일 오전 9시 3장 리셋)");
-    setState(s => {
-      const nextCharge = s.adViewsLeft === 3 ? Date.now() + 3 * 3600000 : s.nextAdChargeTime;
-      return { ...s, tickets: s.tickets + 1, adViewsLeft: s.adViewsLeft - 1, nextAdChargeTime: nextCharge };
-    });
+    const nextCharge = state.adViewsLeft === 3 ? Date.now() + 3 * 3600000 : state.nextAdChargeTime;
+    setState(s => ({ ...s, tickets: s.tickets + 1, adViewsLeft: s.adViewsLeft - 1, nextAdChargeTime: nextCharge }));
+    try { await httpsCallable(getFunctions(app), 'syncAdAction')({ userId: getUserId(), type: 'ticket', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){}
     alert("📺 광고 시청 완료! 게임장 티켓 1장이 충전되었습니다.");
   };
 
-  const watchBuffAd = () => {
+  const watchBuffAd = async () => {
     if (Date.now() < state.nextBuffAdTime) return alert(`🚨 버프 쿨타임 중입니다! 남은 시간: ${formatTimeStr(state.nextBuffAdTime)}`);
     setState(s => ({ ...s, isAdActive: true, adTimeLeft: 3600, nextBuffAdTime: Date.now() + 3 * 3600000 }));
-    alert("📺 광고 시청 완료! 1시간 동안 채굴량이 2배로 증가합니다. (3시간 후 다시 시청 가능)");
+    try { await httpsCallable(getFunctions(app), 'syncAdAction')({ userId: getUserId(), type: 'buff', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){}
+    alert("📺 광고 시청 완료! 1시간 동안 채굴량이 2배로 증가합니다.");
   };
 
-  const testPushNotification = async () => {
-    const uid = getUserId();
-    try {
-      await httpsCallable(getFunctions(app), 'testPushNotification')({ userId: uid, title: userRankTitle, name: state.userName });
-      alert("✅ 백엔드로 실제 알림 전송 명령을 꽂아 넣었습니다!");
-    } catch (e) { alert("❌ 푸시 실패: " + e.message); }
+  // 🚨 [동기화 패치] 미니게임 & 복권 보상금 영구 저장
+  const handleArcadeReward = async (amount) => {
+    if (amount > 0) {
+      setState(s => ({ ...s, balance: s.balance + amount }));
+      try { await httpsCallable(getFunctions(app), 'syncBonusReward')({ userId: getUserId(), amount: amount, source: 'arcade', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){}
+    }
+    setActiveModal(null);
+  };
+
+  const handleLotteryReward = async (amount) => {
+    setState(s => ({...s, balance: s.balance + amount, lastLotterySlot: currentLotterySlot}));
+    try { await httpsCallable(getFunctions(app), 'syncBonusReward')({ userId: getUserId(), amount: amount, source: 'lottery', slot: currentLotterySlot, initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){}
+    alert("국고 입금 완료!"); setShowLottery(false);
   };
 
   const getRealSuccessRate = (lvl, type) => {
     let base = 1.0;
-    if (type === 'gear') {
-      if (lvl >= 6 && lvl <= 10) base = 0.70;
-      else if (lvl >= 11 && lvl <= 15) base = 0.60;
-      else if (lvl >= 16 && lvl <= 20) base = 0.50;
-      else if (lvl >= 21) base = 0.50 - ((lvl - 20) * 0.02);
-    } else {
-      if (lvl >= 6 && lvl <= 10) base = 0.70;
-      else if (lvl >= 11 && lvl <= 15) base = 0.65;
-      else if (lvl >= 16 && lvl <= 20) base = 0.60;
-      else if (lvl >= 21 && lvl <= 25) base = 0.55;
-      else if (lvl >= 26 && lvl <= 30) base = 0.50;
-      else if (lvl >= 31 && lvl <= 35) base = 0.45;
-      else if (lvl >= 36 && lvl <= 40) base = 0.40;
-      else if (lvl >= 41) base = 0.40 - ((lvl - 40) * 0.02);
-    }
+    if (type === 'gear') { if (lvl >= 6 && lvl <= 10) base = 0.70; else if (lvl >= 11 && lvl <= 15) base = 0.60; else if (lvl >= 16 && lvl <= 20) base = 0.50; else if (lvl >= 21) base = 0.50 - ((lvl - 20) * 0.02); } 
+    else { if (lvl >= 6 && lvl <= 10) base = 0.70; else if (lvl >= 11 && lvl <= 15) base = 0.65; else if (lvl >= 16 && lvl <= 20) base = 0.60; else if (lvl >= 21 && lvl <= 25) base = 0.55; else if (lvl >= 26 && lvl <= 30) base = 0.50; else if (lvl >= 31 && lvl <= 35) base = 0.45; else if (lvl >= 36 && lvl <= 40) base = 0.40; else if (lvl >= 41) base = 0.40 - ((lvl - 40) * 0.02); }
     return base;
   };
 
   const getFrontendRates = (burned) => {
     if (burned >= MAX_SUPPLY * 0.6) return { burn: 0.22, jackpot: 0.23 };
-    if (burned >= MAX_SUPPLY * 0.3) return { burn: 0.27, jackpot: 0.18 };
-    return { burn: 0.30, jackpot: 0.15 }; 
+    if (burned >= MAX_SUPPLY * 0.3) return { burn: 0.27, jackpot: 0.18 }; return { burn: 0.30, jackpot: 0.15 }; 
   };
 
   const handleUpgrade = async (type, id = null) => {
-    const key = id || type;
-    if (lockRef.current[key]) return; 
+    const key = id || type; if (lockRef.current[key]) return; 
     let cost = calculateCost(levelsRef.current[key], type, levelsRef.current['necklace']);
     let currentLvl = levelsRef.current[key];
     if (currentLvl >= (type === 'gear' ? 30 : 50)) return;
     if (levelsRef.current['balance'] < cost) return alert("GOU 부족");
 
-    lockRef.current[key] = true;
-    setTimeout(() => { lockRef.current[key] = false; }, 150);
-
-    const ringBonus = (levelsRef.current['ring'] || 0) * 0.001;
-    let successRate = getRealSuccessRate(currentLvl, type) + ringBonus;
-
-    const isSuccess = Math.random() < successRate;
-    let nextLvl = currentLvl;
-
-    if (isSuccess) {
-      nextLvl++;
-    } else {
-      if (currentLvl >= 5 && !SAVE_POINTS.includes(currentLvl)) nextLvl--;
-    }
+    lockRef.current[key] = true; setTimeout(() => { lockRef.current[key] = false; }, 150);
+    const ringBonus = (levelsRef.current['ring'] || 0) * 0.001; let successRate = getRealSuccessRate(currentLvl, type) + ringBonus;
+    const isSuccess = Math.random() < successRate; let nextLvl = currentLvl;
+    if (isSuccess) { nextLvl++; } else { if (currentLvl >= 5 && !SAVE_POINTS.includes(currentLvl)) nextLvl--; }
 
     setState(s => {
-      const rates = getFrontendRates(s.burned);
-      const burnFee = isSuccess ? 0 : cost * rates.burn;
-      const jackpotFee = isSuccess ? 0 : cost * rates.jackpot;
+      const rates = getFrontendRates(s.burned); const burnFee = isSuccess ? 0 : cost * rates.burn; const jackpotFee = isSuccess ? 0 : cost * rates.jackpot;
       const newState = { ...s, balance: s.balance - cost, burned: s.burned + burnFee, jackpot: s.jackpot + jackpotFee };
-      if (type === 'pet') newState.petLevel = nextLvl;
-      if (type === 'castle') newState.castleLevel = nextLvl;
-      return newState;
+      if (type === 'pet') newState.petLevel = nextLvl; if (type === 'castle') newState.castleLevel = nextLvl; return newState;
     });
 
     if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextLvl } : g));
-    
-    if (!isSuccess && SAVE_POINTS.includes(currentLvl)) triggerLvlAnim(key, 'up'); 
-    else triggerLvlAnim(key, isSuccess ? 'up' : 'down');
+    if (!isSuccess && SAVE_POINTS.includes(currentLvl)) triggerLvlAnim(key, 'up'); else triggerLvlAnim(key, isSuccess ? 'up' : 'down');
     triggerAnim(key, isSuccess ? 'success' : 'fail');
-
     httpsCallable(getFunctions(app), 'upgradeItem')({ userId: getUserId(), type, id, initData: window.Telegram?.WebApp?.initData || "" }).catch(e => console.log(e));
   };
 
   useEffect(() => { latestUpgradeRef.current = handleUpgrade; });
 
   const toggleAuto = async (type, id = null) => {
-    const key = id || type;
-    const maxLimit = type === 'gear' ? 30 : 50;
+    const key = id || type; const maxLimit = type === 'gear' ? 30 : 50;
     if (autoActiveRef.current[key]) { autoActiveRef.current[key] = false; setAutoUI(p => ({ ...p, [key]: false })); return; } 
-
-    const currentLvl = levelsRef.current[key];
-    const targetStr = window.prompt(`목표 강화 레벨 입력 (최대 ${maxLimit}):`, maxLimit);
-    if (!targetStr) return; 
-    const target = parseInt(targetStr, 10);
+    const currentLvl = levelsRef.current[key]; const targetStr = window.prompt(`목표 강화 레벨 입력 (최대 ${maxLimit}):`, maxLimit);
+    if (!targetStr) return; const target = parseInt(targetStr, 10);
     if (isNaN(target) || target <= currentLvl || target > maxLimit) return alert("유효한 숫자 입력 요망.");
 
-    autoActiveRef.current[key] = true;
-    setAutoUI(p => ({ ...p, [key]: true }));
+    autoActiveRef.current[key] = true; setAutoUI(p => ({ ...p, [key]: true }));
 
     const runSimulator = async () => {
       while (autoActiveRef.current[key]) {
-        let simLvl = levelsRef.current[key];
-        let simBalance = levelsRef.current['balance'];
+        let simLvl = levelsRef.current[key]; let simBalance = levelsRef.current['balance'];
         if (simLvl >= target || simLvl >= maxLimit) { alert(`목표 달성!`); break; }
-
         let cost = calculateCost(simLvl, type, levelsRef.current['necklace']);
         if (simBalance < cost) { alert(`잔고 부족!`); break; }
-
-        const ringBonus = (levelsRef.current['ring'] || 0) * 0.001;
-        let successRate = getRealSuccessRate(simLvl, type) + ringBonus;
-
-        const isSuccess = Math.random() < successRate;
-        let nextSimLvl = simLvl;
-        if (isSuccess) nextSimLvl++;
-        else if (simLvl >= 5 && !SAVE_POINTS.includes(simLvl)) nextSimLvl--;
-
+        const ringBonus = (levelsRef.current['ring'] || 0) * 0.001; let successRate = getRealSuccessRate(simLvl, type) + ringBonus;
+        const isSuccess = Math.random() < successRate; let nextSimLvl = simLvl;
+        if (isSuccess) nextSimLvl++; else if (simLvl >= 5 && !SAVE_POINTS.includes(simLvl)) nextSimLvl--;
         setState(s => {
-          const rates = getFrontendRates(s.burned);
-          const burnFee = isSuccess ? 0 : cost * rates.burn;
-          const jackpotFee = isSuccess ? 0 : cost * rates.jackpot;
+          const rates = getFrontendRates(s.burned); const burnFee = isSuccess ? 0 : cost * rates.burn; const jackpotFee = isSuccess ? 0 : cost * rates.jackpot;
           const newState = { ...s, balance: s.balance - cost, burned: s.burned + burnFee, jackpot: s.jackpot + jackpotFee };
-          if (type === 'pet') newState.petLevel = nextSimLvl;
-          if (type === 'castle') newState.castleLevel = nextSimLvl;
-          return newState;
+          if (type === 'pet') newState.petLevel = nextSimLvl; if (type === 'castle') newState.castleLevel = nextSimLvl; return newState;
         });
-
         if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextSimLvl } : g));
-        
-        if (!isSuccess && SAVE_POINTS.includes(simLvl)) triggerLvlAnim(key, 'up');
-        else triggerLvlAnim(key, isSuccess ? 'up' : 'down');
+        if (!isSuccess && SAVE_POINTS.includes(simLvl)) triggerLvlAnim(key, 'up'); else triggerLvlAnim(key, isSuccess ? 'up' : 'down');
         triggerAnim(key, isSuccess ? 'success' : 'fail'); 
         await new Promise(r => setTimeout(r, 400)); 
       }
-      autoActiveRef.current[key] = false;
-      setAutoUI(p => ({ ...p, [key]: false }));
+      autoActiveRef.current[key] = false; setAutoUI(p => ({ ...p, [key]: false }));
     };
     runSimulator();
   };
@@ -770,18 +506,11 @@ export default function App() {
         const currentKSTDay = Math.floor((Date.now() + 9 * 3600000) / 86400000);
         let newAdViews = s.adViewsLeft; let newNextCharge = s.nextAdChargeTime; let newLastReset = s.lastDailyReset;
         if (currentKSTDay > s.lastDailyReset) { newAdViews = 3; newNextCharge = 0; newLastReset = currentKSTDay; } 
-        else if (newAdViews < 3 && Date.now() >= newNextCharge && newNextCharge > 0) {
-          newAdViews++; newNextCharge = newAdViews < 3 ? Date.now() + 3 * 3600000 : 0;
-        }
+        else if (newAdViews < 3 && Date.now() >= newNextCharge && newNextCharge > 0) { newAdViews++; newNextCharge = newAdViews < 3 ? Date.now() + 3 * 3600000 : 0; }
         const b = checkHunt(Date.now(), currentStats, s);
         const gainPerSec = ((300000 * b.mult * (1 + totalBonusPct / 100)) / 86400) * gainHalvingMult * (s.isAdActive ? 2.0 : 1.0);
-        let nUnclaimed = s.unclaimedTime + 1;
-        if (nUnclaimed > 43200) nUnclaimed = 43200; 
-        return { 
-          ...s, pendingGOU: nUnclaimed < 43200 ? s.pendingGOU + gainPerSec : s.pendingGOU, unclaimedTime: nUnclaimed, 
-          isAdActive: s.adTimeLeft > 0 ? true : false, adTimeLeft: Math.max(0, s.adTimeLeft - 1),
-          adViewsLeft: newAdViews, nextAdChargeTime: newNextCharge, lastDailyReset: newLastReset
-        };
+        let nUnclaimed = s.unclaimedTime + 1; if (nUnclaimed > 43200) nUnclaimed = 43200; 
+        return { ...s, pendingGOU: nUnclaimed < 43200 ? s.pendingGOU + gainPerSec : s.pendingGOU, unclaimedTime: nUnclaimed, isAdActive: s.adTimeLeft > 0 ? true : false, adTimeLeft: Math.max(0, s.adTimeLeft - 1), adViewsLeft: newAdViews, nextAdChargeTime: newNextCharge, lastDailyReset: newLastReset };
       });
     }, 1000);
     return () => clearInterval(timer);
@@ -830,8 +559,11 @@ export default function App() {
         .bottom-nav-btn { flex: 1; background: transparent; border: none; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; padding: 5px 2px; }
       `}</style>
 
-      {showLottery && <ScratchLottery userRank={userRankTitle} onReward={(amt) => { setState(s => ({...s, balance: s.balance + amt, lastLotterySlot: currentLotterySlot})); alert("국고 입금 완료!"); }} onClose={() => setShowLottery(false)} />}
-      {activeModal && <ArcadeGames type={activeModal} onClose={() => setActiveModal(null)} onReward={(r) => { if(r>0) setState(s=>({...s, balance:s.balance+r})); setActiveModal(null); }} pReward={pReward} gReward={gReward} />}
+      {/* 🚨 [동기화 패치] 복권 당첨 시 handleLotteryReward 호출 */}
+      {showLottery && <ScratchLottery userRank={userRankTitle} onReward={handleLotteryReward} onClose={() => setShowLottery(false)} />}
+      
+      {/* 🚨 [동기화 패치] 미니게임 당첨 시 handleArcadeReward 호출 */}
+      {activeModal && <ArcadeGames type={activeModal} onClose={() => setActiveModal(null)} onReward={handleArcadeReward} pReward={pReward} gReward={gReward} />}
       
       <div onClick={handleOpenLottery} style={{ position: 'fixed', top: '75px', left: '50%', transform:'translateX(-50%)', background: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'linear-gradient(45deg, #ffd700, #ff8c00)' : '#555', color: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '#000' : '#aaa', padding: '10px 20px', borderRadius: '20px', fontWeight: '900', zIndex: 9000, cursor: 'pointer', boxShadow: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '0 0 15px rgba(255, 215, 0, 0.8)' : 'none', animation: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'pulse 1.5s infinite' : 'none', border:'2px solid #fff', width:'max-content' }}>
         {isHotTime && state.lastLotterySlot !== currentLotterySlot ? '🎟️ 지금 당장 복권 긁기!' : '⏳ 복권 준비 중 (12~14 / 18~20)'}
@@ -898,9 +630,10 @@ export default function App() {
                   <div style={{textAlign:'center', flex:1}}><div style={{fontSize:'11px', color:'#aaa', marginBottom:'4px'}}>남은 광고</div><div style={{color:'#06b6d4', fontWeight:'bold', fontSize:'18px'}}>📺 {state.adViewsLeft}/3</div></div>
                 </div>
                 <button onClick={watchAdForTicket} style={{ width:'100%', background: 'linear-gradient(90deg, #06b6d4, #3b82f6)', color: '#fff', border:'none', padding:'12px', borderRadius:'10px', fontWeight:'bold', marginBottom:'15px', cursor:'pointer' }}>📺 광고 보고 티켓 충전</button>
-                <button onClick={() => { 
+                <button onClick={async () => { 
                   if(state.tickets <= 0) return alert("티켓이 부족합니다!"); 
                   setState(s => ({...s, tickets: s.tickets - 1})); 
+                  try { await httpsCallable(getFunctions(app), 'syncAdAction')({ userId: getUserId(), type: 'useTicket', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){}
                   const games = ['blacksmith', 'tower', 'catch', 'memory'];
                   const randGame = games[Math.floor(Math.random() * games.length)];
                   setActiveModal(randGame); 
@@ -971,7 +704,6 @@ export default function App() {
               <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px' }}>🏆 이번 주 시즌 잭팟 보상금</div>
               <div style={{ color: '#fff', fontWeight: '900', fontSize: '32px', textShadow: '0 0 15px rgba(251,191,36,0.8)' }}>{state.jackpot.toLocaleString()} <span style={{fontSize:'14px', color:'#fbbf24'}}>GOU</span></div>
             </div>
-
             <div className="glass-panel" style={{ padding: '25px 15px' }}>
               <h2 style={{ textAlign: 'center', color: '#fbbf24', margin: '0 0 25px 0' }}>👑 SERVER RANKING</h2>
               <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e6d5b8', fontSize: '14px' }}>
@@ -988,9 +720,6 @@ export default function App() {
                       </td>
                     </tr>
                   ))}
-                  {rankings.length === 0 && (
-                     <tr><td colSpan="3" style={{textAlign:'center', padding:'20px', color:'#888'}}>아직 랭커가 없습니다.</td></tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -1007,25 +736,13 @@ export default function App() {
                 초기 봇들의 공격 위험이 사라지고, 진성 홀더분들이 DEX에서 안전하게 진입할 수 있는 생태계가 조성되면 <span style={{color: '#fbbf24', fontWeight: 'bold'}}>이 상점은 즉시 영구 폐쇄</span>됩니다.
               </p>
             </div>
-
-            {[
-              { ton: 1, gou: 10000000 },
-              { ton: 5, gou: 50000000 },
-              { ton: 10, gou: 100000000 }
-            ].map((pkg, i) => (
+            {[{ ton: 1, gou: 10000000 }, { ton: 5, gou: 50000000 }, { ton: 10, gou: 100000000 }].map((pkg, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.6)', padding: '15px 20px', borderRadius: '12px', marginBottom: '15px', border: '1px solid #333' }}>
-                <div>
-                  <div style={{ color: '#06b6d4', fontWeight: '900', fontSize: '20px' }}>{pkg.ton} TON</div>
-                  <div style={{ color: '#fff', fontSize: '13px', marginTop: '4px' }}>= {pkg.gou.toLocaleString()} GOU</div>
-                </div>
-                <button onClick={() => handleBuyGOU(pkg.ton, pkg.gou)} className="action-btn" style={{ background: 'linear-gradient(90deg, #06b6d4, #3b82f6)', color: '#fff', maxWidth: '110px', fontSize: '15px', padding: '12px 0', boxShadow: '0 4px 15px rgba(6,182,212,0.4)' }}>
-                  TON 결제
-                </button>
+                <div><div style={{ color: '#06b6d4', fontWeight: '900', fontSize: '20px' }}>{pkg.ton} TON</div><div style={{ color: '#fff', fontSize: '13px', marginTop: '4px' }}>= {pkg.gou.toLocaleString()} GOU</div></div>
+                <button onClick={() => handleBuyGOU(pkg.ton, pkg.gou)} className="action-btn" style={{ background: 'linear-gradient(90deg, #06b6d4, #3b82f6)', color: '#fff', maxWidth: '110px', fontSize: '15px', padding: '12px 0', boxShadow: '0 4px 15px rgba(6,182,212,0.4)' }}>TON 결제</button>
               </div>
             ))}
-            <div style={{ textalign: 'center', fontSize: '11px', color: '#666', marginTop: '20px' }}>
-              결제 즉시 사령관님의 계정(GOU 국고)으로 전송됩니다.<br/>추후 DEX(Ston.fi) 오라클이 연동되어 실시간 가격으로 자동 환산될 예정입니다.
-            </div>
+            <div style={{ textAlign: 'center', fontSize: '11px', color: '#666', marginTop: '20px' }}>결제 즉시 사령관님의 계정(GOU 국고)으로 전송됩니다.<br/>추후 DEX(Ston.fi) 오라클이 연동되어 실시간 가격으로 자동 환산될 예정입니다.</div>
           </div>
         )}
 
@@ -1039,9 +756,7 @@ export default function App() {
             {settingTab === 'my' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 <button onClick={handleTitleEdit} className="action-btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid #555' }}>🛡️ 나만의 GOD 칭호 변경 (성 50강 필요)</button>
-                {getUserId() === 'test_commander_123' && (
-                  <button onClick={testPushNotification} className="action-btn" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #3b82f6' }}>🔔 [관리자 전용] 텔레그램 알림 발송 테스트</button>
-                )}
+                {getUserId() === 'test_commander_123' && ( <button onClick={testPushNotification} className="action-btn" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #3b82f6' }}>🔔 [관리자 전용] 텔레그램 알림 발송 테스트</button> )}
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={() => setActiveTab('shop')} className="action-btn" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid #22c55e' }}>📥 GOU 다이렉트 구매</button>
                   <button onClick={withdrawGOU} className="action-btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>📤 GOU 국고 출금 (140강 필요)</button>
@@ -1065,10 +780,7 @@ export default function App() {
                   <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '15px' }}>친구 펫 50강 시 <b style={{color:'#10b981'}}>1억</b> / 성 50강 시 <b style={{color:'#fbbf24'}}>10억</b> 자동 지급!</div>
                   {invitedFriends.map((f, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div>
-                        <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '13px' }}>{f.name}</div>
-                        <div style={{ color: f.rank === '기사' ? '#06b6d4' : '#666', fontSize: '11px' }}>[{f.rank}]</div>
-                      </div>
+                      <div><div style={{ color: '#fff', fontWeight: 'bold', fontSize: '13px' }}>{f.name}</div><div style={{ color: f.rank === '기사' ? '#06b6d4' : '#666', fontSize: '11px' }}>[{f.rank}]</div></div>
                       <div style={{ textAlign: 'right', fontSize: '12px', color: '#ccc' }}>
                         <div>🐉 펫: <span style={{color: f.petLvl>=50 ? '#10b981' : '#fff'}}>{f.petLvl}</span>강</div>
                         <div>🏰 성: <span style={{color: f.castleLvl>=50 ? '#fbbf24' : '#fff'}}>{f.castleLvl}</span>강</div>
