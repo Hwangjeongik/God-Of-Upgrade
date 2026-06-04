@@ -214,10 +214,10 @@ export default function App() {
   useEffect(() => {
     if (window.Adsgram) {
       // 👇 애즈그램에서 만드신 새로운 '티켓 블록 ID 숫자'를 따옴표 안에 넣으세요!
-      ticketAdRef.current = window.Adsgram.init({ blockId: "34105" });
+      ticketAdRef.current = window.Adsgram.init({ blockId: "34107" });
       
       // 👇 애즈그램에서 만드신 새로운 '버프 블록 ID 숫자'를 따옴표 안에 넣으세요!
-      buffAdRef.current = window.Adsgram.init({ blockId: "34106" });
+      buffAdRef.current = window.Adsgram.init({ blockId: "34108" });
     }
   }, []);
 
