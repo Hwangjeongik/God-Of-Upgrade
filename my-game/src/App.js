@@ -9,15 +9,15 @@ const MAX_SUPPLY = 10000000000000;
 const SAVE_POINTS = [10, 20, 30, 40]; 
 const ADMIN_WALLET_ADDRESS = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ";
 
-// 🌍 7개국어 게임 내부(App.js) 번역 사전 (Native Web3/RPG Slang 적용)
+// 🌍 7개국어 게임 내부(App.js) 번역 사전 (지갑 문지기 경고문 추가 완료)
 const i18n = {
-  ko: { wConn:"지갑 연결됨", rGod:"GOD", rCom:"사령관", rKni:"기사", rRec:"훈련병", jPot:"🏆 이번 주 시즌 잭팟 보상금", burn:"🔥 서버 총 소각량 (반감기 게이지)", ph2:"🚨 2차 반감기 가동 중 (비용 50%↓)", ph1:"⚠️ 1차 반감기 가동 중 (수익 50%↓)", ph0:"🟢 기본 페이즈 진행 중", dGain:"일일 자동 채굴량", unClm:"미수확", cBtn:"🚀 GOU 획득하기", bfOn:"🔥 버프 가동 중", bfCd:"⏳ 쿨타임", bfBtn:"📺 광고: 1시간 채굴량 2배", arc:"🎰 랜덤 아케이드 게임장", tkts:"🎟️ 보유 티켓", ads:"📺 남은 광고", adBtn:"📺 광고 보고 티켓 충전", pBtn:"🎲 랜덤 아케이드 입장", hTit:"🗺️ 점령 영지 현황 (전투력 매칭)", hReq:"필요 강화 합:", gTit:"⚔️ 신화 무기고", pTit:"🐉 신수 및 영지 성장", lvl:"강", prob:"확률:", cost:"비용:", upg:"강화", shTit:"💎 GOU 다이렉트 상점", shNot:"🚨 [사령관 특별 공지] DEX 상장 초기, 스나이퍼 봇 사재기 및 슬리피지 방지용 임시 보급소입니다.", buy:"TON 결제", nHom:"홈(수확)", nUpg:"강화", nShp:"상점", nRnk:"랭킹", nSys:"시스템", aNoG:"GOU가 부족합니다.", rSrv:"👑 SERVER RANKING", nTgt:"목표 강화 레벨 입력:", h1:"초원 영지", h2:"신의 숲", h3:"불멸 사막", h4:"심연 정글", h5:"황혼 화산", g1:"제우스의 검", g2:"아레스의 갑옷", g3:"아테나의 투구", g4:"헤파이스토스의 장갑", g5:"헤르메스의 신발", g6:"아프로디테의 목걸이", g7:"포세이돈의 반지", s1:"공격력", s2:"체력", s3:"방어력", s4:"명중률", s5:"보너스", s6:"비용감소", s7:"성공확률", p1:"고대 드래곤", p2:"위대한 군주의 성", gBf:"버프: ", pBf:"수익 보너스: ", spec:"진행 중 ⚔️", lck1:"장비 210강 달성 시 개방", lck2:"펫 50강 달성 시 개방", rnk1:"순위", rnk2:"사령관명", rnk3:"달성 스펙", syMy:"👤 내 정보 (MY)", syFr:"🤝 친구초대 퀘스트", tgTit:"🛡️ 나만의 GOD 칭호 변경", tgWd:"📤 GOU 국고 출금", cpy:"🔗 초대 링크 복사하기", frSt:"🔥 기사 달성 친구 초대 현황", frMy:"🤝 내 친구 육성 현황", aMin:"최소 수량을 확인하세요.", aMax:"목표 달성!", aErr:"잔고 부족!", hSpec1:"🏰 제국의 심장", hSpec2:"🐉 신수의 둥지", aTkt:"티켓이 부족합니다!" },
-  en: { wConn:"Wallet Connected", rGod:"GOD", rCom:"Cmdr", rKni:"Knight", rRec:"Recruit", jPot:"🏆 Weekly Season Jackpot", burn:"🔥 Total Server Burn (Halving)", ph2:"🚨 Phase 2 Halving (Cost 50%↓)", ph1:"⚠️ Phase 1 Halving (Yield 50%↓)", ph0:"🟢 Normal Phase", dGain:"Daily Auto Mining", unClm:"Unclaimed", cBtn:"🚀 Claim GOU", bfOn:"🔥 Buff Active", bfCd:"⏳ Cooldown", bfBtn:"📺 Ad: 2x Mining (1h)", arc:"🎰 Random Arcade", tkts:"🎟️ Tickets", ads:"📺 Ads Left", adBtn:"📺 Watch Ad for Ticket", pBtn:"🎲 Enter Arcade", hTit:"🗺️ Territories (Power Match)", hReq:"Req Lvl Sum:", gTit:"⚔️ Mythic Armory", pTit:"🐉 Divine Beast & Castle", lvl:"Lv", prob:"Rate:", cost:"Cost:", upg:"UPG", shTit:"💎 Direct GOU Shop", shNot:"🚨 [Notice] Temporary depot to prevent sniper bots during early DEX listing.", buy:"BUY (TON)", nHom:"Home", nUpg:"Upgrade", nShp:"Shop", nRnk:"Rank", nSys:"System", aNoG:"Not enough GOU.", rSrv:"👑 SERVER RANKING", nTgt:"Enter target upgrade level:", h1:"Grassland", h2:"Forest of Gods", h3:"Immortal Desert", h4:"Abyssal Jungle", h5:"Twilight Volcano", g1:"Sword of Zeus", g2:"Armor of Ares", g3:"Helmet of Athena", g4:"Gloves of Hephaestus", g5:"Shoes of Hermes", g6:"Necklace of Aphrodite", g7:"Ring of Poseidon", s1:"ATK", s2:"HP", s3:"DEF", s4:"ACC", s5:"Bonus", s6:"Cost Reduc", s7:"Success Rate", p1:"Ancient Dragon", p2:"Great Monarch's Castle", gBf:"Buff: ", pBf:"Yield Bonus: ", spec:"Hunting ⚔️", lck1:"Unlocks at Gear +210", lck2:"Unlocks at Pet +50", rnk1:"Rank", rnk2:"Commander", rnk3:"Stats", syMy:"👤 My Info", syFr:"🤝 Invite Quest", tgTit:"🛡️ Change GOD Title", tgWd:"📤 Withdraw GOU", cpy:"🔗 Copy Invite Link", frSt:"🔥 Friends Reached Knight", frMy:"🤝 Friends Growth", aMin:"Check minimum amount.", aMax:"Target Reached!", aErr:"Not enough balance!", hSpec1:"🏰 Heart of Empire", hSpec2:"🐉 Beast Nest", aTkt:"Not enough tickets!" },
-  ru: { wConn:"Кошелек подключен", rGod:"БОГ", rCom:"Командир", rKni:"Рыцарь", rRec:"Рекрут", jPot:"🏆 Джекпот Сезона", burn:"🔥 Всего Сожжено (Халвинг)", ph2:"🚨 Халвинг 2 (Стоимость 50%↓)", ph1:"⚠️ Халвинг 1 (Доход 50%↓)", ph0:"🟢 Обычная Фаза", dGain:"Дневная добыча", unClm:"Не собрано", cBtn:"🚀 Собрать GOU", bfOn:"🔥 Бафф Активен", bfCd:"⏳ Перезарядка", bfBtn:"📺 Реклама: 2x добыча (1ч)", arc:"🎰 Аркада", tkts:"🎟️ Билеты", ads:"📺 Осталось рекламы", adBtn:"📺 Реклама за билет", pBtn:"🎲 Войти в Аркаду", hTit:"🗺️ Территории", hReq:"Требуется ур:", gTit:"⚔️ Мифический Арсенал", pTit:"🐉 Питомец и Замок", lvl:"Ур", prob:"Шанс:", cost:"Цена:", upg:"Улучш", shTit:"💎 Магазин GOU", shNot:"🚨 Временный пункт для защиты от снайпер-ботов на DEX.", buy:"КУПИТЬ (TON)", nHom:"Главная", nUpg:"Улучш", nShp:"Магз", nRnk:"Топ", nSys:"Система", aNoG:"Недостаточно GOU", rSrv:"👑 РЕЙТИНГ СЕРВЕРА", nTgt:"Целевой уровень:", h1:"Луга", h2:"Лес Богов", h3:"Бессмертная Пустыня", h4:"Джунгли Бездны", h5:"Сумеречный Вулкан", g1:"Меч Зевса", g2:"Броня Ареса", g3:"Шлем Афины", g4:"Перчатки Гефеста", g5:"Обувь Гермеса", g6:"Ожерелье Афродиты", g7:"Кольцо Посейдона", s1:"АТК", s2:"ХП", s3:"ЗАЩ", s4:"ТОЧ", s5:"Бонус", s6:"Скидка", s7:"Шанс", p1:"Древний Дракон", p2:"Замок Монарха", gBf:"Бафф: ", pBf:"Доход: ", spec:"Охота ⚔️", lck1:"Разб: Снаряж +210", lck2:"Разб: Питомец +50", rnk1:"Ранг", rnk2:"Командир", rnk3:"Статы", syMy:"👤 Мой Профиль", syFr:"🤝 Квесты", tgTit:"🛡️ Изменить титул GOD", tgWd:"📤 Вывод GOU", cpy:"🔗 Копировать ссылку", frSt:"🔥 Друзья-Рыцари", frMy:"🤝 Прогресс друзей", aMin:"Мин. сумма не достигнута.", aMax:"Цель достигнута!", aErr:"Недостаточно баланса!", hSpec1:"🏰 Сердце Империи", hSpec2:"🐉 Гнездо Зверя", aTkt:"Нет билетов!" },
-  zh: { wConn:"已连接钱包", rGod:"GOD", rCom:"指挥官", rKni:"骑士", rRec:"新兵", jPot:"🏆 本周赛季奖池", burn:"🔥 总销毁量 (减半)", ph2:"🚨 阶段2减半 (成本50%↓)", ph1:"⚠️ 阶段1减半 (收益50%↓)", ph0:"🟢 基础阶段", dGain:"每日自动挖矿", unClm:"未领取", cBtn:"🚀 领取 GOU", bfOn:"🔥 增益生效中", bfCd:"⏳ 冷却中", bfBtn:"📺 看广告: 1小时收益2倍", arc:"🎰 随机街机", tkts:"🎟️ 门票", ads:"📺 剩余广告", adBtn:"📺 看广告补充门票", pBtn:"🎲 进入街机", hTit:"🗺️ 领地状态", hReq:"需要强化:", gTit:"⚔️ 神话武器库", pTit:"🐉 神兽与领地", lvl:"级", prob:"概率:", cost:"费用:", upg:"强化", shTit:"💎 GOU直营店", shNot:"🚨 防御DEX狙击机器人的临时补给站。", buy:"购买 (TON)", nHom:"主页", nUpg:"强化", nShp:"商店", nRnk:"排名", nSys:"系统", aNoG:"GOU不足。", rSrv:"👑 全服排名", nTgt:"输入目标等级:", h1:"草原领地", h2:"神之森林", h3:"不朽沙漠", h4:"深渊丛林", h5:"黄昏火山", g1:"宙斯之剑", g2:"阿瑞斯之甲", g3:"雅典娜之盔", g4:"赫菲斯托斯手套", g5:"赫尔墨斯之鞋", g6:"阿佛洛狄忒项链", g7:"波塞冬之戒", s1:"攻击力", s2:"生命值", s3:"防御力", s4:"命中率", s5:"加成", s6:"费用减少", s7:"成功率", p1:"远古巨龙", p2:"伟大君主之城", gBf:"增益: ", pBf:"收益加成: ", spec:"进行中 ⚔️", lck1:"装备+210解锁", lck2:"宠物+50解锁", rnk1:"排名", rnk2:"指挥官", rnk3:"属性", syMy:"👤 我的信息", syFr:"🤝 邀请任务", tgTit:"🛡️ 更改GOD称号", tgWd:"📤 提取 GOU", cpy:"🔗 复制邀请链接", frSt:"🔥 达到骑士的好友", frMy:"🤝 好友养成状态", aMin:"检查最低数量。", aMax:"达成目标！", aErr:"余额不足！", hSpec1:"🏰 帝国之心", hSpec2:"🐉 神兽之巢", aTkt:"门票不足！" },
-  ja: { wConn:"ウォレット接続済", rGod:"GOD", rCom:"司令官", rKni:"騎士", rRec:"訓練兵", jPot:"🏆 今週のジャックポット", burn:"🔥 総バーン量 (半減期)", ph2:"🚨 第2半減期 (費用50%↓)", ph1:"⚠️ 第1半減期 (収益50%↓)", ph0:"🟢 基本フェーズ", dGain:"1日の自動採掘", unClm:"未受取", cBtn:"🚀 GOU 獲得", bfOn:"🔥 バフ稼働中", bfCd:"⏳ クールタイム", bfBtn:"📺 広告: 1時間収益2倍", arc:"🎰 ランダムアーケード", tkts:"🎟️ チケット", ads:"📺 残り広告", adBtn:"📺 広告でチケット補充", pBtn:"🎲 アーケード入場", hTit:"🗺️ 占領領地", hReq:"必要強化:", gTit:"⚔️ 神話の武器庫", pTit:"🐉 神獣と領地", lvl:"強化", prob:"確率:", cost:"費用:", upg:"強化", shTit:"💎 GOU直営店", shNot:"🚨 DEXスナイパー防御用の一時ショップ。", buy:"決済 (TON)", nHom:"ホーム", nUpg:"強化", nShp:"ショップ", nRnk:"ランク", nSys:"システム", aNoG:"GOU不足です。", rSrv:"👑 サーバーランキング", nTgt:"目標レベルを入力:", h1:"草原の領地", h2:"神の森", h3:"不滅の砂漠", h4:"深淵のジャングル", h5:"黄昏の火山", g1:"ゼウスの剣", g2:"アレスの鎧", g3:"アテナの兜", g4:"ヘパイストスの手袋", g5:"ヘルメスの靴", g6:"アフロディーテの首飾り", g7:"ポセイドンの指輪", s1:"攻撃力", s2:"体力", s3:"防御力", s4:"命中率", s5:"ボーナス", s6:"費用減少", s7:"成功確率", p1:"古代ドラゴン", p2:"偉大なる君主の城", gBf:"バフ: ", pBf:"収益ボーナス: ", spec:"進行中 ⚔️", lck1:"装備+210で解放", lck2:"ペット+50で解放", rnk1:"順位", rnk2:"司令官名", rnk3:"スペック", syMy:"👤 マイページ", syFr:"🤝 友達招待", tgTit:"🛡️ GOD称号変更", tgWd:"📤 GOU出金", cpy:"🔗 リンクをコピー", frSt:"🔥 騎士到達の友達", frMy:"🤝 友達の育成状況", aMin:"最小数量を確認してください。", aMax:"目標達成！", aErr:"残高不足！", hSpec1:"🏰 帝国の心臓", hSpec2:"🐉 神獣の巣", aTkt:"チケットが足りません！" },
-  es: { wConn:"Billetera Conect.", rGod:"DIOS", rCom:"Cmdte", rKni:"Caballero", rRec:"Recluta", jPot:"🏆 Jackpot Semanal", burn:"🔥 Quema Total (Halving)", ph2:"🚨 Halving 2 (Costo 50%↓)", ph1:"⚠️ Halving 1 (Ganancia 50%↓)", ph0:"🟢 Fase Normal", dGain:"Minería Diaria", unClm:"Sin Reclamar", cBtn:"🚀 Reclamar GOU", bfOn:"🔥 Buff Activo", bfCd:"⏳ Enfriamiento", bfBtn:"📺 Anuncio: Minería 2x (1h)", arc:"🎰 Arcade Aleatorio", tkts:"🎟️ Boletos", ads:"📺 Anuncios Rest.", adBtn:"📺 Anuncio por Boleto", pBtn:"🎲 Entrar al Arcade", hTit:"🗺️ Territorios", hReq:"Nivel Requerido:", gTit:"⚔️ Armería Mítica", pTit:"🐉 Bestia Divina", lvl:"Nv", prob:"Prob:", cost:"Costo:", upg:"Mejora", shTit:"💎 Tienda GOU", shNot:"🚨 Depósito temporal para evitar bots francotiradores en DEX.", buy:"COMPRAR", nHom:"Inicio", nUpg:"Mejora", nShp:"Tienda", nRnk:"Ranking", nSys:"Sistema", aNoG:"GOU Insuficiente.", rSrv:"👑 RANKING DEL SERVIDOR", nTgt:"Ingresa nivel objetivo:", h1:"Pradera", h2:"Bosque de Dioses", h3:"Desierto Inmortal", h4:"Jungla Abisal", h5:"Volcán Crepuscular", g1:"Espada de Zeus", g2:"Armadura de Ares", g3:"Casco de Atenea", g4:"Guantes de Hefesto", g5:"Zapatos de Hermes", g6:"Collar de Afrodita", g7:"Anillo de Poseidón", s1:"ATQ", s2:"PV", s3:"DEF", s4:"PRE", s5:"Bono", s6:"Reduc. Costo", s7:"Prob. Éxito", p1:"Dragón Antiguo", p2:"Castillo del Monarca", gBf:"Buff: ", pBf:"Bono de Ganancia: ", spec:"Cazando ⚔️", lck1:"Desbloquea al +210", lck2:"Desbloquea al +50", rnk1:"Rango", rnk2:"Comandante", rnk3:"Estadísticas", syMy:"👤 Mi Info", syFr:"🤝 Misión de Invit.", tgTit:"🛡️ Cambiar Título de DIOS", tgWd:"📤 Retirar GOU", cpy:"🔗 Copiar Enlace", frSt:"🔥 Amigos nivel Caballero", frMy:"🤝 Crecimiento de Amigos", aMin:"Verifique la cantidad mínima.", aMax:"¡Objetivo Alcanzado!", aErr:"¡Saldo insuficiente!", hSpec1:"🏰 Corazón del Imperio", hSpec2:"🐉 Nido de Bestias", aTkt:"¡Faltan boletos!" },
-  vi: { wConn:"Đã kết nối ví", rGod:"CHÚA", rCom:"Chỉ huy", rKni:"Hiệp sĩ", rRec:"Tân binh", jPot:"🏆 Jackpot Mùa giải Tuần", burn:"🔥 Tổng lượng Đốt (Halving)", ph2:"🚨 Halving 2 (Chi phí 50%↓)", ph1:"⚠️ Halving 1 (Lợi nhuận 50%↓)", ph0:"🟢 Giai đoạn Bình thường", dGain:"Khai thác Tự động", unClm:"Chưa nhận", cBtn:"🚀 Nhận GOU", bfOn:"🔥 Đang kích hoạt Buff", bfCd:"⏳ Thời gian chờ", bfBtn:"📺 Xem QC: x2 Khai thác", arc:"🎰 Arcade Ngẫu nhiên", tkts:"🎟️ Vé", ads:"📺 QC Còn lại", adBtn:"📺 Xem QC nhận Vé", pBtn:"🎲 Vào Arcade", hTit:"🗺️ Lãnh thổ", hReq:"Yêu cầu Cấp:", gTit:"⚔️ Kho vũ khí Thần thoại", pTit:"🐉 Thần thú & Lâu đài", lvl:"Cấp", prob:"Tỉ lệ:", cost:"Chi phí:", upg:"N.Cấp", shTit:"💎 Cửa hàng GOU", shNot:"🚨 Trạm tiếp tế tạm thời để ngăn chặn bot bắn tỉa trên DEX.", buy:"MUA (TON)", nHom:"Tr.chủ", nUpg:"N.cấp", nShp:"C.Hàng", nRnk:"X.hạng", nSys:"Hệ thống", aNoG:"Không đủ GOU.", rSrv:"👑 BẢNG XẾP HẠNG SERVER", nTgt:"Nhập cấp độ mục tiêu:", h1:"Thảo nguyên", h2:"Rừng Thần", h3:"Sa mạc Bất tử", h4:"Rừng sâu", h5:"Núi lửa Chạng vạng", g1:"Kiếm của Zeus", g2:"Giáp của Ares", g3:"Mũ của Athena", g4:"Găng của Hephaestus", g5:"Giày của Hermes", g6:"Vòng cổ của Aphrodite", g7:"Nhẫn của Poseidon", s1:"ATK", s2:"HP", s3:"DEF", s4:"ACC", s5:"Thưởng", s6:"Giảm Chi phí", s7:"Tỉ lệ Thành công", p1:"Rồng Cổ đại", p2:"Lâu đài Đại vương", gBf:"Buff: ", pBf:"Thưởng Lợi nhuận: ", spec:"Đang săn ⚔️", lck1:"Mở khóa khi Trang bị +210", lck2:"Mở khóa khi Thú cưng +50", rnk1:"Hạng", rnk2:"Chỉ huy", rnk3:"Chỉ số", syMy:"👤 Thông tin", syFr:"🤝 N.vụ Mời", tgTit:"🛡️ Đổi Danh hiệu CHÚA", tgWd:"📤 Rút GOU", cpy:"🔗 Sao chép Liên kết", frSt:"🔥 Bạn bè đạt Hiệp sĩ", frMy:"🤝 Tiến độ Bạn bè", aMin:"Kiểm tra số lượng tối thiểu.", aMax:"Đạt mục tiêu!", aErr:"Không đủ số dư!", hSpec1:"🏰 Trái tim Đế chế", hSpec2:"🐉 Tổ Thần thú", aTkt:"Không đủ vé!" }
+  ko: { wConn:"지갑 연결됨", wNotConn:"지갑 미연결", wWarn:"⚠️ 이 기능을 사용하려면 TON 지갑을 연결해야 합니다!", rGod:"GOD", rCom:"사령관", rKni:"기사", rRec:"훈련병", jPot:"🏆 이번 주 시즌 잭팟 보상금", burn:"🔥 서버 총 소각량 (반감기 게이지)", ph2:"🚨 2차 반감기 가동 중 (비용 50%↓)", ph1:"⚠️ 1차 반감기 가동 중 (수익 50%↓)", ph0:"🟢 기본 페이즈 진행 중", dGain:"일일 자동 채굴량", unClm:"미수확", cBtn:"🚀 GOU 획득하기", bfOn:"🔥 버프 가동 중", bfCd:"⏳ 쿨타임", bfBtn:"📺 광고: 1시간 채굴량 2배", arc:"🎰 랜덤 아케이드 게임장", tkts:"🎟️ 보유 티켓", ads:"📺 남은 광고", adBtn:"📺 광고 보고 티켓 충전", pBtn:"🎲 랜덤 아케이드 입장", hTit:"🗺️ 점령 영지 현황 (전투력 매칭)", hReq:"필요 강화 합:", gTit:"⚔️ 신화 무기고", pTit:"🐉 신수 및 영지 성장", lvl:"강", prob:"확률:", cost:"비용:", upg:"강화", shTit:"💎 GOU 다이렉트 상점", shNot:"🚨 [사령관 특별 공지] DEX 상장 초기, 스나이퍼 봇 사재기 및 슬리피지 방지용 임시 보급소입니다.", buy:"TON 결제", nHom:"홈(수확)", nUpg:"강화", nShp:"상점", nRnk:"랭킹", nSys:"시스템", aNoG:"GOU가 부족합니다.", rSrv:"👑 SERVER RANKING", nTgt:"목표 강화 레벨 입력:", h1:"초원 영지", h2:"신의 숲", h3:"불멸 사막", h4:"심연 정글", h5:"황혼 화산", g1:"제우스의 검", g2:"아레스의 갑옷", g3:"아테나의 투구", g4:"헤파이스토스의 장갑", g5:"헤르메스의 신발", g6:"아프로디테의 목걸이", g7:"포세이돈의 반지", s1:"공격력", s2:"체력", s3:"방어력", s4:"명중률", s5:"보너스", s6:"비용감소", s7:"성공확률", p1:"고대 드래곤", p2:"위대한 군주의 성", gBf:"버프: ", pBf:"수익 보너스: ", spec:"진행 중 ⚔️", lck1:"장비 210강 달성 시 개방", lck2:"펫 50강 달성 시 개방", rnk1:"순위", rnk2:"사령관명", rnk3:"달성 스펙", syMy:"👤 내 정보 (MY)", syFr:"🤝 친구초대 퀘스트", tgTit:"🛡️ 나만의 GOD 칭호 변경", tgWd:"📤 GOU 국고 출금", cpy:"🔗 초대 링크 복사하기", frSt:"🔥 기사 달성 친구 초대 현황", frMy:"🤝 내 친구 육성 현황", aMin:"최소 수량을 확인하세요.", aMax:"목표 달성!", aErr:"잔고 부족!", hSpec1:"🏰 제국의 심장", hSpec2:"🐉 신수의 둥지", aTkt:"티켓이 부족합니다!" },
+  en: { wConn:"Wallet Connected", wNotConn:"Not Connected", wWarn:"⚠️ You must connect your TON wallet first!", rGod:"GOD", rCom:"Cmdr", rKni:"Knight", rRec:"Recruit", jPot:"🏆 Weekly Season Jackpot", burn:"🔥 Total Server Burn (Halving)", ph2:"🚨 Phase 2 Halving (Cost 50%↓)", ph1:"⚠️ Phase 1 Halving (Yield 50%↓)", ph0:"🟢 Normal Phase", dGain:"Daily Auto Mining", unClm:"Unclaimed", cBtn:"🚀 Claim GOU", bfOn:"🔥 Buff Active", bfCd:"⏳ Cooldown", bfBtn:"📺 Ad: 2x Mining (1h)", arc:"🎰 Random Arcade", tkts:"🎟️ Tickets", ads:"📺 Ads Left", adBtn:"📺 Watch Ad for Ticket", pBtn:"🎲 Enter Arcade", hTit:"🗺️ Territories (Power Match)", hReq:"Req Lvl Sum:", gTit:"⚔️ Mythic Armory", pTit:"🐉 Divine Beast & Castle", lvl:"Lv", prob:"Rate:", cost:"Cost:", upg:"UPG", shTit:"💎 Direct GOU Shop", shNot:"🚨 [Notice] Temporary depot to prevent sniper bots during early DEX listing.", buy:"BUY (TON)", nHom:"Home", nUpg:"Upgrade", nShp:"Shop", nRnk:"Rank", nSys:"System", aNoG:"Not enough GOU.", rSrv:"👑 SERVER RANKING", nTgt:"Enter target upgrade level:", h1:"Grassland", h2:"Forest of Gods", h3:"Immortal Desert", h4:"Abyssal Jungle", h5:"Twilight Volcano", g1:"Sword of Zeus", g2:"Armor of Ares", g3:"Helmet of Athena", g4:"Gloves of Hephaestus", g5:"Shoes of Hermes", g6:"Necklace of Aphrodite", g7:"Ring of Poseidon", s1:"ATK", s2:"HP", s3:"DEF", s4:"ACC", s5:"Bonus", s6:"Cost Reduc", s7:"Success Rate", p1:"Ancient Dragon", p2:"Great Monarch's Castle", gBf:"Buff: ", pBf:"Yield Bonus: ", spec:"Hunting ⚔️", lck1:"Unlocks at Gear +210", lck2:"Unlocks at Pet +50", rnk1:"Rank", rnk2:"Commander", rnk3:"Stats", syMy:"👤 My Info", syFr:"🤝 Invite Quest", tgTit:"🛡️ Change GOD Title", tgWd:"📤 Withdraw GOU", cpy:"🔗 Copy Invite Link", frSt:"🔥 Friends Reached Knight", frMy:"🤝 Friends Growth", aMin:"Check minimum amount.", aMax:"Target Reached!", aErr:"Not enough balance!", hSpec1:"🏰 Heart of Empire", hSpec2:"🐉 Beast Nest", aTkt:"Not enough tickets!" },
+  ru: { wConn:"Кошелек подключен", wNotConn:"Нет кошелька", wWarn:"⚠️ Сначала подключите кошелек TON!", rGod:"БОГ", rCom:"Командир", rKni:"Рыцарь", rRec:"Рекрут", jPot:"🏆 Джекпот Сезона", burn:"🔥 Всего Сожжено (Халвинг)", ph2:"🚨 Халвинг 2 (Стоимость 50%↓)", ph1:"⚠️ Халвинг 1 (Доход 50%↓)", ph0:"🟢 Обычная Фаза", dGain:"Дневная добыча", unClm:"Не собрано", cBtn:"🚀 Собрать GOU", bfOn:"🔥 Бафф Активен", bfCd:"⏳ Перезарядка", bfBtn:"📺 Реклама: 2x добыча (1ч)", arc:"🎰 Аркада", tkts:"🎟️ Билеты", ads:"📺 Осталось рекламы", adBtn:"📺 Реклама за билет", pBtn:"🎲 Войти в Аркаду", hTit:"🗺️ Территории", hReq:"Требуется ур:", gTit:"⚔️ Мифический Арсенал", pTit:"🐉 Питомец и Замок", lvl:"Ур", prob:"Шанс:", cost:"Цена:", upg:"Улучш", shTit:"💎 Магазин GOU", shNot:"🚨 Временный пункт для защиты от снайпер-ботов на DEX.", buy:"КУПИТЬ (TON)", nHom:"Главная", nUpg:"Улучш", nShp:"Магз", nRnk:"Топ", nSys:"Система", aNoG:"Недостаточно GOU", rSrv:"👑 РЕЙТИНГ СЕРВЕРА", nTgt:"Целевой уровень:", h1:"Луга", h2:"Лес Богов", h3:"Бессмертная Пустыня", h4:"Джунгли Бездны", h5:"Сумеречный Вулкан", g1:"Меч Зевса", g2:"Броня Ареса", g3:"Шлем Афины", g4:"Перчатки Гефеста", g5:"Обувь Гермеса", g6:"Ожерелье Афродиты", g7:"Кольцо Посейдона", s1:"АТК", s2:"ХП", s3:"ЗАЩ", s4:"ТОЧ", s5:"Бонус", s6:"Скидка", s7:"Шанс", p1:"Древний Дракон", p2:"Замок Монарха", gBf:"Бафф: ", pBf:"Доход: ", spec:"Охота ⚔️", lck1:"Разб: Снаряж +210", lck2:"Разб: Питомец +50", rnk1:"Ранг", rnk2:"Командир", rnk3:"Статы", syMy:"👤 Мой Профиль", syFr:"🤝 Квесты", tgTit:"🛡️ Изменить титул GOD", tgWd:"📤 Вывод GOU", cpy:"🔗 Копировать ссылку", frSt:"🔥 Друзья-Рыцари", frMy:"🤝 Прогресс друзей", aMin:"Мин. сумма не достигнута.", aMax:"Цель достигнута!", aErr:"Недостаточно баланса!", hSpec1:"🏰 Сердце Империи", hSpec2:"🐉 Гнездо Зверя", aTkt:"Нет билетов!" },
+  zh: { wConn:"已连接钱包", wNotConn:"未连接", wWarn:"⚠️ 您必须先连接TON钱包！", rGod:"GOD", rCom:"指挥官", rKni:"骑士", rRec:"新兵", jPot:"🏆 本周赛季奖池", burn:"🔥 总销毁量 (减半)", ph2:"🚨 阶段2减半 (成本50%↓)", ph1:"⚠️ 阶段1减半 (收益50%↓)", ph0:"🟢 基础阶段", dGain:"每日自动挖矿", unClm:"未领取", cBtn:"🚀 领取 GOU", bfOn:"🔥 增益生效中", bfCd:"⏳ 冷却中", bfBtn:"📺 看广告: 1小时收益2倍", arc:"🎰 随机街机", tkts:"🎟️ 门票", ads:"📺 剩余广告", adBtn:"📺 看广告补充门票", pBtn:"🎲 进入街机", hTit:"🗺️ 领地状态", hReq:"需要强化:", gTit:"⚔️ 神话武器库", pTit:"🐉 神兽与领地", lvl:"级", prob:"概率:", cost:"费用:", upg:"强化", shTit:"💎 GOU直营店", shNot:"🚨 防御DEX狙击机器人的临时补给站。", buy:"购买 (TON)", nHom:"主页", nUpg:"强化", nShp:"商店", nRnk:"排名", nSys:"系统", aNoG:"GOU不足。", rSrv:"👑 全服排名", nTgt:"输入目标等级:", h1:"草原领地", h2:"神之森林", h3:"不朽沙漠", h4:"深渊丛林", h5:"黄昏火山", g1:"宙斯之剑", g2:"阿瑞斯之甲", g3:"雅典娜之盔", g4:"赫菲斯托斯手套", g5:"赫尔墨斯之鞋", g6:"阿佛洛狄忒项链", g7:"波塞冬之戒", s1:"攻击力", s2:"生命值", s3:"防御力", s4:"命中率", s5:"加成", s6:"费用减少", s7:"成功率", p1:"远古巨龙", p2:"伟大君主之城", gBf:"增益: ", pBf:"收益加成: ", spec:"进行中 ⚔️", lck1:"装备+210解锁", lck2:"宠物+50解锁", rnk1:"排名", rnk2:"指挥官", rnk3:"属性", syMy:"👤 我的信息", syFr:"🤝 邀请任务", tgTit:"🛡️ 更改GOD称号", tgWd:"📤 提取 GOU", cpy:"🔗 复制邀请链接", frSt:"🔥 达到骑士的好友", frMy:"🤝 好友养成状态", aMin:"检查最低数量。", aMax:"达成目标！", aErr:"余额不足！", hSpec1:"🏰 帝国之心", hSpec2:"🐉 神兽之巢", aTkt:"门票不足！" },
+  ja: { wConn:"ウォレット接続済", wNotConn:"未接続", wWarn:"⚠️ まずTONウォレットを接続してください！", rGod:"GOD", rCom:"司令官", rKni:"騎士", rRec:"訓練兵", jPot:"🏆 今週のジャックポット", burn:"🔥 総バーン量 (半減期)", ph2:"🚨 第2半減期 (費用50%↓)", ph1:"⚠️ 第1半減期 (収益50%↓)", ph0:"🟢 基本フェーズ", dGain:"1日の自動採掘", unClm:"未受取", cBtn:"🚀 GOU 獲得", bfOn:"🔥 バフ稼働中", bfCd:"⏳ クールタイム", bfBtn:"📺 広告: 1時間収益2倍", arc:"🎰 ランダムアーケード", tkts:"🎟️ チケット", ads:"📺 残り広告", adBtn:"📺 広告でチケット補充", pBtn:"🎲 アーケード入場", hTit:"🗺️ 占領領地", hReq:"必要強化:", gTit:"⚔️ 神話の武器庫", pTit:"🐉 神獣と領地", lvl:"強化", prob:"確率:", cost:"費用:", upg:"強化", shTit:"💎 GOU直営店", shNot:"🚨 DEXスナイパー防御用の一時ショップ。", buy:"決済 (TON)", nHom:"ホーム", nUpg:"強化", nShp:"ショップ", nRnk:"ランク", nSys:"システム", aNoG:"GOU不足です。", rSrv:"👑 サーバーランキング", nTgt:"目標レベルを入力:", h1:"草原の領地", h2:"神の森", h3:"不滅の砂漠", h4:"深淵のジャングル", h5:"黄昏の火山", g1:"ゼウスの剣", g2:"アレスの鎧", g3:"アテナの兜", g4:"ヘパイストスの手袋", g5:"ヘルメスの靴", g6:"アフロディーテの首飾り", g7:"ポセイドンの指輪", s1:"攻撃力", s2:"体力", s3:"防御力", s4:"命中率", s5:"ボーナス", s6:"費用減少", s7:"成功確率", p1:"古代ドラゴン", p2:"偉大なる君主の城", gBf:"バフ: ", pBf:"収益ボーナス: ", spec:"進行中 ⚔️", lck1:"装備+210で解放", lck2:"ペット+50で解放", rnk1:"順位", rnk2:"司令官名", rnk3:"スペック", syMy:"👤 マイページ", syFr:"🤝 友達招待", tgTit:"🛡️ GOD称号変更", tgWd:"📤 GOU出金", cpy:"🔗 リンクをコピー", frSt:"🔥 騎士到達の友達", frMy:"🤝 友達の育成状況", aMin:"最小数量を確認してください。", aMax:"目標達成！", aErr:"残高不足！", hSpec1:"🏰 帝国の心臓", hSpec2:"🐉 神獣の巣", aTkt:"チケットが足りません！" },
+  es: { wConn:"Billetera Conect.", wNotConn:"No Conectada", wWarn:"⚠️ ¡Debes conectar tu billetera TON primero!", rGod:"DIOS", rCom:"Cmdte", rKni:"Caballero", rRec:"Recluta", jPot:"🏆 Jackpot Semanal", burn:"🔥 Quema Total (Halving)", ph2:"🚨 Halving 2 (Costo 50%↓)", ph1:"⚠️ Halving 1 (Ganancia 50%↓)", ph0:"🟢 Fase Normal", dGain:"Minería Diaria", unClm:"Sin Reclamar", cBtn:"🚀 Reclamar GOU", bfOn:"🔥 Buff Activo", bfCd:"⏳ Enfriamiento", bfBtn:"📺 Anuncio: Minería 2x (1h)", arc:"🎰 Arcade Aleatorio", tkts:"🎟️ Boletos", ads:"📺 Anuncios Rest.", adBtn:"📺 Anuncio por Boleto", pBtn:"🎲 Entrar al Arcade", hTit:"🗺️ Territorios", hReq:"Nivel Requerido:", gTit:"⚔️ Armería Mítica", pTit:"🐉 Bestia Divina", lvl:"Nv", prob:"Prob:", cost:"Costo:", upg:"Mejora", shTit:"💎 Tienda GOU", shNot:"🚨 Depósito temporal para evitar bots francotiradores en DEX.", buy:"COMPRAR", nHom:"Inicio", nUpg:"Mejora", nShp:"Tienda", nRnk:"Ranking", nSys:"Sistema", aNoG:"GOU Insuficiente.", rSrv:"👑 RANKING DEL SERVIDOR", nTgt:"Ingresa nivel objetivo:", h1:"Pradera", h2:"Bosque de Dioses", h3:"Desierto Inmortal", h4:"Jungla Abisal", h5:"Volcán Crepuscular", g1:"Espada de Zeus", g2:"Armadura de Ares", g3:"Casco de Atenea", g4:"Guantes de Hefesto", g5:"Zapatos de Hermes", g6:"Collar de Afrodita", g7:"Anillo de Poseidón", s1:"ATQ", s2:"PV", s3:"DEF", s4:"PRE", s5:"Bono", s6:"Reduc. Costo", s7:"Prob. Éxito", p1:"Dragón Antiguo", p2:"Castillo del Monarca", gBf:"Buff: ", pBf:"Bono de Ganancia: ", spec:"Cazando ⚔️", lck1:"Desbloquea al +210", lck2:"Desbloquea al +50", rnk1:"Rango", rnk2:"Comandante", rnk3:"Estadísticas", syMy:"👤 Mi Info", syFr:"🤝 Misión de Invit.", tgTit:"🛡️ Cambiar Título de DIOS", tgWd:"📤 Retirar GOU", cpy:"🔗 Copiar Enlace", frSt:"🔥 Amigos nivel Caballero", frMy:"🤝 Crecimiento de Amigos", aMin:"Verifique la cantidad mínima.", aMax:"¡Objetivo Alcanzado!", aErr:"¡Saldo insuficiente!", hSpec1:"🏰 Corazón del Imperio", hSpec2:"🐉 Nido de Bestias", aTkt:"¡Faltan boletos!" },
+  vi: { wConn:"Đã kết nối ví", wNotConn:"Chưa kết nối", wWarn:"⚠️ Bạn phải kết nối ví TON trước!", rGod:"CHÚA", rCom:"Chỉ huy", rKni:"Hiệp sĩ", rRec:"Tân binh", jPot:"🏆 Jackpot Mùa giải Tuần", burn:"🔥 Tổng lượng Đốt (Halving)", ph2:"🚨 Halving 2 (Chi phí 50%↓)", ph1:"⚠️ Halving 1 (Lợi nhuận 50%↓)", ph0:"🟢 Giai đoạn Bình thường", dGain:"Khai thác Tự động", unClm:"Chưa nhận", cBtn:"🚀 Nhận GOU", bfOn:"🔥 Đang kích hoạt Buff", bfCd:"⏳ Thời gian chờ", bfBtn:"📺 Xem QC: x2 Khai thác", arc:"🎰 Arcade Ngẫu nhiên", tkts:"🎟️ Vé", ads:"📺 QC Còn lại", adBtn:"📺 Xem QC nhận Vé", pBtn:"🎲 Vào Arcade", hTit:"🗺️ Lãnh thổ", hReq:"Yêu cầu Cấp:", gTit:"⚔️ Kho vũ khí Thần thoại", pTit:"🐉 Thần thú & Lâu đài", lvl:"Cấp", prob:"Tỉ lệ:", cost:"Chi phí:", upg:"N.Cấp", shTit:"💎 Cửa hàng GOU", shNot:"🚨 Trạm tiếp tế tạm thời để ngăn chặn bot bắn tỉa trên DEX.", buy:"MUA (TON)", nHom:"Tr.chủ", nUpg:"N.cấp", nShp:"C.Hàng", nRnk:"X.hạng", nSys:"Hệ thống", aNoG:"Không đủ GOU.", rSrv:"👑 BẢNG XẾP HẠNG SERVER", nTgt:"Nhập cấp độ mục tiêu:", h1:"Thảo nguyên", h2:"Rừng Thần", h3:"Sa mạc Bất tử", h4:"Rừng sâu", h5:"Núi lửa Chạng vạng", g1:"Kiếm của Zeus", g2:"Giáp của Ares", g3:"Mũ của Athena", g4:"Găng của Hephaestus", g5:"Giày của Hermes", g6:"Vòng cổ của Aphrodite", g7:"Nhẫn của Poseidon", s1:"ATK", s2:"HP", s3:"DEF", s4:"ACC", s5:"Thưởng", s6:"Giảm Chi phí", s7:"Tỉ lệ Thành công", p1:"Rồng Cổ đại", p2:"Lâu đài Đại vương", gBf:"Buff: ", pBf:"Thưởng Lợi nhuận: ", spec:"Đang săn ⚔️", lck1:"Mở khóa khi Trang bị +210", lck2:"Mở khóa khi Thú cưng +50", rnk1:"Hạng", rnk2:"Chỉ huy", rnk3:"Chỉ số", syMy:"👤 Thông tin", syFr:"🤝 N.vụ Mời", tgTit:"🛡️ Đổi Danh hiệu CHÚA", tgWd:"📤 Rút GOU", cpy:"🔗 Sao chép Liên kết", frSt:"🔥 Bạn bè đạt Hiệp sĩ", frMy:"🤝 Tiến độ Bạn bè", aMin:"Kiểm tra số lượng tối thiểu.", aMax:"Đạt mục tiêu!", aErr:"Không đủ số dư!", hSpec1:"🏰 Trái tim Đế chế", hSpec2:"🐉 Tổ Thần thú", aTkt:"Không đủ vé!" }
 };
 
 const ScratchLottery = ({ userRank, onReward, onClose }) => {
@@ -219,7 +219,7 @@ export default function App() {
     {name: t.h3, mult: 2.5, reqSum: 70, req: {atk:100, hp:1000, def:50, acc:20}}, {name: t.h4, mult: 5, reqSum: 110, req: {atk:170, hp:1700, def:75, acc:34}}, {name: t.h5, mult: 12, reqSum: 150, req: {atk:230, hp:2300, def:115, acc:46}}
   ], [t]);
 
-  const [state, setState] = useState({ screen: 'wallet', walletAddress: '', balance: 0, burned: 0, jackpot: 0, pendingGOU: 0, unclaimedTime: 0, userName: "Commander", petLevel: 0, castleLevel: 0, petHuntEndTime: 0, castleHuntEndTime: 0, isAdActive: false, adTimeLeft: 0, tickets: 3, adViewsLeft: 3, nextAdChargeTime: 0, nextBuffAdTime: 0, lastLotterySlot: "", lastDailyReset: Math.floor((Date.now() + 9 * 3600000) / 86400000), customGodTitle: "UPGRADE" });
+  const [state, setState] = useState({ walletAddress: '', balance: 0, burned: 0, jackpot: 0, pendingGOU: 0, unclaimedTime: 0, userName: "Commander", petLevel: 0, castleLevel: 0, petHuntEndTime: 0, castleHuntEndTime: 0, isAdActive: false, adTimeLeft: 0, tickets: 3, adViewsLeft: 3, nextAdChargeTime: 0, nextBuffAdTime: 0, lastLotterySlot: "", lastDailyReset: Math.floor((Date.now() + 9 * 3600000) / 86400000), customGodTitle: "UPGRADE" });
 
   const lockRef = useRef({}); const autoActiveRef = useRef({}); const levelsRef = useRef({}); 
   const [autoUI, setAutoUI] = useState({}); const [lvlAnims, setLvlAnims] = useState({}); 
@@ -284,32 +284,71 @@ export default function App() {
 
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
-  useEffect(() => {
-    if (wallet) {
-      setState(s => ({ ...s, walletAddress: wallet.account.address.substring(0, 6) + '...' + wallet.account.address.substring(wallet.account.address.length - 4), screen: 'game' }));
-      httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName, initData: window.Telegram?.WebApp?.initData || "" }).then(res => {
-         if (res.data && res.data.userData) {
-            const d = res.data.userData; setState(s => ({ ...s, balance: d.balance ?? 50000, petLevel: d.petLevel ?? 0, castleLevel: d.castleLevel ?? 0, tickets: d.tickets ?? 3, adViewsLeft: d.adViewsLeft ?? 3, nextAdChargeTime: d.nextAdChargeTime ?? 0, nextBuffAdTime: d.nextBuffAdTime ?? 0, lastLotterySlot: d.lastLotterySlot ?? "" }));
-            if (d.gears && d.gears.length > 0) setGears(prev => prev.map(g => { const saved = d.gears.find(sg => sg.id === g.id); return saved ? { ...g, lvl: saved.lvl } : g; }));
-         }
-      }).catch(e => console.log(e));
-    } else { setState(s => ({ ...s, screen: 'wallet' })); }
-  }, [wallet]);
-
-  const withdrawGOU = async () => {
-    if (totalGearLevel < 140) return alert(`LVL 140+ Required!`);
-    if (state.balance < 10000000) return alert(t.aMin);
-    const input = window.prompt(`${t.tgWd} (5% Fee) | Balance: ${Math.floor(state.balance)}`, 10000000);
-    if (!input) return; const amount = parseInt(input, 10);
-    if (isNaN(amount) || amount < 10000000 || amount > state.balance) return alert(t.aMin);
-    if (!window.confirm(`${amount.toLocaleString()} GOU?`)) return;
-    setState(s => ({...s, balance: s.balance - amount, burned: s.burned + (amount * 0.05) }));
-    try { await httpsCallable(getFunctions(app), 'withdrawGOU')({ userId: getUserId(), amount, initData: window.Telegram?.WebApp?.initData || "" }); alert("OK!"); } catch (e) { alert("Error!"); }
+  // 🛡️ [문지기 함수 추가] 지갑 검사가 필요할 때만 호출됨
+  const requireWallet = (actionCallback) => {
+    if (!wallet) {
+      alert(t.wWarn);
+      tonConnectUI.openModal();
+      return;
+    }
+    actionCallback();
   };
 
+  // 🔄 [동기화 로직 1] 앱 시작 시 텔레그램 ID 기반으로 데이터부터 불러옴 (지갑 유무 상관없음)
+  useEffect(() => {
+    httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName, initData: window.Telegram?.WebApp?.initData || "" }).then(res => {
+        if (res.data && res.data.userData) {
+          const d = res.data.userData; setState(s => ({ ...s, balance: d.balance ?? 50000, petLevel: d.petLevel ?? 0, castleLevel: d.castleLevel ?? 0, tickets: d.tickets ?? 3, adViewsLeft: d.adViewsLeft ?? 3, nextAdChargeTime: d.nextAdChargeTime ?? 0, nextBuffAdTime: d.nextBuffAdTime ?? 0, lastLotterySlot: d.lastLotterySlot ?? "" }));
+          if (d.gears && d.gears.length > 0) setGears(prev => prev.map(g => { const saved = d.gears.find(sg => sg.id === g.id); return saved ? { ...g, lvl: saved.lvl } : g; }));
+        }
+    }).catch(e => console.log(e));
+  }, []);
+
+  // 🔄 [동기화 로직 2] 지갑 연결 상태 변경 시 UI(주소 표시) 업데이트
+  useEffect(() => {
+    if (wallet) {
+      setState(s => ({ ...s, walletAddress: wallet.account.address.substring(0, 6) + '...' + wallet.account.address.substring(wallet.account.address.length - 4) }));
+    } else {
+      setState(s => ({ ...s, walletAddress: '' }));
+    }
+  }, [wallet]);
+
+  // 📤 [출금 로직 수정] 지갑 검사 (requireWallet) 씌움
+  const withdrawGOU = async () => {
+    requireWallet(async () => {
+      if (totalGearLevel < 140) return alert(`LVL 140+ Required!`);
+      if (state.balance < 10000000) return alert(t.aMin);
+      const input = window.prompt(`${t.tgWd} (5% Fee) | Balance: ${Math.floor(state.balance)}`, 10000000);
+      if (!input) return; const amount = parseInt(input, 10);
+      if (isNaN(amount) || amount < 10000000 || amount > state.balance) return alert(t.aMin);
+      if (!window.confirm(`${amount.toLocaleString()} GOU?`)) return;
+      setState(s => ({...s, balance: s.balance - amount, burned: s.burned + (amount * 0.05) }));
+      try { await httpsCallable(getFunctions(app), 'withdrawGOU')({ userId: getUserId(), amount, initData: window.Telegram?.WebApp?.initData || "" }); alert("OK!"); } catch (e) { alert("Error!"); }
+    });
+  };
+
+  // 📥 [신규 추가] DEX에서 매수한 GOU 입금 로직 (지갑 문지기 발동)
+  const depositGOU = async () => {
+    requireWallet(async () => {
+      const input = window.prompt(`📥 DEX에서 매수한 GOU를 제국 국고로 입금합니다.\n입금할 수량을 입력하세요:`, "10000000");
+      if (!input) return; 
+      const amount = parseInt(input, 10);
+      if (isNaN(amount) || amount <= 0) return alert("올바른 수량을 입력하세요!");
+      
+      // 추후 GOU 토큰(Jetton) 전송 스마트 컨트랙트 연결 구간
+      alert(`[트랜잭션 승인 대기]\n사령관님의 지갑에서 ${amount.toLocaleString()} GOU를 제국으로 전송합니다!\n(추후 스마트 컨트랙트 연동 예정)`);
+      
+      // 트랜잭션 성공 시 서버 잔고(balance) 업데이트 로직
+      // setState(s => ({...s, balance: s.balance + amount}));
+    });
+  };
+
+  // 💎 [상점 로직 수정] 지갑 검사 (requireWallet) 씌움
   const handleBuyGOU = async (tonAmount, gouAmount) => {
-    if (!wallet) return; const transaction = { validUntil: Math.floor(Date.now() / 1000) + 60, messages: [{ address: ADMIN_WALLET_ADDRESS, amount: String(tonAmount * 1e9) }] };
-    try { const result = await tonConnectUI.sendTransaction(transaction); const res = await httpsCallable(getFunctions(app), 'buyGOU')({ userId: getUserId(), amount: gouAmount, txHash: result.boc, initData: window.Telegram?.WebApp?.initData || "" }); if (res.data.success) { setState(s => ({...s, balance: s.balance + gouAmount})); alert(`OK! +${gouAmount.toLocaleString()} GOU`); } } catch (e) { alert("Cancel"); }
+    requireWallet(async () => {
+      const transaction = { validUntil: Math.floor(Date.now() / 1000) + 60, messages: [{ address: ADMIN_WALLET_ADDRESS, amount: String(tonAmount * 1e9) }] };
+      try { const result = await tonConnectUI.sendTransaction(transaction); const res = await httpsCallable(getFunctions(app), 'buyGOU')({ userId: getUserId(), amount: gouAmount, txHash: result.boc, initData: window.Telegram?.WebApp?.initData || "" }); if (res.data.success) { setState(s => ({...s, balance: s.balance + gouAmount})); alert(`OK! +${gouAmount.toLocaleString()} GOU`); } } catch (e) { alert("Cancel"); }
+    });
   };
 
   const claimGOU = async () => {
@@ -405,15 +444,6 @@ export default function App() {
   const currentHour = new Date().getHours(); const isHotTime = (currentHour >= 12 && currentHour < 14) || (currentHour >= 18 && currentHour < 20); const currentLotterySlot = `${new Date().toDateString()}-${currentHour >= 12 && currentHour < 14 ? 'lunch' : (currentHour >= 18 && currentHour < 20 ? 'dinner' : 'none')}`;
   const handleOpenLottery = () => { if (!isHotTime) return alert("Wait for Hot Time! (12~14 / 18~20 KST)"); if (state.lastLotterySlot === currentLotterySlot) return alert("Already Claimed!"); setShowLottery(true); };
 
-  if (state.screen === 'wallet') {
-    return (
-      <div style={{ backgroundImage: `linear-gradient(rgba(11, 15, 25, 0.4), rgba(26, 15, 20, 0.6)), url("${process.env.PUBLIC_URL}/background.jpg")`, backgroundSize: 'cover', backgroundPosition: 'center', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#e6d5b8' }}>
-        <h1 style={{ color: '#fbbf24', fontSize: '32px', textShadow: '0 0 10px rgba(251,191,36,0.5)' }}>GOD OF UPGRADE</h1>
-        <div style={{ padding: '20px', background: 'rgba(0,0,0,0.5)', borderRadius: '15px', marginTop: '20px' }}><TonConnectButton /></div>
-      </div>
-    );
-  }
-
   // 🌐 언어별 장비 이름/스탯 매핑
   const gearNames = [t.g1, t.g2, t.g3, t.g4, t.g5, t.g6, t.g7];
   const statNames = [t.s1, t.s2, t.s3, t.s4, t.s5, t.s6, t.s7];
@@ -467,7 +497,7 @@ export default function App() {
 
       <div className="fixed-header">
         <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold' }}>{state.walletAddress || t.wConn}</div>
+          <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 'bold' }}>{state.walletAddress || t.wNotConn}</div>
           <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#fff' }}>
             <span style={{color: userRankTitle.includes('GOD') ? '#fbbf24' : '#06b6d4'}}>[{userRankTitle}]</span> {state.userName}
           </div>
@@ -634,10 +664,19 @@ export default function App() {
 
             {settingTab === 'my' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                
+                {/* 🛡️ 지갑 연결 버튼을 세팅 탭으로 이동시켰습니다! */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px', padding: '15px', background: 'rgba(0,0,0,0.4)', borderRadius: '10px', border: '1px solid #333' }}>
+                   <TonConnectButton />
+                </div>
+
                 <button onClick={handleTitleEdit} className="action-btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid #555' }}>{t.tgTit}</button>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                
+                {/* 👇 방금 교체하신 3개의 완벽한 경제 버튼들 👇 */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <button onClick={() => setActiveTab('shop')} className="action-btn" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid #22c55e' }}>{t.shTit}</button>
-                  <button onClick={withdrawGOU} className="action-btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>{t.tgWd}</button>
+                  <button onClick={depositGOU} className="action-btn" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #3b82f6' }}>📥 GOU 입금</button>
+                  <button onClick={withdrawGOU} className="action-btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid #ef4444', gridColumn: 'span 2' }}>{t.tgWd}</button>
                 </div>
               </div>
             )}
