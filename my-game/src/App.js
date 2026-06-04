@@ -9,30 +9,27 @@ const MAX_SUPPLY = 10000000000000;
 const SAVE_POINTS = [10, 20, 30, 40]; 
 const ADMIN_WALLET_ADDRESS = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ";
 
-// 🌍 7개국어 게임 내부(App.js) 번역 사전 (지갑 문지기 경고문 추가 완료)
 const i18n = {
-  ko: { wConn:"지갑 연결됨", wNotConn:"지갑 미연결", wWarn:"⚠️ 이 기능을 사용하려면 TON 지갑을 연결해야 합니다!", rGod:"GOD", rCom:"사령관", rKni:"기사", rRec:"훈련병", jPot:"🏆 이번 주 시즌 잭팟 보상금", burn:"🔥 서버 총 소각량 (반감기 게이지)", ph2:"🚨 2차 반감기 가동 중 (비용 50%↓)", ph1:"⚠️ 1차 반감기 가동 중 (수익 50%↓)", ph0:"🟢 기본 페이즈 진행 중", dGain:"일일 자동 채굴량", unClm:"미수확", cBtn:"🚀 GOU 획득하기", bfOn:"🔥 버프 가동 중", bfCd:"⏳ 쿨타임", bfBtn:"📺 광고: 1시간 채굴량 2배", arc:"🎰 랜덤 아케이드 게임장", tkts:"🎟️ 보유 티켓", ads:"📺 남은 광고", adBtn:"📺 광고 보고 티켓 충전", pBtn:"🎲 랜덤 아케이드 입장", hTit:"🗺️ 점령 영지 현황 (전투력 매칭)", hReq:"필요 강화 합:", gTit:"⚔️ 신화 무기고", pTit:"🐉 신수 및 영지 성장", lvl:"강", prob:"확률:", cost:"비용:", upg:"강화", shTit:"💎 GOU 다이렉트 상점", shNot:"🚨 [사령관 특별 공지] DEX 상장 초기, 스나이퍼 봇 사재기 및 슬리피지 방지용 임시 보급소입니다.", buy:"TON 결제", nHom:"홈(수확)", nUpg:"강화", nShp:"상점", nRnk:"랭킹", nSys:"시스템", aNoG:"GOU가 부족합니다.", rSrv:"👑 SERVER RANKING", nTgt:"목표 강화 레벨 입력:", h1:"초원 영지", h2:"신의 숲", h3:"불멸 사막", h4:"심연 정글", h5:"황혼 화산", g1:"제우스의 검", g2:"아레스의 갑옷", g3:"아테나의 투구", g4:"헤파이스토스의 장갑", g5:"헤르메스의 신발", g6:"아프로디테의 목걸이", g7:"포세이돈의 반지", s1:"공격력", s2:"체력", s3:"방어력", s4:"명중률", s5:"보너스", s6:"비용감소", s7:"성공확률", p1:"고대 드래곤", p2:"위대한 군주의 성", gBf:"버프: ", pBf:"수익 보너스: ", spec:"진행 중 ⚔️", lck1:"장비 210강 달성 시 개방", lck2:"펫 50강 달성 시 개방", rnk1:"순위", rnk2:"사령관명", rnk3:"달성 스펙", syMy:"👤 내 정보 (MY)", syFr:"🤝 친구초대 퀘스트", tgTit:"🛡️ 나만의 GOD 칭호 변경", tgWd:"📤 GOU 국고 출금", cpy:"🔗 초대 링크 복사하기", frSt:"🔥 기사 달성 친구 초대 현황", frMy:"🤝 내 친구 육성 현황", aMin:"최소 수량을 확인하세요.", aMax:"목표 달성!", aErr:"잔고 부족!", hSpec1:"🏰 제국의 심장", hSpec2:"🐉 신수의 둥지", aTkt:"티켓이 부족합니다!" },
-  en: { wConn:"Wallet Connected", wNotConn:"Not Connected", wWarn:"⚠️ You must connect your TON wallet first!", rGod:"GOD", rCom:"Cmdr", rKni:"Knight", rRec:"Recruit", jPot:"🏆 Weekly Season Jackpot", burn:"🔥 Total Server Burn (Halving)", ph2:"🚨 Phase 2 Halving (Cost 50%↓)", ph1:"⚠️ Phase 1 Halving (Yield 50%↓)", ph0:"🟢 Normal Phase", dGain:"Daily Auto Mining", unClm:"Unclaimed", cBtn:"🚀 Claim GOU", bfOn:"🔥 Buff Active", bfCd:"⏳ Cooldown", bfBtn:"📺 Ad: 2x Mining (1h)", arc:"🎰 Random Arcade", tkts:"🎟️ Tickets", ads:"📺 Ads Left", adBtn:"📺 Watch Ad for Ticket", pBtn:"🎲 Enter Arcade", hTit:"🗺️ Territories (Power Match)", hReq:"Req Lvl Sum:", gTit:"⚔️ Mythic Armory", pTit:"🐉 Divine Beast & Castle", lvl:"Lv", prob:"Rate:", cost:"Cost:", upg:"UPG", shTit:"💎 Direct GOU Shop", shNot:"🚨 [Notice] Temporary depot to prevent sniper bots during early DEX listing.", buy:"BUY (TON)", nHom:"Home", nUpg:"Upgrade", nShp:"Shop", nRnk:"Rank", nSys:"System", aNoG:"Not enough GOU.", rSrv:"👑 SERVER RANKING", nTgt:"Enter target upgrade level:", h1:"Grassland", h2:"Forest of Gods", h3:"Immortal Desert", h4:"Abyssal Jungle", h5:"Twilight Volcano", g1:"Sword of Zeus", g2:"Armor of Ares", g3:"Helmet of Athena", g4:"Gloves of Hephaestus", g5:"Shoes of Hermes", g6:"Necklace of Aphrodite", g7:"Ring of Poseidon", s1:"ATK", s2:"HP", s3:"DEF", s4:"ACC", s5:"Bonus", s6:"Cost Reduc", s7:"Success Rate", p1:"Ancient Dragon", p2:"Great Monarch's Castle", gBf:"Buff: ", pBf:"Yield Bonus: ", spec:"Hunting ⚔️", lck1:"Unlocks at Gear +210", lck2:"Unlocks at Pet +50", rnk1:"Rank", rnk2:"Commander", rnk3:"Stats", syMy:"👤 My Info", syFr:"🤝 Invite Quest", tgTit:"🛡️ Change GOD Title", tgWd:"📤 Withdraw GOU", cpy:"🔗 Copy Invite Link", frSt:"🔥 Friends Reached Knight", frMy:"🤝 Friends Growth", aMin:"Check minimum amount.", aMax:"Target Reached!", aErr:"Not enough balance!", hSpec1:"🏰 Heart of Empire", hSpec2:"🐉 Beast Nest", aTkt:"Not enough tickets!" },
-  ru: { wConn:"Кошелек подключен", wNotConn:"Нет кошелька", wWarn:"⚠️ Сначала подключите кошелек TON!", rGod:"БОГ", rCom:"Командир", rKni:"Рыцарь", rRec:"Рекрут", jPot:"🏆 Джекпот Сезона", burn:"🔥 Всего Сожжено (Халвинг)", ph2:"🚨 Халвинг 2 (Стоимость 50%↓)", ph1:"⚠️ Халвинг 1 (Доход 50%↓)", ph0:"🟢 Обычная Фаза", dGain:"Дневная добыча", unClm:"Не собрано", cBtn:"🚀 Собрать GOU", bfOn:"🔥 Бафф Активен", bfCd:"⏳ Перезарядка", bfBtn:"📺 Реклама: 2x добыча (1ч)", arc:"🎰 Аркада", tkts:"🎟️ Билеты", ads:"📺 Осталось рекламы", adBtn:"📺 Реклама за билет", pBtn:"🎲 Войти в Аркаду", hTit:"🗺️ Территории", hReq:"Требуется ур:", gTit:"⚔️ Мифический Арсенал", pTit:"🐉 Питомец и Замок", lvl:"Ур", prob:"Шанс:", cost:"Цена:", upg:"Улучш", shTit:"💎 Магазин GOU", shNot:"🚨 Временный пункт для защиты от снайпер-ботов на DEX.", buy:"КУПИТЬ (TON)", nHom:"Главная", nUpg:"Улучш", nShp:"Магз", nRnk:"Топ", nSys:"Система", aNoG:"Недостаточно GOU", rSrv:"👑 РЕЙТИНГ СЕРВЕРА", nTgt:"Целевой уровень:", h1:"Луга", h2:"Лес Богов", h3:"Бессмертная Пустыня", h4:"Джунгли Бездны", h5:"Сумеречный Вулкан", g1:"Меч Зевса", g2:"Броня Ареса", g3:"Шлем Афины", g4:"Перчатки Гефеста", g5:"Обувь Гермеса", g6:"Ожерелье Афродиты", g7:"Кольцо Посейдона", s1:"АТК", s2:"ХП", s3:"ЗАЩ", s4:"ТОЧ", s5:"Бонус", s6:"Скидка", s7:"Шанс", p1:"Древний Дракон", p2:"Замок Монарха", gBf:"Бафф: ", pBf:"Доход: ", spec:"Охота ⚔️", lck1:"Разб: Снаряж +210", lck2:"Разб: Питомец +50", rnk1:"Ранг", rnk2:"Командир", rnk3:"Статы", syMy:"👤 Мой Профиль", syFr:"🤝 Квесты", tgTit:"🛡️ Изменить титул GOD", tgWd:"📤 Вывод GOU", cpy:"🔗 Копировать ссылку", frSt:"🔥 Друзья-Рыцари", frMy:"🤝 Прогресс друзей", aMin:"Мин. сумма не достигнута.", aMax:"Цель достигнута!", aErr:"Недостаточно баланса!", hSpec1:"🏰 Сердце Империи", hSpec2:"🐉 Гнездо Зверя", aTkt:"Нет билетов!" },
-  zh: { wConn:"已连接钱包", wNotConn:"未连接", wWarn:"⚠️ 您必须先连接TON钱包！", rGod:"GOD", rCom:"指挥官", rKni:"骑士", rRec:"新兵", jPot:"🏆 本周赛季奖池", burn:"🔥 总销毁量 (减半)", ph2:"🚨 阶段2减半 (成本50%↓)", ph1:"⚠️ 阶段1减半 (收益50%↓)", ph0:"🟢 基础阶段", dGain:"每日自动挖矿", unClm:"未领取", cBtn:"🚀 领取 GOU", bfOn:"🔥 增益生效中", bfCd:"⏳ 冷却中", bfBtn:"📺 看广告: 1小时收益2倍", arc:"🎰 随机街机", tkts:"🎟️ 门票", ads:"📺 剩余广告", adBtn:"📺 看广告补充门票", pBtn:"🎲 进入街机", hTit:"🗺️ 领地状态", hReq:"需要强化:", gTit:"⚔️ 神话武器库", pTit:"🐉 神兽与领地", lvl:"级", prob:"概率:", cost:"费用:", upg:"强化", shTit:"💎 GOU直营店", shNot:"🚨 防御DEX狙击机器人的临时补给站。", buy:"购买 (TON)", nHom:"主页", nUpg:"强化", nShp:"商店", nRnk:"排名", nSys:"系统", aNoG:"GOU不足。", rSrv:"👑 全服排名", nTgt:"输入目标等级:", h1:"草原领地", h2:"神之森林", h3:"不朽沙漠", h4:"深渊丛林", h5:"黄昏火山", g1:"宙斯之剑", g2:"阿瑞斯之甲", g3:"雅典娜之盔", g4:"赫菲斯托斯手套", g5:"赫尔墨斯之鞋", g6:"阿佛洛狄忒项链", g7:"波塞冬之戒", s1:"攻击力", s2:"生命值", s3:"防御力", s4:"命中率", s5:"加成", s6:"费用减少", s7:"成功率", p1:"远古巨龙", p2:"伟大君主之城", gBf:"增益: ", pBf:"收益加成: ", spec:"进行中 ⚔️", lck1:"装备+210解锁", lck2:"宠物+50解锁", rnk1:"排名", rnk2:"指挥官", rnk3:"属性", syMy:"👤 我的信息", syFr:"🤝 邀请任务", tgTit:"🛡️ 更改GOD称号", tgWd:"📤 提取 GOU", cpy:"🔗 复制邀请链接", frSt:"🔥 达到骑士的好友", frMy:"🤝 好友养成状态", aMin:"检查最低数量。", aMax:"达成目标！", aErr:"余额不足！", hSpec1:"🏰 帝国之心", hSpec2:"🐉 神兽之巢", aTkt:"门票不足！" },
-  ja: { wConn:"ウォレット接続済", wNotConn:"未接続", wWarn:"⚠️ まずTONウォレットを接続してください！", rGod:"GOD", rCom:"司令官", rKni:"騎士", rRec:"訓練兵", jPot:"🏆 今週のジャックポット", burn:"🔥 総バーン量 (半減期)", ph2:"🚨 第2半減期 (費用50%↓)", ph1:"⚠️ 第1半減期 (収益50%↓)", ph0:"🟢 基本フェーズ", dGain:"1日の自動採掘", unClm:"未受取", cBtn:"🚀 GOU 獲得", bfOn:"🔥 バフ稼働中", bfCd:"⏳ クールタイム", bfBtn:"📺 広告: 1時間収益2倍", arc:"🎰 ランダムアーケード", tkts:"🎟️ チケット", ads:"📺 残り広告", adBtn:"📺 広告でチケット補充", pBtn:"🎲 アーケード入場", hTit:"🗺️ 占領領地", hReq:"必要強化:", gTit:"⚔️ 神話の武器庫", pTit:"🐉 神獣と領地", lvl:"強化", prob:"確率:", cost:"費用:", upg:"強化", shTit:"💎 GOU直営店", shNot:"🚨 DEXスナイパー防御用の一時ショップ。", buy:"決済 (TON)", nHom:"ホーム", nUpg:"強化", nShp:"ショップ", nRnk:"ランク", nSys:"システム", aNoG:"GOU不足です。", rSrv:"👑 サーバーランキング", nTgt:"目標レベルを入力:", h1:"草原の領地", h2:"神の森", h3:"不滅の砂漠", h4:"深淵のジャングル", h5:"黄昏の火山", g1:"ゼウスの剣", g2:"アレスの鎧", g3:"アテナの兜", g4:"ヘパイストスの手袋", g5:"ヘルメスの靴", g6:"アフロディーテの首飾り", g7:"ポセイドンの指輪", s1:"攻撃力", s2:"体力", s3:"防御力", s4:"命中率", s5:"ボーナス", s6:"費用減少", s7:"成功確率", p1:"古代ドラゴン", p2:"偉大なる君主の城", gBf:"バフ: ", pBf:"収益ボーナス: ", spec:"進行中 ⚔️", lck1:"装備+210で解放", lck2:"ペット+50で解放", rnk1:"順位", rnk2:"司令官名", rnk3:"スペック", syMy:"👤 マイページ", syFr:"🤝 友達招待", tgTit:"🛡️ GOD称号変更", tgWd:"📤 GOU出金", cpy:"🔗 リンクをコピー", frSt:"🔥 騎士到達の友達", frMy:"🤝 友達の育成状況", aMin:"最小数量を確認してください。", aMax:"目標達成！", aErr:"残高不足！", hSpec1:"🏰 帝国の心臓", hSpec2:"🐉 神獣の巣", aTkt:"チケットが足りません！" },
-  es: { wConn:"Billetera Conect.", wNotConn:"No Conectada", wWarn:"⚠️ ¡Debes conectar tu billetera TON primero!", rGod:"DIOS", rCom:"Cmdte", rKni:"Caballero", rRec:"Recluta", jPot:"🏆 Jackpot Semanal", burn:"🔥 Quema Total (Halving)", ph2:"🚨 Halving 2 (Costo 50%↓)", ph1:"⚠️ Halving 1 (Ganancia 50%↓)", ph0:"🟢 Fase Normal", dGain:"Minería Diaria", unClm:"Sin Reclamar", cBtn:"🚀 Reclamar GOU", bfOn:"🔥 Buff Activo", bfCd:"⏳ Enfriamiento", bfBtn:"📺 Anuncio: Minería 2x (1h)", arc:"🎰 Arcade Aleatorio", tkts:"🎟️ Boletos", ads:"📺 Anuncios Rest.", adBtn:"📺 Anuncio por Boleto", pBtn:"🎲 Entrar al Arcade", hTit:"🗺️ Territorios", hReq:"Nivel Requerido:", gTit:"⚔️ Armería Mítica", pTit:"🐉 Bestia Divina", lvl:"Nv", prob:"Prob:", cost:"Costo:", upg:"Mejora", shTit:"💎 Tienda GOU", shNot:"🚨 Depósito temporal para evitar bots francotiradores en DEX.", buy:"COMPRAR", nHom:"Inicio", nUpg:"Mejora", nShp:"Tienda", nRnk:"Ranking", nSys:"Sistema", aNoG:"GOU Insuficiente.", rSrv:"👑 RANKING DEL SERVIDOR", nTgt:"Ingresa nivel objetivo:", h1:"Pradera", h2:"Bosque de Dioses", h3:"Desierto Inmortal", h4:"Jungla Abisal", h5:"Volcán Crepuscular", g1:"Espada de Zeus", g2:"Armadura de Ares", g3:"Casco de Atenea", g4:"Guantes de Hefesto", g5:"Zapatos de Hermes", g6:"Collar de Afrodita", g7:"Anillo de Poseidón", s1:"ATQ", s2:"PV", s3:"DEF", s4:"PRE", s5:"Bono", s6:"Reduc. Costo", s7:"Prob. Éxito", p1:"Dragón Antiguo", p2:"Castillo del Monarca", gBf:"Buff: ", pBf:"Bono de Ganancia: ", spec:"Cazando ⚔️", lck1:"Desbloquea al +210", lck2:"Desbloquea al +50", rnk1:"Rango", rnk2:"Comandante", rnk3:"Estadísticas", syMy:"👤 Mi Info", syFr:"🤝 Misión de Invit.", tgTit:"🛡️ Cambiar Título de DIOS", tgWd:"📤 Retirar GOU", cpy:"🔗 Copiar Enlace", frSt:"🔥 Amigos nivel Caballero", frMy:"🤝 Crecimiento de Amigos", aMin:"Verifique la cantidad mínima.", aMax:"¡Objetivo Alcanzado!", aErr:"¡Saldo insuficiente!", hSpec1:"🏰 Corazón del Imperio", hSpec2:"🐉 Nido de Bestias", aTkt:"¡Faltan boletos!" },
-  vi: { wConn:"Đã kết nối ví", wNotConn:"Chưa kết nối", wWarn:"⚠️ Bạn phải kết nối ví TON trước!", rGod:"CHÚA", rCom:"Chỉ huy", rKni:"Hiệp sĩ", rRec:"Tân binh", jPot:"🏆 Jackpot Mùa giải Tuần", burn:"🔥 Tổng lượng Đốt (Halving)", ph2:"🚨 Halving 2 (Chi phí 50%↓)", ph1:"⚠️ Halving 1 (Lợi nhuận 50%↓)", ph0:"🟢 Giai đoạn Bình thường", dGain:"Khai thác Tự động", unClm:"Chưa nhận", cBtn:"🚀 Nhận GOU", bfOn:"🔥 Đang kích hoạt Buff", bfCd:"⏳ Thời gian chờ", bfBtn:"📺 Xem QC: x2 Khai thác", arc:"🎰 Arcade Ngẫu nhiên", tkts:"🎟️ Vé", ads:"📺 QC Còn lại", adBtn:"📺 Xem QC nhận Vé", pBtn:"🎲 Vào Arcade", hTit:"🗺️ Lãnh thổ", hReq:"Yêu cầu Cấp:", gTit:"⚔️ Kho vũ khí Thần thoại", pTit:"🐉 Thần thú & Lâu đài", lvl:"Cấp", prob:"Tỉ lệ:", cost:"Chi phí:", upg:"N.Cấp", shTit:"💎 Cửa hàng GOU", shNot:"🚨 Trạm tiếp tế tạm thời để ngăn chặn bot bắn tỉa trên DEX.", buy:"MUA (TON)", nHom:"Tr.chủ", nUpg:"N.cấp", nShp:"C.Hàng", nRnk:"X.hạng", nSys:"Hệ thống", aNoG:"Không đủ GOU.", rSrv:"👑 BẢNG XẾP HẠNG SERVER", nTgt:"Nhập cấp độ mục tiêu:", h1:"Thảo nguyên", h2:"Rừng Thần", h3:"Sa mạc Bất tử", h4:"Rừng sâu", h5:"Núi lửa Chạng vạng", g1:"Kiếm của Zeus", g2:"Giáp của Ares", g3:"Mũ của Athena", g4:"Găng của Hephaestus", g5:"Giày của Hermes", g6:"Vòng cổ của Aphrodite", g7:"Nhẫn của Poseidon", s1:"ATK", s2:"HP", s3:"DEF", s4:"ACC", s5:"Thưởng", s6:"Giảm Chi phí", s7:"Tỉ lệ Thành công", p1:"Rồng Cổ đại", p2:"Lâu đài Đại vương", gBf:"Buff: ", pBf:"Thưởng Lợi nhuận: ", spec:"Đang săn ⚔️", lck1:"Mở khóa khi Trang bị +210", lck2:"Mở khóa khi Thú cưng +50", rnk1:"Hạng", rnk2:"Chỉ huy", rnk3:"Chỉ số", syMy:"👤 Thông tin", syFr:"🤝 N.vụ Mời", tgTit:"🛡️ Đổi Danh hiệu CHÚA", tgWd:"📤 Rút GOU", cpy:"🔗 Sao chép Liên kết", frSt:"🔥 Bạn bè đạt Hiệp sĩ", frMy:"🤝 Tiến độ Bạn bè", aMin:"Kiểm tra số lượng tối thiểu.", aMax:"Đạt mục tiêu!", aErr:"Không đủ số dư!", hSpec1:"🏰 Trái tim Đế chế", hSpec2:"🐉 Tổ Thần thú", aTkt:"Không đủ vé!" }
+  ko: { wConn:"지갑 연결됨", wNotConn:"지갑 미연결", wWarn:"⚠️ 이 기능을 사용하려면 TON 지갑을 연결해야 합니다!", rGod:"GOD", rCom:"사령관", rKni:"기사", rRec:"훈련병", jPot:"🏆 이번 주 시즌 잭팟 보상금", burn:"🔥 서버 총 소각량 (반감기 게이지)", ph2:"🚨 2차 반감기 가동 중 (비용 50%↓)", ph1:"⚠️ 1차 반감기 가동 중 (수익 50%↓)", ph0:"🟢 기본 페이즈 진행 중", dGain:"일일 자동 채굴량", unClm:"미수확", cBtn:"🚀 GOU 획득하기", bfOn:"🔥 버프 가동 중", bfCd:"⏳ 쿨타임", bfBtn:"📺 광고: 1시간 채굴량 2배", arc:"🎰 랜덤 아케이드 게임장", tkts:"🎟️ 보유 티켓", ads:"📺 남은 광고", adBtn:"📺 광고 보고 티켓 충전", pBtn:"🎲 랜덤 아케이드 입장", hTit:"🗺️ 점령 영지 현황 (전투력 매칭)", hReq:"필요 강화 합:", gTit:"⚔️ 신화 무기고", pTit:"🐉 신수 및 영지 성장", lvl:"강", prob:"확률:", cost:"비용:", upg:"강화", shTit:"💎 GOU 다이렉트 상점", buy:"TON 결제", nHom:"홈(수확)", nUpg:"강화", nShp:"상점", nRnk:"랭킹", nSys:"시스템", aNoG:"GOU가 부족합니다.", rSrv:"👑 SERVER RANKING", nTgt:"목표 강화 레벨 입력:", h1:"초원 영지", h2:"신의 숲", h3:"불멸 사막", h4:"심연 정글", h5:"황혼 화산", g1:"제우스의 검", g2:"아레스의 갑옷", g3:"아테나의 투구", g4:"헤파이스토스의 장갑", g5:"헤르메스의 신발", g6:"아프로디테의 목걸이", g7:"포세이돈의 반지", s1:"공격력", s2:"체력", s3:"방어력", s4:"명중률", s5:"보너스", s6:"비용감소", s7:"성공확률", p1:"고대 드래곤", p2:"위대한 군주의 성", gBf:"버프: ", pBf:"수익 보너스: ", spec:"진행 중 ⚔️", lck1:"장비 210강 달성 시 개방", lck2:"펫 50강 달성 시 개방", rnk1:"순위", rnk2:"사령관명", rnk3:"달성 스펙", syMy:"👤 내 정보 (MY)", syFr:"🤝 친구초대 퀘스트", tgTit:"🛡️ 나만의 GOD 칭호 변경", tgWd:"📤 GOU 국고 출금", cpy:"🔗 초대 링크 복사하기", frSt:"🔥 기사 달성 친구 초대 현황", frMy:"🤝 내 친구 육성 현황", aMin:"최소 수량을 확인하세요.", aMax:"목표 달성!", aErr:"잔고 부족!", hSpec1:"🏰 제국의 심장", hSpec2:"🐉 신수의 둥지", aTkt:"티켓이 부족합니다!",
+    lTit:"🎟️ 핫타임 복권", lTm:"[수령 가능 시간] 12:00~14:00 / 18:00~20:00 (한국시간 KST)", lOn:"복권 긁기!", lOff:"대기중...", lWait:"핫타임(12:00~14:00, 18:00~20:00 KST)을 기다려주세요!", lClaimed:"이미 이번 핫타임 복권을 수령하셨습니다!", shNtTit:"🚨 [필독] GOU 톤 상점 공식 선언문", shNt1:"본 상점은 단순한 과금처가 아닌 <b>제국 경제 방어선</b>입니다. 외부 고래들의 조작으로부터 유저를 보호합니다.", shNt2:"<b>📉 덤핑 원천 차단:</b> 런칭 초기 DEX 유동성을 의도적으로 낮게 설정하여 악성 고래들의 매집/덤핑을 막습니다.", shNt3:"<b>⚖️ 오라클(Oracle) 연동:</b> 상점 내 GOU는 실시간 TON ↔ GOU 스왑 가격을 추종하여 공정하게 책정됩니다.", shNt4:"<b>💧 100% LP 재투입:</b> 결제된 모든 TON은 <b>DEX GOU 유동성 풀에 전액 재투입</b>되어 코인 가치를 방어합니다!", depBtn:"📥 GOU 입금", depPmt:"📥 DEX에서 매수한 GOU를 제국으로 입금합니다.\n수량을 입력하세요:", depErr:"올바른 수량을 입력하세요!" },
+  en: { wConn:"Wallet Connected", wNotConn:"Not Connected", wWarn:"⚠️ You must connect your TON wallet first!", rGod:"GOD", rCom:"Cmdr", rKni:"Knight", rRec:"Recruit", jPot:"🏆 Weekly Season Jackpot", burn:"🔥 Total Server Burn (Halving)", ph2:"🚨 Phase 2 Halving (Cost 50%↓)", ph1:"⚠️ Phase 1 Halving (Yield 50%↓)", ph0:"🟢 Normal Phase", dGain:"Daily Auto Mining", unClm:"Unclaimed", cBtn:"🚀 Claim GOU", bfOn:"🔥 Buff Active", bfCd:"⏳ Cooldown", bfBtn:"📺 Ad: 2x Mining (1h)", arc:"🎰 Random Arcade", tkts:"🎟️ Tickets", ads:"📺 Ads Left", adBtn:"📺 Watch Ad for Ticket", pBtn:"🎲 Enter Arcade", hTit:"🗺️ Territories (Power Match)", hReq:"Req Lvl Sum:", gTit:"⚔️ Mythic Armory", pTit:"🐉 Divine Beast & Castle", lvl:"Lv", prob:"Rate:", cost:"Cost:", upg:"UPG", shTit:"💎 Direct GOU Shop", buy:"BUY (TON)", nHom:"Home", nUpg:"Upgrade", nShp:"Shop", nRnk:"Rank", nSys:"System", aNoG:"Not enough GOU.", rSrv:"👑 SERVER RANKING", nTgt:"Enter target upgrade level:", h1:"Grassland", h2:"Forest of Gods", h3:"Immortal Desert", h4:"Abyssal Jungle", h5:"Twilight Volcano", g1:"Sword of Zeus", g2:"Armor of Ares", g3:"Helmet of Athena", g4:"Gloves of Hephaestus", g5:"Shoes of Hermes", g6:"Necklace of Aphrodite", g7:"Ring of Poseidon", s1:"ATK", s2:"HP", s3:"DEF", s4:"ACC", s5:"Bonus", s6:"Cost Reduc", s7:"Success Rate", p1:"Ancient Dragon", p2:"Great Monarch's Castle", gBf:"Buff: ", pBf:"Yield Bonus: ", spec:"Hunting ⚔️", lck1:"Unlocks at Gear +210", lck2:"Unlocks at Pet +50", rnk1:"Rank", rnk2:"Commander", rnk3:"Stats", syMy:"👤 My Info", syFr:"🤝 Invite Quest", tgTit:"🛡️ Change GOD Title", tgWd:"📤 Withdraw GOU", cpy:"🔗 Copy Invite Link", frSt:"🔥 Friends Reached Knight", frMy:"🤝 Friends Growth", aMin:"Check minimum amount.", aMax:"Target Reached!", aErr:"Not enough balance!", hSpec1:"🏰 Heart of Empire", hSpec2:"🐉 Beast Nest", aTkt:"Not enough tickets!",
+    lTit:"🎟️ Hot Time Lottery", lTm:"[Available] 12:00~14:00 / 18:00~20:00 (KST)", lOn:"Scratch!", lOff:"Waiting...", lWait:"Wait for Hot Time (12:00~14:00, 18:00~20:00 KST)!", lClaimed:"Already claimed this slot!", shNtTit:"🚨 [NOTICE] GOU TON Shop Declaration", shNt1:"This shop is our <b>Economic Defense Line</b> against market manipulation by external whales.", shNt2:"<b>📉 Anti-Dumping:</b> Initial DEX liquidity is set low to prevent whale dumping.", shNt3:"<b>⚖️ Oracle Linked:</b> Prices follow real-time TON ↔ GOU swap rates.", shNt4:"<b>💧 100% LP Reinvestment:</b> All TON spent here goes into the <b>DEX Liquidity Pool</b> to pump your GOU value!", depBtn:"📥 Deposit GOU", depPmt:"📥 Deposit GOU from DEX to Empire.\nEnter amount:", depErr:"Enter a valid amount!" }
 };
+['ru','zh','ja','es','vi'].forEach(lang => { i18n[lang] = { ...i18n['en'], ...i18n[lang] }; });
 
 const ScratchLottery = ({ userRank, onReward, onClose }) => {
   const canvasRef = useRef(null); const [isCompleted, setIsCompleted] = useState(false); const [reward, setReward] = useState(0);
   const rankInfo = useMemo(() => {
     if (userRank.includes('GOD')) return [ {p:'80%', amt:'100M'}, {p:'15%', amt:'1B'}, {p:'4%', amt:'5B'}, {p:'1%', amt:'10B (Jackpot)'} ];
-    if (userRank.includes('사령관') || userRank.includes('Cmdr') || userRank.includes('Командир') || userRank.includes('指挥官') || userRank.includes('司令官') || userRank.includes('Cmdte') || userRank.includes('Chỉ huy')) return [ {p:'80%', amt:'50M'}, {p:'15%', amt:'100M'}, {p:'4%', amt:'500M'}, {p:'1%', amt:'1B (Jackpot)'} ];
-    if (userRank.includes('기사') || userRank.includes('Knight') || userRank.includes('Рыцарь') || userRank.includes('骑士') || userRank.includes('騎士') || userRank.includes('Caballero') || userRank.includes('Hiệp sĩ')) return [ {p:'80%', amt:'5M'}, {p:'15%', amt:'10M'}, {p:'4%', amt:'50M'}, {p:'1%', amt:'100M (Jackpot)'} ];
+    if (userRank.includes('사령관') || userRank.includes('Cmdr')) return [ {p:'80%', amt:'50M'}, {p:'15%', amt:'100M'}, {p:'4%', amt:'500M'}, {p:'1%', amt:'1B (Jackpot)'} ];
+    if (userRank.includes('기사') || userRank.includes('Knight')) return [ {p:'80%', amt:'5M'}, {p:'15%', amt:'10M'}, {p:'4%', amt:'50M'}, {p:'1%', amt:'100M (Jackpot)'} ];
     return [ {p:'80%', amt:'500k'}, {p:'15%', amt:'1M'}, {p:'4%', amt:'5M'}, {p:'1%', amt:'10M (Jackpot)'} ];
   }, [userRank]);
   useEffect(() => {
     const roll = Math.random() * 100; let amt = 0;
     if (userRank.includes('GOD')) { if (roll < 80) amt = 100000000; else if (roll < 95) amt = 1000000000; else if (roll < 99) amt = 5000000000; else amt = 10000000000; }
-    else if (userRank.includes('사령관') || userRank.includes('Cmdr') || userRank.includes('Командир') || userRank.includes('指挥官') || userRank.includes('司令官') || userRank.includes('Cmdte') || userRank.includes('Chỉ huy')) { if (roll < 80) amt = 50000000; else if (roll < 95) amt = 100000000; else if (roll < 99) amt = 500000000; else amt = 1000000000; }
-    else if (userRank.includes('기사') || userRank.includes('Knight') || userRank.includes('Рыцарь') || userRank.includes('骑士') || userRank.includes('騎士') || userRank.includes('Caballero') || userRank.includes('Hiệp sĩ')) { if (roll < 80) amt = 5000000; else if (roll < 95) amt = 10000000; else if (roll < 99) amt = 50000000; else amt = 100000000; }
+    else if (userRank.includes('사령관') || userRank.includes('Cmdr')) { if (roll < 80) amt = 50000000; else if (roll < 95) amt = 100000000; else if (roll < 99) amt = 500000000; else amt = 1000000000; }
+    else if (userRank.includes('기사') || userRank.includes('Knight')) { if (roll < 80) amt = 5000000; else if (roll < 95) amt = 10000000; else if (roll < 99) amt = 50000000; else amt = 100000000; }
     else { if (roll < 80) amt = 500000; else if (roll < 95) amt = 1000000; else if (roll < 99) amt = 5000000; else amt = 10000000; }
     setReward(amt);
     const canvas = canvasRef.current; const ctx = canvas.getContext('2d');
@@ -197,7 +194,6 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
 );
 
 export default function App() {
-  // 🎵 인게임 BGM 상태
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
@@ -207,17 +203,11 @@ export default function App() {
       else { audioRef.current.play().catch(e => console.log(e)); setIsPlaying(true); }
     }
   };
-  // 📺 Adsgram 광고 컨트롤러 세팅
   const adControllerRef = useRef(null);
   useEffect(() => {
-    if (window.Adsgram) {
-      adControllerRef.current = window.Adsgram.init({ blockId: "34004" });
-    }
+    if (window.Adsgram) { adControllerRef.current = window.Adsgram.init({ blockId: "34004" }); }
   }, []);
-  //const launchDate = new Date('2026-06-20T11:00:00+09:00').getTime();
-  //if (Date.now() < launchDate) { return <PreRegister />; }
 
-  // 🌐 언어 상태 감지
   const [lang, setLang] = useState('ko');
   const [showLangMenu, setShowLangMenu] = useState(false);
   useEffect(() => {
@@ -241,7 +231,7 @@ export default function App() {
   const lockRef = useRef({}); const autoActiveRef = useRef({}); const levelsRef = useRef({}); 
   const [autoUI, setAutoUI] = useState({}); const [lvlAnims, setLvlAnims] = useState({}); 
   const [anims, setAnims] = useState({}); const [activeModal, setActiveModal] = useState(null); 
-  const [showGuide, setShowGuide] = useState(false); const [showLottery, setShowLottery] = useState(false);
+  const [showLottery, setShowLottery] = useState(false);
 
   const [gears, setGears] = useState([
     {id: 'sword', lvl: 0, base: 10, unit: '', imgFile: 'sword.jpg', emoji: '⚡'}, {id: 'armor', lvl: 0, base: 100, unit: '', imgFile: 'armor.jpg', emoji: '🔥'},
@@ -301,17 +291,11 @@ export default function App() {
 
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
-  // 🛡️ [문지기 함수 추가] 지갑 검사가 필요할 때만 호출됨
   const requireWallet = (actionCallback) => {
-    if (!wallet) {
-      alert(t.wWarn);
-      tonConnectUI.openModal();
-      return;
-    }
+    if (!wallet) { alert(t.wWarn); tonConnectUI.openModal(); return; }
     actionCallback();
   };
 
-  // 🔄 [동기화 로직 1] 앱 시작 시 텔레그램 ID 기반으로 데이터부터 불러옴 (지갑 유무 상관없음)
   useEffect(() => {
     httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName, initData: window.Telegram?.WebApp?.initData || "" }).then(res => {
         if (res.data && res.data.userData) {
@@ -321,16 +305,11 @@ export default function App() {
     }).catch(e => console.log(e));
   }, []);
 
-  // 🔄 [동기화 로직 2] 지갑 연결 상태 변경 시 UI(주소 표시) 업데이트
   useEffect(() => {
-    if (wallet) {
-      setState(s => ({ ...s, walletAddress: wallet.account.address.substring(0, 6) + '...' + wallet.account.address.substring(wallet.account.address.length - 4) }));
-    } else {
-      setState(s => ({ ...s, walletAddress: '' }));
-    }
+    if (wallet) { setState(s => ({ ...s, walletAddress: wallet.account.address.substring(0, 6) + '...' + wallet.account.address.substring(wallet.account.address.length - 4) })); } 
+    else { setState(s => ({ ...s, walletAddress: '' })); }
   }, [wallet]);
 
-  // 📤 [출금 로직 수정] 지갑 검사 (requireWallet) 씌움
   const withdrawGOU = async () => {
     requireWallet(async () => {
       if (totalGearLevel < 140) return alert(`LVL 140+ Required!`);
@@ -344,23 +323,16 @@ export default function App() {
     });
   };
 
-  // 📥 [신규 추가] DEX에서 매수한 GOU 입금 로직 (지갑 문지기 발동)
   const depositGOU = async () => {
     requireWallet(async () => {
-      const input = window.prompt(`📥 DEX에서 매수한 GOU를 제국 국고로 입금합니다.\n입금할 수량을 입력하세요:`, "10000000");
+      const input = window.prompt(t.depPmt, "10000000");
       if (!input) return; 
       const amount = parseInt(input, 10);
-      if (isNaN(amount) || amount <= 0) return alert("올바른 수량을 입력하세요!");
-      
-      // 추후 GOU 토큰(Jetton) 전송 스마트 컨트랙트 연결 구간
-      alert(`[트랜잭션 승인 대기]\n사령관님의 지갑에서 ${amount.toLocaleString()} GOU를 제국으로 전송합니다!\n(추후 스마트 컨트랙트 연동 예정)`);
-      
-      // 트랜잭션 성공 시 서버 잔고(balance) 업데이트 로직
-      // setState(s => ({...s, balance: s.balance + amount}));
+      if (isNaN(amount) || amount <= 0) return alert(t.depErr);
+      alert(t.depMsg ? t.depMsg.replace('{amt}', amount.toLocaleString()) : `[Deposit] Sending ${amount.toLocaleString()} GOU!`);
     });
   };
 
-  // 💎 [상점 로직 수정] 지갑 검사 (requireWallet) 씌움
   const handleBuyGOU = async (tonAmount, gouAmount) => {
     requireWallet(async () => {
       const transaction = { validUntil: Math.floor(Date.now() / 1000) + 60, messages: [{ address: ADMIN_WALLET_ADDRESS, amount: String(tonAmount * 1e9) }] };
@@ -377,44 +349,31 @@ export default function App() {
   const handleTitleEdit = () => { if (state.castleLevel >= 50) { const newPrefix = window.prompt("New GOD Title:", state.customGodTitle); if (newPrefix && newPrefix.trim() !== "") setState(s => ({ ...s, customGodTitle: newPrefix.trim().toUpperCase() })); } else { alert(t.lck2); } };
   const formatTimeStr = (targetTime) => { const diff = Math.max(0, targetTime - Date.now()); const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000); return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; };
 
-  // 🎟️ 1. 광고 보고 티켓 충전하기 (진짜 광고 연동)
   const watchAdForTicket = async () => {
     if (state.adViewsLeft <= 0) return alert(t.bfCd); 
-    if (!adControllerRef.current) return alert("광고 시스템을 불러오는 중입니다.");
-
+    if (!adControllerRef.current) return alert("Ads system loading.");
     try {
-      // 광고 창 띄우기! (여기서 멈춰서 유저가 끝까지 보길 기다립니다)
       const result = await adControllerRef.current.show();
-      
-      // 유저가 광고를 끝까지 시청 완료했을 때만 보상 지급!
       if (result.done) {
         const nextCharge = state.adViewsLeft === 3 ? Date.now() + 3 * 3600000 : state.nextAdChargeTime;
         setState(s => ({ ...s, tickets: s.tickets + 1, adViewsLeft: s.adViewsLeft - 1, nextAdChargeTime: nextCharge }));
         try { await httpsCallable(getFunctions(app), 'syncAdAction')({ userId: getUserId(), type: 'ticket', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} 
-        alert("광고 시청 완료! 티켓 1장 획득! 🎟️");
+        alert("Success! +1 Ticket 🎟️");
       }
-    } catch (error) {
-      // 유저가 중간에 끄거나, 현재 송출할 광고가 없을 때
-      alert("광고 시청을 취소했거나 시청 가능한 광고가 없습니다.");
-    }
+    } catch (error) { alert("Ad cancelled."); }
   };
 
-  // 🔥 2. 광고 보고 1시간 채굴량 2배 버프 (진짜 광고 연동)
   const watchBuffAd = async () => {
     if (Date.now() < state.nextBuffAdTime) return alert(t.bfCd);
-    if (!adControllerRef.current) return alert("광고 시스템을 불러오는 중입니다.");
-
+    if (!adControllerRef.current) return alert("Ads system loading.");
     try {
       const result = await adControllerRef.current.show();
-      
       if (result.done) {
         setState(s => ({ ...s, isAdActive: true, adTimeLeft: 3600, nextBuffAdTime: Date.now() + 3 * 3600000 }));
         try { await httpsCallable(getFunctions(app), 'syncAdAction')({ userId: getUserId(), type: 'buff', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} 
-        alert("광고 시청 완료! 1시간 동안 채굴량 2배 버프 가동! 🔥");
+        alert("Success! 2x Mining Buff (1h) 🔥");
       }
-    } catch (error) {
-      alert("광고 시청을 취소했거나 시청 가능한 광고가 없습니다.");
-    }
+    } catch (error) { alert("Ad cancelled."); }
   };
 
   const handleArcadeReward = async (amount) => { if (amount > 0) { setState(s => ({ ...s, balance: s.balance + amount })); try { await httpsCallable(getFunctions(app), 'syncBonusReward')({ userId: getUserId(), amount: amount, source: 'arcade', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} } setActiveModal(null); };
@@ -486,10 +445,9 @@ export default function App() {
     return () => clearInterval(timer);
   }, [checkHunt, currentStats, totalBonusPct, gainHalvingMult]);
 
-  const currentHour = new Date().getHours(); const isHotTime = (currentHour >= 12 && currentHour < 14) || (currentHour >= 18 && currentHour < 20); const currentLotterySlot = `${new Date().toDateString()}-${currentHour >= 12 && currentHour < 14 ? 'lunch' : (currentHour >= 18 && currentHour < 20 ? 'dinner' : 'none')}`;
-  const handleOpenLottery = () => { if (!isHotTime) return alert("Wait for Hot Time! (12:00~14:00 / 18:00~20:00 KST)"); if (state.lastLotterySlot === currentLotterySlot) return alert("Already Claimed!"); setShowLottery(true); };
+  const currentHour = new Date(Date.now() + 9 * 3600000).getUTCHours(); const isHotTime = (currentHour >= 12 && currentHour < 14) || (currentHour >= 18 && currentHour < 20); const currentLotterySlot = `${new Date(Date.now() + 9 * 3600000).toDateString()}-${currentHour >= 12 && currentHour < 14 ? 'lunch' : (currentHour >= 18 && currentHour < 20 ? 'dinner' : 'none')}`;
+  const handleOpenLottery = () => { if (!isHotTime) return alert(t.lWait); if (state.lastLotterySlot === currentLotterySlot) return alert(t.lClaimed); setShowLottery(true); };
 
-  // 🌐 언어별 장비 이름/스탯 매핑
   const gearNames = [t.g1, t.g2, t.g3, t.g4, t.g5, t.g6, t.g7];
   const statNames = [t.s1, t.s2, t.s3, t.s4, t.s5, t.s6, t.s7];
 
@@ -517,32 +475,15 @@ export default function App() {
         .bottom-nav-btn { flex: 1; background: transparent; border: none; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; padding: 5px 2px; }
       `}</style>
 
-      {/* 🎵 BGM 오디오 및 우측 상단 컨트롤 패널 */}
       <audio ref={audioRef} src={`${process.env.PUBLIC_URL}/bgm.mp3`} loop preload="auto" />
 
+      {/* 🎵 오직 BGM 버튼만 심플하게 남겼습니다! */}
       <div style={{ position: 'fixed', top: '75px', right: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px', zIndex: 9000 }}>
-        {/* BGM 온오프 버튼 */}
         <button onClick={toggleBGM} style={{ background: isPlaying ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', border: `2px solid ${isPlaying ? '#06b6d4' : '#555'}`, color: isPlaying ? '#06b6d4' : '#888', borderRadius: '50%', width: '38px', height: '38px', fontSize: '18px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: isPlaying ? '0 0 10px rgba(6,182,212,0.5)' : 'none', transition: '0.3s' }}>
           {isPlaying ? '🔊' : '🔇'}
         </button>
-
-        {/* 🎟️ 핫타임 배급소 (콤팩트 복권 UI) */}
-        <div style={{ background: 'rgba(20, 24, 34, 0.95)', border: '1px solid #fbbf24', borderRadius: '10px', padding: '10px', textAlign: 'right', boxShadow: '0 5px 15px rgba(0,0,0,0.7)', minWidth: '120px' }}>
-          <div style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 'bold', marginBottom: '4px' }}>🎟️ 핫타임 배급소</div>
-          <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '2px' }}>[수령 가능 시간]</div>
-          <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '8px', lineHeight: '1.4' }}>
-            12:00 ~ 14:00<br/>18:00 ~ 20:00
-          </div>
-          <button
-            onClick={handleOpenLottery}
-            style={{ width: '100%', background: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'linear-gradient(90deg, #fbbf24, #d97706)' : '#555', color: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '#000' : '#aaa', border: 'none', padding: '6px 0', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', cursor: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'pointer' : 'not-allowed', animation: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'pulse 1.5s infinite' : 'none' }}
-          >
-            {isHotTime && state.lastLotterySlot !== currentLotterySlot ? '보급품 수령' : '대기중...'}
-          </button>
-        </div>
       </div>
 
-      {/* 🌐 좌측 상단 언어 선택 UI */}
       <div style={{ position: 'fixed', top: '75px', left: '10px', zIndex: 9000 }}>
         <button onClick={() => setShowLangMenu(!showLangMenu)} style={{ background: 'rgba(0,0,0,0.8)', border: '1px solid #555', color: '#fff', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
           🌐 {lang.toUpperCase()} ▼
@@ -580,6 +521,20 @@ export default function App() {
         
         {activeTab === 'home' && (
           <div>
+            {/* 🎟️ 핫타임 복권 깔끔한 배너로 이식 완료! */}
+            <div style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.15))', border: '1px solid rgba(16,185,129,0.4)', borderRadius: '15px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', boxShadow: '0 5px 20px rgba(16,185,129,0.1)' }}>
+              <div>
+                <div style={{ color: '#10b981', fontWeight: '900', fontSize: '18px', marginBottom: '5px' }}>{t.lTit}</div>
+                <div style={{ color: '#aaa', fontSize: '12px' }}>{t.lTm}</div>
+              </div>
+              <button 
+                onClick={handleOpenLottery}
+                style={{ background: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'linear-gradient(90deg, #10b981, #06b6d4)' : '#333', color: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '#fff' : '#888', border: 'none', padding: '12px 20px', borderRadius: '10px', fontWeight: '900', cursor: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'pointer' : 'not-allowed', animation: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'pulse 1.5s infinite' : 'none', boxShadow: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '0 4px 15px rgba(16,185,129,0.4)' : 'none' }}
+              >
+                {isHotTime && state.lastLotterySlot !== currentLotterySlot ? t.lOn : t.lOff}
+              </button>
+            </div>
+
             <div className="big-banner-jackpot">
               <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '15px', marginBottom: '8px' }}>{t.jPot}</div>
               <div style={{ color: '#fff', fontWeight: '900', fontSize: '38px', textShadow: '0 0 15px rgba(251,191,36,0.8)' }}>{state.jackpot.toLocaleString()} <span style={{fontSize:'16px', color:'#fbbf24'}}>GOU</span></div>
@@ -706,22 +661,18 @@ export default function App() {
           </div>
         )}
 
-{activeTab === 'shop' && (
+        {activeTab === 'shop' && (
           <div className="glass-panel" style={{ padding: '25px 20px', border: '2px solid #06b6d4', background: 'linear-gradient(180deg, rgba(20,24,34,0.9), rgba(6,182,212,0.1))' }}>
             <h2 style={{ textAlign: 'center', color: '#06b6d4', margin: '0 0 15px 0', textShadow: '0 0 10px rgba(6,182,212,0.5)' }}>{t.shTit}</h2>
             
-            {/* 🚨 GOU 경제 방어선 공식 선언문 (장착 완료!) */}
+            {/* 🚨 번역 완벽 적용된 상점 공지문! */}
             <div style={{ backgroundColor: '#1a1a2e', border: '1px solid #ff4757', padding: '15px', borderRadius: '10px', marginBottom: '20px', color: '#fff', fontSize: '14px', lineHeight: '1.6', boxShadow: '0 0 15px rgba(255, 71, 87, 0.2)' }}>
-                <h4 style={{ color: '#ff4757', marginTop: '0', marginBottom: '10px', textAlign: 'center' }}>
-                    🚨 [필독] GOU 톤 상점 공식 선언문
-                </h4>
-                <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#bdc3c7' }}>
-                    본 상점은 단순한 과금처가 아닌 <b>제국 경제 방어선</b>입니다. 플레이하지 않는 외부 코인 홀더(고래)들의 시장 조작으로부터 유저들을 보호하기 위해 다음과 같이 운영됩니다.
-                </p>
+                <h4 style={{ color: '#ff4757', marginTop: '0', marginBottom: '10px', textAlign: 'center' }}>{t.shNtTit}</h4>
+                <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#bdc3c7' }} dangerouslySetInnerHTML={{ __html: t.shNt1 }}></p>
                 <ul style={{ margin: '0', paddingLeft: '20px', fontSize: '13px' }}>
-                    <li style={{ marginBottom: '5px' }}><b>📉 덤핑 원천 차단:</b> 런칭 초기 DEX(거래소) 유동성을 의도적으로 낮게 설정하여 악성 고래들의 매집/덤핑을 막습니다.</li>
-                    <li style={{ marginBottom: '5px' }}><b>⚖️ 오라클(Oracle) 연동:</b> 상점 내 GOU 패키지는 실시간 TON ↔ GOU 스왑 가격을 추종하여 가장 공정하게 책정됩니다.</li>
-                    <li style={{ marginBottom: '0' }}><b style={{ color: '#2ecc71' }}>💧 100% 유동성 풀(LP) 재투입:</b> 상점에서 결제된 모든 TON은 사령관의 사비로 들어가지 않고, <b>DEX GOU 유동성 풀에 전액 재투입</b>되어 여러분이 보유한 GOU 코인의 가치를 방어하고 우상향시킵니다!</li>
+                    <li style={{ marginBottom: '5px' }} dangerouslySetInnerHTML={{ __html: t.shNt2 }}></li>
+                    <li style={{ marginBottom: '5px' }} dangerouslySetInnerHTML={{ __html: t.shNt3 }}></li>
+                    <li style={{ marginBottom: '0' }} dangerouslySetInnerHTML={{ __html: t.shNt4 }}></li>
                 </ul>
             </div>
 
@@ -743,18 +694,14 @@ export default function App() {
 
             {settingTab === 'my' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                
-                {/* 🛡️ 지갑 연결 버튼을 세팅 탭으로 이동시켰습니다! */}
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px', padding: '15px', background: 'rgba(0,0,0,0.4)', borderRadius: '10px', border: '1px solid #333' }}>
                    <TonConnectButton />
                 </div>
-
                 <button onClick={handleTitleEdit} className="action-btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid #555' }}>{t.tgTit}</button>
-                
-                {/* 👇 방금 교체하신 3개의 완벽한 경제 버튼들 👇 */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <button onClick={() => setActiveTab('shop')} className="action-btn" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid #22c55e' }}>{t.shTit}</button>
-                  <button onClick={depositGOU} className="action-btn" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #3b82f6' }}>📥 GOU 입금</button>
+                  {/* 🚨 입금 버튼 다국어 적용 완료 */}
+                  <button onClick={depositGOU} className="action-btn" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #3b82f6' }}>{t.depBtn}</button>
                   <button onClick={withdrawGOU} className="action-btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid #ef4444', gridColumn: 'span 2' }}>{t.tgWd}</button>
                 </div>
               </div>
