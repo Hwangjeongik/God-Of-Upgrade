@@ -197,6 +197,14 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
 );
 
 export default function App() {
+  // 📺 Adsgram 광고 컨트롤러 세팅
+  const adControllerRef = useRef(null);
+  useEffect(() => {
+    if (window.Adsgram) {
+      // 🚨 여기에 방금 발급받은 사령관님의 Block ID를 넣으십시오!
+      adControllerRef.current = window.Adsgram.init({ blockId: "34004" });
+    }
+  }, []);
   //const launchDate = new Date('2026-06-20T11:00:00+09:00').getTime();
   //if (Date.now() < launchDate) { return <PreRegister />; }
 
@@ -360,16 +368,44 @@ export default function App() {
   const handleTitleEdit = () => { if (state.castleLevel >= 50) { const newPrefix = window.prompt("New GOD Title:", state.customGodTitle); if (newPrefix && newPrefix.trim() !== "") setState(s => ({ ...s, customGodTitle: newPrefix.trim().toUpperCase() })); } else { alert(t.lck2); } };
   const formatTimeStr = (targetTime) => { const diff = Math.max(0, targetTime - Date.now()); const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000); return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; };
 
+  // 🎟️ 1. 광고 보고 티켓 충전하기 (진짜 광고 연동)
   const watchAdForTicket = async () => {
-    if (state.adViewsLeft <= 0) return alert(t.bfCd); const nextCharge = state.adViewsLeft === 3 ? Date.now() + 3 * 3600000 : state.nextAdChargeTime;
-    setState(s => ({ ...s, tickets: s.tickets + 1, adViewsLeft: s.adViewsLeft - 1, nextAdChargeTime: nextCharge }));
-    try { await httpsCallable(getFunctions(app), 'syncAdAction')({ userId: getUserId(), type: 'ticket', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} alert("OK!");
+    if (state.adViewsLeft <= 0) return alert(t.bfCd); 
+    if (!adControllerRef.current) return alert("광고 시스템을 불러오는 중입니다.");
+
+    try {
+      // 광고 창 띄우기! (여기서 멈춰서 유저가 끝까지 보길 기다립니다)
+      const result = await adControllerRef.current.show();
+      
+      // 유저가 광고를 끝까지 시청 완료했을 때만 보상 지급!
+      if (result.done) {
+        const nextCharge = state.adViewsLeft === 3 ? Date.now() + 3 * 3600000 : state.nextAdChargeTime;
+        setState(s => ({ ...s, tickets: s.tickets + 1, adViewsLeft: s.adViewsLeft - 1, nextAdChargeTime: nextCharge }));
+        try { await httpsCallable(getFunctions(app), 'syncAdAction')({ userId: getUserId(), type: 'ticket', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} 
+        alert("광고 시청 완료! 티켓 1장 획득! 🎟️");
+      }
+    } catch (error) {
+      // 유저가 중간에 끄거나, 현재 송출할 광고가 없을 때
+      alert("광고 시청을 취소했거나 시청 가능한 광고가 없습니다.");
+    }
   };
 
+  // 🔥 2. 광고 보고 1시간 채굴량 2배 버프 (진짜 광고 연동)
   const watchBuffAd = async () => {
     if (Date.now() < state.nextBuffAdTime) return alert(t.bfCd);
-    setState(s => ({ ...s, isAdActive: true, adTimeLeft: 3600, nextBuffAdTime: Date.now() + 3 * 3600000 }));
-    try { await httpsCallable(getFunctions(app), 'syncAdAction')({ userId: getUserId(), type: 'buff', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} alert("OK!");
+    if (!adControllerRef.current) return alert("광고 시스템을 불러오는 중입니다.");
+
+    try {
+      const result = await adControllerRef.current.show();
+      
+      if (result.done) {
+        setState(s => ({ ...s, isAdActive: true, adTimeLeft: 3600, nextBuffAdTime: Date.now() + 3 * 3600000 }));
+        try { await httpsCallable(getFunctions(app), 'syncAdAction')({ userId: getUserId(), type: 'buff', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} 
+        alert("광고 시청 완료! 1시간 동안 채굴량 2배 버프 가동! 🔥");
+      }
+    } catch (error) {
+      alert("광고 시청을 취소했거나 시청 가능한 광고가 없습니다.");
+    }
   };
 
   const handleArcadeReward = async (amount) => { if (amount > 0) { setState(s => ({ ...s, balance: s.balance + amount })); try { await httpsCallable(getFunctions(app), 'syncBonusReward')({ userId: getUserId(), amount: amount, source: 'arcade', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} } setActiveModal(null); };
