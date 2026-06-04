@@ -260,25 +260,9 @@ export default function PreRegister() {
   // 텔레그램 유저 고유 ID 가져오기 (백엔드 요청용)
   const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
 
-  // 🚨 [최종 보안] 채널 가입 여부 확인 후 입장 필터링
+  // 🚀 [핵심 수정 구간] 채널 가입 검사 삭제! 무혈입성 하이패스!
   const handleBotRedirect = async () => {
-    // 1. 서버에 유저의 채널 가입 여부 확인 요청
-    try {
-      const checkResult = await httpsCallable(getFunctions(app), 'checkChannelJoin')({ 
-        userId: getUserId() 
-      });
-
-      if (!checkResult.data.isMember) {
-        // 2. 가입 안 되어 있으면 채널로 강제 납치
-        alert("⚠️ 사전예약 혜택을 받으려면 공식 채널에 먼저 입장해주세요!\n(Please join the official channel first!)");
-        window.open("https://t.me/+wR-IWYGr0nw1Y2U1", "_blank"); 
-        return;
-      }
-    } catch (e) {
-      console.log("확인 중 에러 발생, 입장 허용:", e);
-    }
-    
-    // 3. 가입 확인 완료 시에만 봇으로 입장
+    // 백엔드 통신 없이, 누르자마자 즉시 봇으로 넘겨버립니다.
     const botUrl = `${tgBaseUrl}${BOT_USERNAME}?start=pre_register`;
     try {
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {

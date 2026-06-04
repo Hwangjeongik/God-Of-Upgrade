@@ -197,8 +197,8 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
 );
 
 export default function App() {
-  const launchDate = new Date('2026-06-20T11:00:00+09:00').getTime();
-  if (Date.now() < launchDate) { return <PreRegister />; }
+  //const launchDate = new Date('2026-06-20T11:00:00+09:00').getTime();
+  //if (Date.now() < launchDate) { return <PreRegister />; }
 
   // 🌐 언어 상태 감지
   const [lang, setLang] = useState('ko');
