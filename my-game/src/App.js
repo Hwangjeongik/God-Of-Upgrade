@@ -197,11 +197,20 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
 );
 
 export default function App() {
+  // 🎵 인게임 BGM 상태
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
+
+  const toggleBGM = () => {
+    if (audioRef.current) {
+      if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); } 
+      else { audioRef.current.play().catch(e => console.log(e)); setIsPlaying(true); }
+    }
+  };
   // 📺 Adsgram 광고 컨트롤러 세팅
   const adControllerRef = useRef(null);
   useEffect(() => {
     if (window.Adsgram) {
-      // 🚨 여기에 방금 발급받은 사령관님의 Block ID를 넣으십시오!
       adControllerRef.current = window.Adsgram.init({ blockId: "34004" });
     }
   }, []);
@@ -478,7 +487,7 @@ export default function App() {
   }, [checkHunt, currentStats, totalBonusPct, gainHalvingMult]);
 
   const currentHour = new Date().getHours(); const isHotTime = (currentHour >= 12 && currentHour < 14) || (currentHour >= 18 && currentHour < 20); const currentLotterySlot = `${new Date().toDateString()}-${currentHour >= 12 && currentHour < 14 ? 'lunch' : (currentHour >= 18 && currentHour < 20 ? 'dinner' : 'none')}`;
-  const handleOpenLottery = () => { if (!isHotTime) return alert("Wait for Hot Time! (12~14 / 18~20 KST)"); if (state.lastLotterySlot === currentLotterySlot) return alert("Already Claimed!"); setShowLottery(true); };
+  const handleOpenLottery = () => { if (!isHotTime) return alert("Wait for Hot Time! (12:00~14:00 / 18:00~20:00 KST)"); if (state.lastLotterySlot === currentLotterySlot) return alert("Already Claimed!"); setShowLottery(true); };
 
   // 🌐 언어별 장비 이름/스탯 매핑
   const gearNames = [t.g1, t.g2, t.g3, t.g4, t.g5, t.g6, t.g7];
@@ -508,6 +517,31 @@ export default function App() {
         .bottom-nav-btn { flex: 1; background: transparent; border: none; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; padding: 5px 2px; }
       `}</style>
 
+      {/* 🎵 BGM 오디오 및 우측 상단 컨트롤 패널 */}
+      <audio ref={audioRef} src={`${process.env.PUBLIC_URL}/bgm.mp3`} loop preload="auto" />
+
+      <div style={{ position: 'fixed', top: '75px', right: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px', zIndex: 9000 }}>
+        {/* BGM 온오프 버튼 */}
+        <button onClick={toggleBGM} style={{ background: isPlaying ? 'rgba(6,182,212,0.3)' : 'rgba(0,0,0,0.6)', border: `2px solid ${isPlaying ? '#06b6d4' : '#555'}`, color: isPlaying ? '#06b6d4' : '#888', borderRadius: '50%', width: '38px', height: '38px', fontSize: '18px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: isPlaying ? '0 0 10px rgba(6,182,212,0.5)' : 'none', transition: '0.3s' }}>
+          {isPlaying ? '🔊' : '🔇'}
+        </button>
+
+        {/* 🎟️ 핫타임 배급소 (콤팩트 복권 UI) */}
+        <div style={{ background: 'rgba(20, 24, 34, 0.95)', border: '1px solid #fbbf24', borderRadius: '10px', padding: '10px', textAlign: 'right', boxShadow: '0 5px 15px rgba(0,0,0,0.7)', minWidth: '120px' }}>
+          <div style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 'bold', marginBottom: '4px' }}>🎟️ 핫타임 배급소</div>
+          <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '2px' }}>[수령 가능 시간]</div>
+          <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '8px', lineHeight: '1.4' }}>
+            12:00 ~ 14:00<br/>18:00 ~ 20:00
+          </div>
+          <button
+            onClick={handleOpenLottery}
+            style={{ width: '100%', background: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'linear-gradient(90deg, #fbbf24, #d97706)' : '#555', color: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '#000' : '#aaa', border: 'none', padding: '6px 0', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', cursor: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'pointer' : 'not-allowed', animation: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'pulse 1.5s infinite' : 'none' }}
+          >
+            {isHotTime && state.lastLotterySlot !== currentLotterySlot ? '보급품 수령' : '대기중...'}
+          </button>
+        </div>
+      </div>
+
       {/* 🌐 좌측 상단 언어 선택 UI */}
       <div style={{ position: 'fixed', top: '75px', left: '10px', zIndex: 9000 }}>
         <button onClick={() => setShowLangMenu(!showLangMenu)} style={{ background: 'rgba(0,0,0,0.8)', border: '1px solid #555', color: '#fff', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -526,10 +560,6 @@ export default function App() {
 
       {showLottery && <ScratchLottery userRank={userRankTitle} onReward={handleLotteryReward} onClose={() => setShowLottery(false)} />}
       {activeModal && <ArcadeGames type={activeModal} onClose={() => setActiveModal(null)} onReward={handleArcadeReward} pReward={pReward} gReward={gReward} />}
-      
-      <div onClick={handleOpenLottery} style={{ position: 'fixed', top: '75px', left: '50%', transform:'translateX(-50%)', background: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'linear-gradient(45deg, #ffd700, #ff8c00)' : '#555', color: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '#000' : '#aaa', padding: '10px 20px', borderRadius: '20px', fontWeight: '900', zIndex: 9000, cursor: 'pointer', boxShadow: isHotTime && state.lastLotterySlot !== currentLotterySlot ? '0 0 15px rgba(255, 215, 0, 0.8)' : 'none', animation: isHotTime && state.lastLotterySlot !== currentLotterySlot ? 'pulse 1.5s infinite' : 'none', border:'2px solid #fff', width:'max-content' }}>
-        {isHotTime && state.lastLotterySlot !== currentLotterySlot ? '🎟️ HOT TIME LOTTERY!' : '⏳ Lottery (12~14 / 18~20)'}
-      </div>
 
       <div className="fixed-header">
         <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -676,12 +706,25 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'shop' && (
+{activeTab === 'shop' && (
           <div className="glass-panel" style={{ padding: '25px 20px', border: '2px solid #06b6d4', background: 'linear-gradient(180deg, rgba(20,24,34,0.9), rgba(6,182,212,0.1))' }}>
             <h2 style={{ textAlign: 'center', color: '#06b6d4', margin: '0 0 15px 0', textShadow: '0 0 10px rgba(6,182,212,0.5)' }}>{t.shTit}</h2>
-            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', padding: '15px', borderRadius: '10px', marginBottom: '25px' }}>
-              <p style={{ color: '#e6d5b8', fontSize: '12px', lineHeight: '1.6', margin: 0 }}>{t.shNot}</p>
+            
+            {/* 🚨 GOU 경제 방어선 공식 선언문 (장착 완료!) */}
+            <div style={{ backgroundColor: '#1a1a2e', border: '1px solid #ff4757', padding: '15px', borderRadius: '10px', marginBottom: '20px', color: '#fff', fontSize: '14px', lineHeight: '1.6', boxShadow: '0 0 15px rgba(255, 71, 87, 0.2)' }}>
+                <h4 style={{ color: '#ff4757', marginTop: '0', marginBottom: '10px', textAlign: 'center' }}>
+                    🚨 [필독] GOU 톤 상점 공식 선언문
+                </h4>
+                <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#bdc3c7' }}>
+                    본 상점은 단순한 과금처가 아닌 <b>제국 경제 방어선</b>입니다. 플레이하지 않는 외부 코인 홀더(고래)들의 시장 조작으로부터 유저들을 보호하기 위해 다음과 같이 운영됩니다.
+                </p>
+                <ul style={{ margin: '0', paddingLeft: '20px', fontSize: '13px' }}>
+                    <li style={{ marginBottom: '5px' }}><b>📉 덤핑 원천 차단:</b> 런칭 초기 DEX(거래소) 유동성을 의도적으로 낮게 설정하여 악성 고래들의 매집/덤핑을 막습니다.</li>
+                    <li style={{ marginBottom: '5px' }}><b>⚖️ 오라클(Oracle) 연동:</b> 상점 내 GOU 패키지는 실시간 TON ↔ GOU 스왑 가격을 추종하여 가장 공정하게 책정됩니다.</li>
+                    <li style={{ marginBottom: '0' }}><b style={{ color: '#2ecc71' }}>💧 100% 유동성 풀(LP) 재투입:</b> 상점에서 결제된 모든 TON은 사령관의 사비로 들어가지 않고, <b>DEX GOU 유동성 풀에 전액 재투입</b>되어 여러분이 보유한 GOU 코인의 가치를 방어하고 우상향시킵니다!</li>
+                </ul>
             </div>
+
             {[{ ton: 1, gou: 10000000 }, { ton: 5, gou: 50000000 }, { ton: 10, gou: 100000000 }].map((pkg, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.6)', padding: '15px 20px', borderRadius: '12px', marginBottom: '15px', border: '1px solid #333' }}>
                 <div><div style={{ color: '#06b6d4', fontWeight: '900', fontSize: '20px' }}>{pkg.ton} TON</div><div style={{ color: '#fff', fontSize: '13px', marginTop: '4px' }}>= {pkg.gou.toLocaleString()} GOU</div></div>
