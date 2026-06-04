@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from './firebase'; 
 
 // 🌍 완벽한 Web3/RPG 네이티브 글로벌 번역 사전 (7개국어)
 const i18n = {
@@ -217,9 +219,10 @@ export default function PreRegister() {
 
   // 🌐 언어 상태 및 초기 감지 로직
   const [lang, setLang] = useState('ko');
+  const [showLangMenu, setShowLangMenu] = useState(false);
 
   useEffect(() => {
-    // 텔레그램 유저 언어 감지 (존재할 경우)
+    // 텔레그램 유저 언어 감지
     const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code;
     if (tgLang) {
       if (tgLang.startsWith('ko')) setLang('ko');
@@ -232,8 +235,6 @@ export default function PreRegister() {
     }
   }, []);
 
-  // 언어 변경 토글 메뉴
-  const [showLangMenu, setShowLangMenu] = useState(false);
   const t = i18n[lang]; // 현재 선택된 언어의 번역 객체
 
   useEffect(() => {
@@ -256,7 +257,28 @@ export default function PreRegister() {
     alert(t.copy_alert.replace('{link}', inviteLink));
   };
 
-  const handleBotRedirect = () => {
+  // 텔레그램 유저 고유 ID 가져오기 (백엔드 요청용)
+  const getUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : "test_commander_123";
+
+  // 🚨 [최종 보안] 채널 가입 여부 확인 후 입장 필터링
+  const handleBotRedirect = async () => {
+    // 1. 서버에 유저의 채널 가입 여부 확인 요청
+    try {
+      const checkResult = await httpsCallable(getFunctions(app), 'checkChannelJoin')({ 
+        userId: getUserId() 
+      });
+
+      if (!checkResult.data.isMember) {
+        // 2. 가입 안 되어 있으면 채널로 강제 납치
+        alert("⚠️ 사전예약 혜택을 받으려면 공식 채널에 먼저 입장해주세요!\n(Please join the official channel first!)");
+        window.open("https://t.me/+wR-IWYGr0nw1Y2U1", "_blank"); 
+        return;
+      }
+    } catch (e) {
+      console.log("확인 중 에러 발생, 입장 허용:", e);
+    }
+    
+    // 3. 가입 확인 완료 시에만 봇으로 입장
     const botUrl = `${tgBaseUrl}${BOT_USERNAME}?start=pre_register`;
     try {
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {

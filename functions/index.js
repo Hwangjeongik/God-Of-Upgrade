@@ -322,3 +322,27 @@ exports.distributeSeasonRewardManual = functions.https.onCall(async (data, conte
         } else { return { success: false, message: '조건 달성 유저 없음' }; }
     });
 });
+
+// 🚨 비공개 채널 ID: -1002344755106 를 적용한 보안 로직
+exports.checkChannelJoin = functions.https.onCall(async (data, context) => {
+    let reqData = data || {}; if (reqData.data) reqData = reqData.data;
+    const uid = reqData.userId;
+    const CHANNEL_ID = "-1002344755106"; 
+    
+    // 텔레그램 API 호출 (채널 가입 여부 확인)
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${CHANNEL_ID}&user_id=${uid}`;
+    
+    return new Promise((resolve) => {
+        https.get(url, (res) => {
+            let body = ''; res.on('data', d => body += d);
+            res.on('end', () => {
+                try {
+                    const response = JSON.parse(body);
+                    const status = response.result?.status;
+                    const isMember = ['member', 'administrator', 'creator'].includes(status);
+                    resolve({ isMember: isMember });
+                } catch(e) { resolve({ isMember: false }); }
+            });
+        }).on('error', () => resolve({ isMember: false }));
+    });
+});
