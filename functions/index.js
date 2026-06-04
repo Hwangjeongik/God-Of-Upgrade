@@ -18,8 +18,10 @@ const WEB_APP_URL = "https://gou-h9pt.onrender.com";
 const ADMIN_WALLET = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ";
 
 const verifyTelegramAuth = (uid, initData) => {
-    if (uid === "test_commander_123") return true; 
+    // 🚨 'test_' 로 시작하는 고유 테스트 계정들은 모두 무사통과 및 세이브 허용!
+    if (uid && String(uid).startsWith("test_")) return true; 
     if (!initData) return false; 
+    // ...
     try {
         const q = new URLSearchParams(initData);
         const hash = q.get('hash');
@@ -332,6 +334,7 @@ exports.checkChannelJoin = functions.https.onCall(async (data, context) => {
     // 텔레그램 API 호출 (채널 가입 여부 확인)
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${CHANNEL_ID}&user_id=${uid}`;
     
+  // (checkChannelJoin 함수의 마지막 부분)
     return new Promise((resolve) => {
         https.get(url, (res) => {
             let body = ''; res.on('data', d => body += d);
@@ -344,5 +347,99 @@ exports.checkChannelJoin = functions.https.onCall(async (data, context) => {
                 } catch(e) { resolve({ isMember: false }); }
             });
         }).on('error', () => resolve({ isMember: false }));
+    });
+}); // 👈 [핵심 수술 부위] checkChannelJoin 함수를 여기서 완벽하게 닫아줍니다!
+
+// =====================================================================
+// 📺 [애즈그램 전용 S2S 웹훅] 광고 시청 완료 보상 지급
+// =====================================================================
+exports.adsgramWebhook = functions.https.onRequest(async (req, res) => {
+    const SECRET_KEY = "dlrl0309"; 
+    const userId = req.query.userid;
+    const type = req.query.type;
+    const secret = req.query.secret;
+
+    // 🚨 [유도리 1] 애즈그램 봇이 테스트 핑을 보낼 때 웃으며 '200 OK'로 통과시켜줌!
+    if (secret !== SECRET_KEY) {
+        console.log("테스트 핑(비밀번호 다름) 무사 통과!");
+        return res.status(200).send("OK_TEST"); 
+    }
+    
+    // 🚨 [유도리 2] 애즈그램 봇이 빈칸이나 '[userId]' 글자 그대로 보낼 때 통과!
+    if (!userId || userId === "[userId]") {
+        console.log("테스트 핑(유저정보 없음) 무사 통과!");
+        return res.status(200).send("OK_TEST");
+    }
+
+    // --- (여기서부터는 진짜 유저가 광고를 다 봤을 때 보상 지급) ---
+    const db = admin.firestore();
+    const userRef = db.collection('users').doc(String(userId));
+
+    try {
+        await db.runTransaction(async (t) => {
+            const doc = await t.get(userRef);
+            let currentData = doc.exists ? doc.data() : {};
+            if (type === 'ticket') {
+                t.set(userRef, { tickets: (currentData.tickets || 0) + 1 }, { merge: true });
+            } else if (type === 'buff') {
+                t.set(userRef, { isAdActive: true, adTimeLeft: 3600, nextBuffAdTime: Date.now() + (3 * 3600000) }, { merge: true });
+            }
+        });
+        res.status(200).send("OK");
+    } catch (error) {
+        // 🚨 [유도리 3] 혹시 서버 에러가 나도 애즈그램 봇은 안심하도록 200 발송
+        console.error("웹훅 에러:", error);
+        res.status(200).send("OK_ERROR_PASS"); 
+    }
+});
+
+// =====================================================================
+// 🚀 [최신 V2 엔진 탑재] 파이어베이스 스케줄러 모듈 불러오기
+// =====================================================================
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+
+// =====================================================================
+// 🚨 [무인 자동화 V2] 매일 자정(KST 00:00) 소각 자동 정산
+// =====================================================================
+exports.dailySystemSettlement = onSchedule({
+    schedule: "0 0 * * *",
+    timeZone: "Asia/Seoul"
+}, async (event) => {
+    const db = admin.firestore();
+    await db.runTransaction(async (t) => {
+        const sysRef = db.collection('system').doc('economy');
+        const doc = await t.get(sysRef);
+        let d = doc.exists ? doc.data() : { burn: 0 };
+        if ((d.burn || 0) > 0) {
+            t.update(sysRef, { burn: 0, totalBurnedEver: admin.firestore.FieldValue.increment(d.burn) });
+        }
+    });
+});
+
+// =====================================================================
+// 🏆 [무인 자동화 V2] 매주 월요일 자정(KST 00:00) 잭팟 시즌 보상
+// =====================================================================
+exports.weeklyJackpotSettlement = onSchedule({
+    schedule: "0 0 * * 1",
+    timeZone: "Asia/Seoul"
+}, async (event) => {
+    const db = admin.firestore();
+    await db.runTransaction(async (t) => {
+        const sysRef = db.collection('system').doc('economy');
+        const sysDoc = await t.get(sysRef);
+        const jackpot = sysDoc.exists ? (sysDoc.data().jackpot || 0) : 0;
+        if (jackpot <= 0) return;
+
+        const usersSnapshot = await t.get(db.collection('users'));
+        let eligibleUsers = [];
+        usersSnapshot.forEach(doc => { if (doc.data().castleLevel >= 50) eligibleUsers.push(doc.id); });
+
+        if (eligibleUsers.length > 0) {
+            const splitAmount = Math.floor(jackpot / eligibleUsers.length);
+            eligibleUsers.forEach(uid => {
+                t.update(db.collection('users').doc(uid), { balance: admin.firestore.FieldValue.increment(splitAmount) });
+            });
+            t.update(sysRef, { jackpot: 0 });
+        }
     });
 });
