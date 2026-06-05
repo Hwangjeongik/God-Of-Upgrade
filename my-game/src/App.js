@@ -9,7 +9,7 @@ const MAX_SUPPLY = 10000000000000;
 const SAVE_POINTS = [10, 20, 30, 40]; 
 const ADMIN_WALLET_ADDRESS = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ";
 
-// 🌍 7개국어 100% 완벽 다국어 사전 (스페인어, 베트남어 ... 제거 및 완벽 번역 완료!)
+// 🌍 7개국어 100% 완벽 다국어 사전
 const i18n = {
   ko: { wConn:"지갑 연결됨", wNotConn:"지갑 미연결", wWarn:"⚠️ 이 기능을 사용하려면 TON 지갑을 연결해야 합니다!", rGod:"GOD", rCom:"사령관", rKni:"기사", rRec:"훈련병", jPot:"🏆 이번 주 시즌 잭팟 보상금", burn:"🔥 서버 총 소각량 (반감기 게이지)", ph2:"🚨 2차 반감기 가동 중 (비용 50%↓)", ph1:"⚠️ 1차 반감기 가동 중 (수익 50%↓)", ph0:"🟢 기본 페이즈 진행 중", dGain:"일일 자동 채굴량", unClm:"미수확", cBtn:"🚀 GOU 획득하기", bfOn:"🔥 버프 가동 중", bfCd:"⏳ 쿨타임", bfBtn:"📺 광고: 1시간 채굴량 2배", arc:"🎰 랜덤 아케이드 게임장", tkts:"🎟️ 보유 티켓", ads:"📺 남은 광고", adBtn:"📺 광고 보고 티켓 충전", pBtn:"🎲 랜덤 아케이드 입장", hTit:"🗺️ 점령 영지 현황 (전투력 매칭)", hReq:"필요 강화 합:", gTit:"⚔️ 신화 무기고", pTit:"🐉 신수 및 영지 성장", lvl:"강", prob:"확률:", cost:"비용:", upg:"강화", shTit:"💎 GOU 다이렉트 상점", buy:"TON 결제", nHom:"홈(수확)", nUpg:"강화", nShp:"상점", nRnk:"랭킹", nSys:"시스템", aNoG:"GOU가 부족합니다.", rSrv:"👑 SERVER RANKING", nTgt:"목표 강화 레벨 입력:", h1:"초원 영지", h2:"신의 숲", h3:"불멸 사막", h4:"심연 정글", h5:"황혼 화산", g1:"제우스의 검", g2:"아레스의 갑옷", g3:"아테나의 투구", g4:"헤파이스토스의 장갑", g5:"헤르메스의 신발", g6:"아프로디테의 목걸이", g7:"포세이돈의 반지", s1:"공격력", s2:"체력", s3:"방어력", s4:"명중률", s5:"보너스", s6:"비용감소", s7:"성공확률", p1:"고대 드래곤", p2:"위대한 군주의 성", gBf:"버프: ", pBf:"수익 보너스: ", spec:"진행 중 ⚔️", lck1:"장비 210강 달성 시 개방", lck2:"펫 50강 달성 시 개방", rnk1:"순위", rnk2:"사령관명", rnk3:"달성 스펙", syMy:"👤 내 정보 (MY)", syFr:"🤝 친구초대 퀘스트", tgTit:"🛡️ 나만의 GOD 칭호 변경", tgWd:"📤 GOU 국고 출금", cpy:"🔗 초대 링크 복사하기", frSt:"🔥 기사 달성 친구 초대 현황", frMy:"🤝 내 친구 육성 현황", aMin:"최소 수량을 확인하세요.", aMax:"목표 달성!", aErr:"잔고 부족!", hSpec1:"🏰 제국의 심장", hSpec2:"🐉 신수의 둥지", aTkt:"티켓이 부족합니다!", lTit:"🎟️ 핫타임 복권", lTm:"[수령 가능 시간] 12:00~14:00 / 18:00~20:00 (한국시간 KST)", lOn:"복권 긁기!", lOff:"대기중...", lWait:"핫타임(12:00~14:00, 18:00~20:00 KST)을 기다려주세요!", lClaimed:"이미 이번 핫타임 복권을 수령하셨습니다!", shNtTit:"🚨 [필독] GOU 톤 상점 공식 선언문", shNt1:"본 상점은 단순한 과금처가 아닌 <b>제국 경제 방어선</b>입니다. 외부 고래들의 조작으로부터 유저를 보호합니다.", shNt2:"<b>📉 덤핑 원천 차단:</b> 런칭 초기 DEX 유동성을 의도적으로 낮게 설정하여 악성 고래들의 매집/덤핑을 막습니다.", shNt3:"<b>⚖️ 오라클(Oracle) 연동:</b> 상점 내 GOU는 실시간 TON ↔ GOU 스왑 가격을 추종하여 공정하게 책정됩니다.", shNt4:"<b>💧 100% LP 재투입:</b> 결제된 모든 TON은 <b>DEX GOU 유동성 풀에 전액 재투입</b>되어 코인 가치를 방어합니다!", depBtn:"📥 GOU 입금", depPmt:"📥 DEX에서 매수한 GOU를 제국으로 입금합니다.\n수량을 입력하세요:", depErr:"올바른 수량을 입력하세요!" },
   en: { wConn:"Wallet Connected", wNotConn:"Not Connected", wWarn:"⚠️ You must connect your TON wallet first!", rGod:"GOD", rCom:"Cmdr", rKni:"Knight", rRec:"Recruit", jPot:"🏆 Weekly Season Jackpot", burn:"🔥 Total Server Burn (Halving)", ph2:"🚨 Phase 2 Halving (Cost 50%↓)", ph1:"⚠️ Phase 1 Halving (Yield 50%↓)", ph0:"🟢 Normal Phase", dGain:"Daily Auto Mining", unClm:"Unclaimed", cBtn:"🚀 Claim GOU", bfOn:"🔥 Buff Active", bfCd:"⏳ Cooldown", bfBtn:"📺 Ad: 2x Mining (1h)", arc:"🎰 Random Arcade", tkts:"🎟️ Tickets", ads:"📺 Ads Left", adBtn:"📺 Watch Ad for Ticket", pBtn:"🎲 Enter Arcade", hTit:"🗺️ Territories (Power Match)", hReq:"Req Lvl Sum:", gTit:"⚔️ Mythic Armory", pTit:"🐉 Divine Beast & Castle", lvl:"Lv", prob:"Rate:", cost:"Cost:", upg:"UPG", shTit:"💎 Direct GOU Shop", buy:"BUY (TON)", nHom:"Home", nUpg:"Upgrade", nShp:"Shop", nRnk:"Rank", nSys:"System", aNoG:"Not enough GOU.", rSrv:"👑 SERVER RANKING", nTgt:"Enter target upgrade level:", h1:"Grassland", h2:"Forest of Gods", h3:"Immortal Desert", h4:"Abyssal Jungle", h5:"Twilight Volcano", g1:"Sword of Zeus", g2:"Armor of Ares", g3:"Helmet of Athena", g4:"Gloves of Hephaestus", g5:"Shoes of Hermes", g6:"Necklace of Aphrodite", g7:"Ring of Poseidon", s1:"ATK", s2:"HP", s3:"DEF", s4:"ACC", s5:"Bonus", s6:"Cost Reduc", s7:"Success Rate", p1:"Ancient Dragon", p2:"Great Monarch's Castle", gBf:"Buff: ", pBf:"Yield Bonus: ", spec:"Hunting ⚔️", lck1:"Unlocks at Gear +210", lck2:"Unlocks at Pet +50", rnk1:"Rank", rnk2:"Commander", rnk3:"Stats", syMy:"👤 My Info", syFr:"🤝 Invite Quest", tgTit:"🛡️ Change GOD Title", tgWd:"📤 Withdraw GOU", cpy:"🔗 Copy Invite Link", frSt:"🔥 Friends Reached Knight", frMy:"🤝 Friends Growth", aMin:"Check minimum amount.", aMax:"Target Reached!", aErr:"Not enough balance!", hSpec1:"🏰 Heart of Empire", hSpec2:"🐉 Beast Nest", aTkt:"Not enough tickets!", lTit:"🎟️ Hot Time Lottery", lTm:"[Available] 12:00~14:00 / 18:00~20:00 (KST)", lOn:"Scratch!", lOff:"Waiting...", lWait:"Wait for Hot Time (12:00~14:00, 18:00~20:00 KST)!", lClaimed:"Already claimed this slot!", shNtTit:"🚨 [NOTICE] GOU TON Shop Declaration", shNt1:"This shop is our <b>Economic Defense Line</b> against market manipulation by external whales.", shNt2:"<b>📉 Anti-Dumping:</b> Initial DEX liquidity is set low to prevent whale dumping.", shNt3:"<b>⚖️ Oracle Linked:</b> Prices follow real-time TON ↔ GOU swap rates.", shNt4:"<b>💧 100% LP Reinvestment:</b> All TON spent here goes into the <b>DEX Liquidity Pool</b> to pump your GOU value!", depBtn:"📥 Deposit GOU", depPmt:"📥 Deposit GOU from DEX to Empire.\nEnter amount:", depErr:"Enter a valid amount!" },
@@ -185,7 +185,7 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
     <div className="img-box-gear" style={type !== 'gear' ? { width: '130px', height: '130px', margin: '0' } : {}}> <img src={`${process.env.PUBLIC_URL}/${item.imgFile}`} alt={item.name} onError={(e)=>{e.target.style.opacity='0'; e.target.nextSibling.style.display='block';}} /> <span style={{ display: 'none', fontSize: '35px', position: 'absolute' }}>{item.emoji}</span> </div>
     <div style={type !== 'gear' ? { flex: 1 } : { width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {type === 'gear' && <div style={{ fontSize: '10px', color: '#c5a059', fontWeight: 'bold', marginTop: '6px' }}>[{item.statText}]</div>}
-      <div style={{ fontSize: type === 'gear' ? '12px' : '18px', fontWeight: '900', margin: '4px 0', color: type === 'gear' ? '#fff' : '#fbbf24', textAlign: type === 'gear' ? 'center' : 'left' }}> {item.name} <span className={animClass} style={{ color: type === 'gear' ? '#fbbf24' : '#fff', fontSize: type === 'gear' ? 'inherit' : '13px', display: 'inline-block', marginLeft: type !== 'gear' ? '5px' : '0' }}><br/>+{item.lvl}</span> </div>
+      <div style={{ fontSize: type === 'gear' ? '12px' : '18px', fontWeight: '900', margin: '4px 0', color: type === 'gear' ? '#fbbf24' : '#fbbf24', textAlign: type === 'gear' ? 'center' : 'left' }}> {item.name} <span className={animClass} style={{ color: type === 'gear' ? '#fbbf24' : '#fff', fontSize: type === 'gear' ? 'inherit' : '13px', display: 'inline-block', marginLeft: type !== 'gear' ? '5px' : '0' }}><br/>+{item.lvl}</span> </div>
       <div style={{ color: '#ccc', fontSize: '11px', lineHeight: '1.4', textAlign: type === 'gear' ? 'center' : 'left', background: 'rgba(0,0,0,0.4)', padding: '5px', borderRadius: '5px', width: '100%' }}> {item.bonusText}<br/>{t.prob} <span style={{color: isMax ? '#fbbf24' : '#06b6d4', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${item.successRateDisplay}%`}</span><br/>{t.cost} <span style={{color: '#fbbf24', fontWeight: 'bold'}}>{isMax ? 'MAX' : `${cost.toLocaleString()}${type !== 'gear' ? ' GOU' : ''}`}</span> </div>
       <div style={{ display: 'flex', width: '100%', gap: '4px', marginTop: '8px' }}>
         <button onClick={() => onUpgrade(type, item.id)} disabled={isMax || autoActive} className="action-btn" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid #fbbf24', padding:'8px', fontSize:'12px' }}>{t.upg}</button>
@@ -207,16 +207,12 @@ export default function App() {
     }
   };
 
-  // 🚨 [새롭게 완벽 분리된 애즈그램 쌍발 엔진 장착!]
   const ticketAdRef = useRef(null);
   const buffAdRef = useRef(null);
   
   useEffect(() => {
     if (window.Adsgram) {
-      // 👇 애즈그램에서 만드신 새로운 '티켓 블록 ID 숫자'를 따옴표 안에 넣으세요!
       ticketAdRef.current = window.Adsgram.init({ blockId: "34107" });
-      
-      // 👇 애즈그램에서 만드신 새로운 '버프 블록 ID 숫자'를 따옴표 안에 넣으세요!
       buffAdRef.current = window.Adsgram.init({ blockId: "34108" });
     }
   }, []);
@@ -331,10 +327,15 @@ export default function App() {
     }
   };
 
+  // 🚨 [핵심 수정 1] 앱 시작 시 휴대폰 금고(localStorage)에서 오프라인 채굴량 복구!
   useEffect(() => {
     httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName, initData: window.Telegram?.WebApp?.initData || "" }).then(res => {
         if (res.data && res.data.userData) {
-          const d = res.data.userData; setState(s => ({ ...s, balance: d.balance ?? 50000, petLevel: d.petLevel ?? 0, castleLevel: d.castleLevel ?? 0, tickets: d.tickets ?? 3, adViewsLeft: d.adViewsLeft ?? 3, nextAdChargeTime: d.nextAdChargeTime ?? 0, nextBuffAdTime: d.nextBuffAdTime ?? 0, lastLotterySlot: d.lastLotterySlot ?? "" }));
+          const savedPending = parseFloat(localStorage.getItem('gou_offline_pending')) || 0;
+          const savedUnclaimedTime = parseInt(localStorage.getItem('gou_offline_time')) || 0;
+          
+          const d = res.data.userData; 
+          setState(s => ({ ...s, balance: d.balance ?? 50000, petLevel: d.petLevel ?? 0, castleLevel: d.castleLevel ?? 0, tickets: d.tickets ?? 3, adViewsLeft: d.adViewsLeft ?? 3, nextAdChargeTime: d.nextAdChargeTime ?? 0, nextBuffAdTime: d.nextBuffAdTime ?? 0, lastLotterySlot: d.lastLotterySlot ?? "", pendingGOU: savedPending, unclaimedTime: savedUnclaimedTime }));
           if (d.gears && d.gears.length > 0) setGears(prev => prev.map(g => { const saved = d.gears.find(sg => sg.id === g.id); return saved ? { ...g, lvl: saved.lvl } : g; }));
         }
     }).catch(e => console.log(e));
@@ -375,16 +376,20 @@ export default function App() {
     });
   };
 
+  // 🚨 [핵심 수정 2] 수확 시 오프라인 금고 초기화!
   const claimGOU = async () => {
     const gain = Math.floor(state.pendingGOU); if (gain < 10) return alert(t.aMin);
     setState(s => ({ ...s, balance: s.balance + gain, pendingGOU: 0, unclaimedTime: 0 })); triggerAnim('claim', 'success');
+    
+    localStorage.setItem('gou_offline_pending', '0');
+    localStorage.setItem('gou_offline_time', '0');
+    
     try { await httpsCallable(getFunctions(app), 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * (state.isAdActive ? 2.0 : 1.0), initData: window.Telegram?.WebApp?.initData || "" }); } catch (error) {}
   };
 
   const handleTitleEdit = () => { if (state.castleLevel >= 50) { const newPrefix = window.prompt("New GOD Title:", state.customGodTitle); if (newPrefix && newPrefix.trim() !== "") setState(s => ({ ...s, customGodTitle: newPrefix.trim().toUpperCase() })); } else { alert(t.lck2); } };
   const formatTimeStr = (targetTime) => { const diff = Math.max(0, targetTime - Date.now()); const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000); return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; };
 
-  // 🎟️ 1. 완벽 분리된 티켓 충전용 광고 함수
   const watchAdForTicket = async () => {
     if (state.adViewsLeft <= 0) return alert(t.bfCd); 
     if (!ticketAdRef.current) return alert("Ads system loading.");
@@ -398,7 +403,6 @@ export default function App() {
     } catch (error) { console.log("Ad cancelled."); }
   };
 
-  // 🔥 2. 완벽 분리된 버프 충전용 광고 함수
   const watchBuffAd = async () => {
     if (Date.now() < state.nextBuffAdTime) return alert(t.bfCd);
     if (!buffAdRef.current) return alert("Ads system loading.");
@@ -411,8 +415,14 @@ export default function App() {
     } catch (error) { console.log("Ad cancelled."); }
   };
 
+  // 🚨 [핵심 수정 3] 복권 시간 변수들을 위로 끌어올림 (충돌 방지)
+  const currentHour = new Date(Date.now() + 9 * 3600000).getUTCHours(); 
+  const isHotTime = (currentHour >= 12 && currentHour < 14) || (currentHour >= 18 && currentHour < 20); 
+  const currentLotterySlot = `${new Date(Date.now() + 9 * 3600000).toDateString()}-${currentHour >= 12 && currentHour < 14 ? 'lunch' : (currentHour >= 18 && currentHour < 20 ? 'dinner' : 'none')}`;
+
   const handleArcadeReward = async (amount) => { if (amount > 0) { setState(s => ({ ...s, balance: s.balance + amount })); try { await httpsCallable(getFunctions(app), 'syncBonusReward')({ userId: getUserId(), amount: amount, source: 'arcade', initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} } setActiveModal(null); };
   const handleLotteryReward = async (amount) => { setState(s => ({...s, balance: s.balance + amount, lastLotterySlot: currentLotterySlot})); try { await httpsCallable(getFunctions(app), 'syncBonusReward')({ userId: getUserId(), amount: amount, source: 'lottery', slot: currentLotterySlot, initData: window.Telegram?.WebApp?.initData || "" }); } catch(e){} alert("OK!"); setShowLottery(false); };
+  const handleOpenLottery = () => { if (!isHotTime) return alert(t.lWait); if (state.lastLotterySlot === currentLotterySlot) return alert(t.lClaimed); setShowLottery(true); };
 
   const getRealSuccessRate = (lvl, type) => {
     let base = 1.0;
@@ -460,13 +470,19 @@ export default function App() {
           const newState = { ...s, balance: s.balance - cost, burned: s.burned + burnFee, jackpot: s.jackpot + jackpotFee }; if (type === 'pet') newState.petLevel = nextSimLvl; if (type === 'castle') newState.castleLevel = nextSimLvl; return newState;
         });
         if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextSimLvl } : g));
-        if (!isSuccess && SAVE_POINTS.includes(simLvl)) triggerLvlAnim(key, 'up'); else triggerLvlAnim(key, isSuccess ? 'up' : 'down'); triggerAnim(key, isSuccess ? 'success' : 'fail'); await new Promise(r => setTimeout(r, 400)); 
+        if (!isSuccess && SAVE_POINTS.includes(simLvl)) triggerLvlAnim(key, 'up'); else triggerLvlAnim(key, isSuccess ? 'up' : 'down'); triggerAnim(key, isSuccess ? 'success' : 'fail'); 
+        
+        // 🚨 [핵심 수정 4] 자동 강화 성공/실패 시에도 파이어베이스에 무조건 기록! (재접속 시 데이터 날아감 방지)
+        httpsCallable(getFunctions(app), 'upgradeItem')({ userId: getUserId(), type, id, initData: window.Telegram?.WebApp?.initData || "" }).catch(e => console.log(e));
+        
+        await new Promise(r => setTimeout(r, 400)); 
       }
       autoActiveRef.current[key] = false; setAutoUI(p => ({ ...p, [key]: false }));
     };
     runSimulator();
   };
 
+  // 🚨 [핵심 수정 5] 1초마다 채굴될 때 휴대폰 금고(localStorage)에 채굴량 백업!
   useEffect(() => {
     const timer = setInterval(() => {
       setState(s => {
@@ -474,14 +490,18 @@ export default function App() {
         if (currentKSTDay > s.lastDailyReset) { newAdViews = 3; newNextCharge = 0; newLastReset = currentKSTDay; } else if (newAdViews < 3 && Date.now() >= newNextCharge && newNextCharge > 0) { newAdViews++; newNextCharge = newAdViews < 3 ? Date.now() + 3 * 3600000 : 0; }
         const b = checkHunt(Date.now(), currentStats, s); const gainPerSec = ((300000 * b.mult * (1 + totalBonusPct / 100)) / 86400) * gainHalvingMult * (s.isAdActive ? 2.0 : 1.0);
         let nUnclaimed = s.unclaimedTime + 1; if (nUnclaimed > 43200) nUnclaimed = 43200; 
-        return { ...s, pendingGOU: nUnclaimed < 43200 ? s.pendingGOU + gainPerSec : s.pendingGOU, unclaimedTime: nUnclaimed, isAdActive: s.adTimeLeft > 0 ? true : false, adTimeLeft: Math.max(0, s.adTimeLeft - 1), adViewsLeft: newAdViews, nextAdChargeTime: newNextCharge, lastDailyReset: newLastReset };
+        
+        const newPending = nUnclaimed < 43200 ? s.pendingGOU + gainPerSec : s.pendingGOU;
+        
+        // 휴대폰 금고에 1초마다 백업
+        localStorage.setItem('gou_offline_pending', newPending);
+        localStorage.setItem('gou_offline_time', nUnclaimed);
+
+        return { ...s, pendingGOU: newPending, unclaimedTime: nUnclaimed, isAdActive: s.adTimeLeft > 0 ? true : false, adTimeLeft: Math.max(0, s.adTimeLeft - 1), adViewsLeft: newAdViews, nextAdChargeTime: newNextCharge, lastDailyReset: newLastReset };
       });
     }, 1000);
     return () => clearInterval(timer);
   }, [checkHunt, currentStats, totalBonusPct, gainHalvingMult]);
-
-  const currentHour = new Date(Date.now() + 9 * 3600000).getUTCHours(); const isHotTime = (currentHour >= 12 && currentHour < 14) || (currentHour >= 18 && currentHour < 20); const currentLotterySlot = `${new Date(Date.now() + 9 * 3600000).toDateString()}-${currentHour >= 12 && currentHour < 14 ? 'lunch' : (currentHour >= 18 && currentHour < 20 ? 'dinner' : 'none')}`;
-  const handleOpenLottery = () => { if (!isHotTime) return alert(t.lWait); if (state.lastLotterySlot === currentLotterySlot) return alert(t.lClaimed); setShowLottery(true); };
 
   const gearNames = [t.g1, t.g2, t.g3, t.g4, t.g5, t.g6, t.g7];
   const statNames = [t.s1, t.s2, t.s3, t.s4, t.s5, t.s6, t.s7];
@@ -730,7 +750,6 @@ export default function App() {
                    <TonConnectButton />
                 </div>
                 
-                {/* 🚨 사령관님 전용 55만 GOU 계정 리셋 버튼 장착! */}
                 <button onClick={handleTestReset} className="action-btn" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444', padding: '15px', fontSize: '16px' }}>
                   🔄 계정 초기화 (55만 GOU)
                 </button>
