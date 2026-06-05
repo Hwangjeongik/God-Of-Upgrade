@@ -3,13 +3,12 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TonConnectButton, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
 import { app } from './firebase'; 
-import PreRegister from './PreRegister'; 
 
 const MAX_SUPPLY = 10000000000000; 
 const SAVE_POINTS = [10, 20, 30, 40]; 
 const ADMIN_WALLET_ADDRESS = "UQBeUaO9-hrCsfk8UWtaafeu3EXV08Gnoww4bbMdanCZwgmQ";
 
-// 🌍 7개국어 100% 완벽 다국어 사전
+// 🌍 7개국어 다국어 사전 (생략 없이 그대로 유지)
 const i18n = {
   ko: { wConn:"지갑 연결됨", wNotConn:"지갑 미연결", wWarn:"⚠️ 이 기능을 사용하려면 TON 지갑을 연결해야 합니다!", rGod:"GOD", rCom:"사령관", rKni:"기사", rRec:"훈련병", jPot:"🏆 이번 주 시즌 잭팟 보상금", burn:"🔥 서버 총 소각량 (반감기 게이지)", ph2:"🚨 2차 반감기 가동 중 (비용 50%↓)", ph1:"⚠️ 1차 반감기 가동 중 (수익 50%↓)", ph0:"🟢 기본 페이즈 진행 중", dGain:"일일 자동 채굴량", unClm:"미수확", cBtn:"🚀 GOU 획득하기", bfOn:"🔥 버프 가동 중", bfCd:"⏳ 쿨타임", bfBtn:"📺 광고: 1시간 채굴량 2배", arc:"🎰 랜덤 아케이드 게임장", tkts:"🎟️ 보유 티켓", ads:"📺 남은 광고", adBtn:"📺 광고 보고 티켓 충전", pBtn:"🎲 랜덤 아케이드 입장", hTit:"🗺️ 점령 영지 현황 (전투력 매칭)", hReq:"필요 강화 합:", gTit:"⚔️ 신화 무기고", pTit:"🐉 신수 및 영지 성장", lvl:"강", prob:"확률:", cost:"비용:", upg:"강화", shTit:"💎 GOU 다이렉트 상점", buy:"TON 결제", nHom:"홈(수확)", nUpg:"강화", nShp:"상점", nRnk:"랭킹", nSys:"시스템", aNoG:"GOU가 부족합니다.", rSrv:"👑 SERVER RANKING", nTgt:"목표 강화 레벨 입력:", h1:"초원 영지", h2:"신의 숲", h3:"불멸 사막", h4:"심연 정글", h5:"황혼 화산", g1:"제우스의 검", g2:"아레스의 갑옷", g3:"아테나의 투구", g4:"헤파이스토스의 장갑", g5:"헤르메스의 신발", g6:"아프로디테의 목걸이", g7:"포세이돈의 반지", s1:"공격력", s2:"체력", s3:"방어력", s4:"명중률", s5:"보너스", s6:"비용감소", s7:"성공확률", p1:"고대 드래곤", p2:"위대한 군주의 성", gBf:"버프: ", pBf:"수익 보너스: ", spec:"진행 중 ⚔️", lck1:"장비 210강 달성 시 개방", lck2:"펫 50강 달성 시 개방", rnk1:"순위", rnk2:"사령관명", rnk3:"달성 스펙", syMy:"👤 내 정보 (MY)", syFr:"🤝 친구초대 퀘스트", tgTit:"🛡️ 나만의 GOD 칭호 변경", tgWd:"📤 GOU 국고 출금", cpy:"🔗 초대 링크 복사하기", frSt:"🔥 기사 달성 친구 초대 현황", frMy:"🤝 내 친구 육성 현황", aMin:"최소 수량을 확인하세요.", aMax:"목표 달성!", aErr:"잔고 부족!", hSpec1:"🏰 제국의 심장", hSpec2:"🐉 신수의 둥지", aTkt:"티켓이 부족합니다!", lTit:"🎟️ 핫타임 복권", lTm:"[수령 가능 시간] 12:00~14:00 / 18:00~20:00 (한국시간 KST)", lOn:"복권 긁기!", lOff:"대기중...", lWait:"핫타임(12:00~14:00, 18:00~20:00 KST)을 기다려주세요!", lClaimed:"이미 이번 핫타임 복권을 수령하셨습니다!", shNtTit:"🚨 [필독] GOU 톤 상점 공식 선언문", shNt1:"본 상점은 단순한 과금처가 아닌 <b>제국 경제 방어선</b>입니다. 외부 고래들의 조작으로부터 유저를 보호합니다.", shNt2:"<b>📉 덤핑 원천 차단:</b> 런칭 초기 DEX 유동성을 의도적으로 낮게 설정하여 악성 고래들의 매집/덤핑을 막습니다.", shNt3:"<b>⚖️ 오라클(Oracle) 연동:</b> 상점 내 GOU는 실시간 TON ↔ GOU 스왑 가격을 추종하여 공정하게 책정됩니다.", shNt4:"<b>💧 100% LP 재투입:</b> 결제된 모든 TON은 <b>DEX GOU 유동성 풀에 전액 재투입</b>되어 코인 가치를 방어합니다!", depBtn:"📥 GOU 입금", depPmt:"📥 DEX에서 매수한 GOU를 제국으로 입금합니다.\n수량을 입력하세요:", depErr:"올바른 수량을 입력하세요!" },
   en: { wConn:"Wallet Connected", wNotConn:"Not Connected", wWarn:"⚠️ You must connect your TON wallet first!", rGod:"GOD", rCom:"Cmdr", rKni:"Knight", rRec:"Recruit", jPot:"🏆 Weekly Season Jackpot", burn:"🔥 Total Server Burn (Halving)", ph2:"🚨 Phase 2 Halving (Cost 50%↓)", ph1:"⚠️ Phase 1 Halving (Yield 50%↓)", ph0:"🟢 Normal Phase", dGain:"Daily Auto Mining", unClm:"Unclaimed", cBtn:"🚀 Claim GOU", bfOn:"🔥 Buff Active", bfCd:"⏳ Cooldown", bfBtn:"📺 Ad: 2x Mining (1h)", arc:"🎰 Random Arcade", tkts:"🎟️ Tickets", ads:"📺 Ads Left", adBtn:"📺 Watch Ad for Ticket", pBtn:"🎲 Enter Arcade", hTit:"🗺️ Territories (Power Match)", hReq:"Req Lvl Sum:", gTit:"⚔️ Mythic Armory", pTit:"🐉 Divine Beast & Castle", lvl:"Lv", prob:"Rate:", cost:"Cost:", upg:"UPG", shTit:"💎 Direct GOU Shop", buy:"BUY (TON)", nHom:"Home", nUpg:"Upgrade", nShp:"Shop", nRnk:"Rank", nSys:"System", aNoG:"Not enough GOU.", rSrv:"👑 SERVER RANKING", nTgt:"Enter target upgrade level:", h1:"Grassland", h2:"Forest of Gods", h3:"Immortal Desert", h4:"Abyssal Jungle", h5:"Twilight Volcano", g1:"Sword of Zeus", g2:"Armor of Ares", g3:"Helmet of Athena", g4:"Gloves of Hephaestus", g5:"Shoes of Hermes", g6:"Necklace of Aphrodite", g7:"Ring of Poseidon", s1:"ATK", s2:"HP", s3:"DEF", s4:"ACC", s5:"Bonus", s6:"Cost Reduc", s7:"Success Rate", p1:"Ancient Dragon", p2:"Great Monarch's Castle", gBf:"Buff: ", pBf:"Yield Bonus: ", spec:"Hunting ⚔️", lck1:"Unlocks at Gear +210", lck2:"Unlocks at Pet +50", rnk1:"Rank", rnk2:"Commander", rnk3:"Stats", syMy:"👤 My Info", syFr:"🤝 Invite Quest", tgTit:"🛡️ Change GOD Title", tgWd:"📤 Withdraw GOU", cpy:"🔗 Copy Invite Link", frSt:"🔥 Friends Reached Knight", frMy:"🤝 Friends Growth", aMin:"Check minimum amount.", aMax:"Target Reached!", aErr:"Not enough balance!", hSpec1:"🏰 Heart of Empire", hSpec2:"🐉 Beast Nest", aTkt:"Not enough tickets!", lTit:"🎟️ Hot Time Lottery", lTm:"[Available] 12:00~14:00 / 18:00~20:00 (KST)", lOn:"Scratch!", lOff:"Waiting...", lWait:"Wait for Hot Time (12:00~14:00, 18:00~20:00 KST)!", lClaimed:"Already claimed this slot!", shNtTit:"🚨 [NOTICE] GOU TON Shop Declaration", shNt1:"This shop is our <b>Economic Defense Line</b> against market manipulation by external whales.", shNt2:"<b>📉 Anti-Dumping:</b> Initial DEX liquidity is set low to prevent whale dumping.", shNt3:"<b>⚖️ Oracle Linked:</b> Prices follow real-time TON ↔ GOU swap rates.", shNt4:"<b>💧 100% LP Reinvestment:</b> All TON spent here goes into the <b>DEX Liquidity Pool</b> to pump your GOU value!", depBtn:"📥 Deposit GOU", depPmt:"📥 Deposit GOU from DEX to Empire.\nEnter amount:", depErr:"Enter a valid amount!" },
@@ -179,7 +178,8 @@ const ArcadeGames = ({ type, onClose, onReward, pReward, gReward, t }) => {
   );
 };
 
-const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, animClass, boxAnimClass, specialHunt, t }) => (
+// 🚨 [최적화 1] React.memo 장갑판 탑재! 1초마다 불필요하게 카드가 번쩍거리는 렉을 100% 차단합니다!
+const UpgradeCard = React.memo(({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, animClass, boxAnimClass, specialHunt, t }) => (
   <div className={`glass-panel ${boxAnimClass}`} style={{ padding: '12px', display: 'flex', flexDirection: type === 'gear' ? 'column' : 'row', alignItems: 'center', gap: type === 'gear' ? '0' : '20px', marginBottom: type === 'gear' ? 0 : '12px', borderTop: type === 'gear' ? '4px solid rgba(197,160,89,0.8)' : 'none', position:'relative', overflow:'hidden' }}>
     {item.locked && ( <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}> <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '11px', padding: '8px 15px', border: '1px solid #fbbf24', borderRadius: '6px', background: 'rgba(0,0,0,0.9)', textAlign: 'center' }}>🔒 {item.lockMsg}</div> </div> )}
     <div className="img-box-gear" style={type !== 'gear' ? { width: '130px', height: '130px', margin: '0' } : {}}> <img src={`${process.env.PUBLIC_URL}/${item.imgFile}`} alt={item.name} onError={(e)=>{e.target.style.opacity='0'; e.target.nextSibling.style.display='block';}} /> <span style={{ display: 'none', fontSize: '35px', position: 'absolute' }}>{item.emoji}</span> </div>
@@ -194,7 +194,17 @@ const UpgradeCard = ({ item, type, isMax, cost, onUpgrade, onAuto, autoActive, a
       {specialHunt && isMax && ( <button onClick={specialHunt.onStart} disabled={specialHunt.isHunting} className="action-btn" style={{ width: '100%', marginTop: '8px', padding:'10px', fontSize:'12px', background: specialHunt.isHunting ? '#333' : 'rgba(147,51,234,0.3)', color: specialHunt.isHunting ? '#888' : '#a855f7', border: `1px solid ${specialHunt.isHunting ? '#444' : '#a855f7'}` }}>{specialHunt.isHunting ? t.spec : specialHunt.huntText}</button> )}
     </div>
   </div>
-);
+), (prevProps, nextProps) => {
+  // 컴포넌트 최적화 로직: 레벨, 비용, 상태가 변할 때만 새로 그립니다.
+  return prevProps.item.lvl === nextProps.item.lvl &&
+         prevProps.isMax === nextProps.isMax &&
+         prevProps.cost === nextProps.cost &&
+         prevProps.autoActive === nextProps.autoActive &&
+         prevProps.animClass === nextProps.animClass &&
+         prevProps.boxAnimClass === nextProps.boxAnimClass &&
+         prevProps.item.locked === nextProps.item.locked &&
+         prevProps.specialHunt?.isHunting === nextProps.specialHunt?.isHunting;
+});
 
 export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -248,7 +258,7 @@ export default function App() {
     {id: 'boots', lvl: 0, base: 5, unit: '%', imgFile: 'shoes.jpg', emoji: '🪽'}, {id: 'necklace', lvl: 0, base: 0.5, unit: '%', imgFile: 'necklace.jpg', emoji: '🌹'}, {id: 'ring', lvl: 0, base: 0.1, unit: '%', imgFile: 'ring.jpg', emoji: '🌊'}
   ]);
 
-  const wallet = useTonWallet(); const [tonConnectUI] = useTonConnectUI(); const latestUpgradeRef = useRef();
+  const wallet = useTonWallet(); const [tonConnectUI] = useTonConnectUI();
 
   useEffect(() => { gears.forEach(g => levelsRef.current[g.id] = g.lvl); levelsRef.current['pet'] = state.petLevel; levelsRef.current['castle'] = state.castleLevel; levelsRef.current['balance'] = state.balance; levelsRef.current['necklace'] = gears.find(g => g.id === 'necklace')?.lvl || 0; levelsRef.current['ring'] = gears.find(g => g.id === 'ring')?.lvl || 0; });
   const triggerAnim = useCallback((id, type) => { setAnims(p => ({ ...p, [id]: type })); setTimeout(() => setAnims(p => ({ ...p, [id]: null })), 250); }, []);
@@ -327,20 +337,17 @@ export default function App() {
     }
   };
 
-  // 🚨 [핵심 수술 부위 1] 재접속 시 백엔드 DB 장부와 완벽 동기화 및 오프라인 채굴량 정밀 복원!
   useEffect(() => {
     httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName, initData: window.Telegram?.WebApp?.initData || "" }).then(res => {
         if (res.data && res.data.userData) {
           const d = res.data.userData;
-          const sys = res.data.systemData || {}; // 백엔드에서 넘겨주는 시스템 장부
+          const sys = res.data.systemData || {}; 
 
-          // 서버 시간 기준 오프라인 시간 계산
           const serverNow = Date.now();
           let elapsedMs = serverNow - (d.lastClaimTime || serverNow);
           if (elapsedMs > 12 * 60 * 60 * 1000) elapsedMs = 12 * 60 * 60 * 1000;
           if (elapsedMs < 0) elapsedMs = 0;
 
-          // 유저 스탯을 기반으로 오프라인 채굴량 정확히 역산
           let tempTotalGear = 0; let tAtk=0, tHp=0, tDef=0, tAcc=0;
           if (d.gears) {
               d.gears.forEach(g => {
@@ -360,7 +367,6 @@ export default function App() {
           const cB = cLvl>=50?1500:cLvl>=40?1200:cLvl>=30?900:cLvl>=20?600:cLvl>=10?300:0;
           const tempBonusPct = (tempTotalGear * 2) + setB + (isPUnl?pLvl*3:0) + pB + (isCUnl?cLvl*5:0) + cB;
 
-          // 헌트 배수
           const hArr = [
               { mult: 1, reqSum: 0, req: {atk:0, hp:0, def:0, acc:0}},
               { mult: 1.5, reqSum: 35, req: {atk:50, hp:500, def:25, acc:10}},
@@ -392,10 +398,10 @@ export default function App() {
             nextAdChargeTime: d.nextAdChargeTime ?? 0,
             nextBuffAdTime: d.nextBuffAdTime ?? 0,
             lastLotterySlot: d.lastLotterySlot ?? "",
-            jackpot: sys.jackpot || 0,   // 🚨 이제 잭팟이 0으로 안 보입니다!
-            burned: sys.burn || 0,       // 🚨 소각량도 완벽 복구됩니다!
-            pendingGOU: offlinePending,  // 🚨 오프라인 채굴량 완벽 적용!
-            unclaimedTime: offlineUnclaimedTime // 🚨 오프라인 시간 완벽 적용!
+            jackpot: sys.jackpot || 0,
+            burned: sys.burn || 0,
+            pendingGOU: offlinePending,
+            unclaimedTime: offlineUnclaimedTime
           }));
           
           if (d.gears && d.gears.length > 0) setGears(prev => prev.map(g => { const saved = d.gears.find(sg => sg.id === g.id); return saved ? { ...g, lvl: saved.lvl } : g; }));
@@ -441,11 +447,8 @@ export default function App() {
   const claimGOU = async () => {
     const gain = Math.floor(state.pendingGOU); if (gain < 10) return alert(t.aMin);
     setState(s => ({ ...s, balance: s.balance + gain, pendingGOU: 0, unclaimedTime: 0 })); triggerAnim('claim', 'success');
-    
-    // 로컬 스토리지도 초기화
     localStorage.setItem('gou_offline_pending', '0');
     localStorage.setItem('gou_offline_time', '0');
-    
     try { await httpsCallable(getFunctions(app), 'claimGOU')({ userId: getUserId(), currentMultiplier: currentHuntData.mult * (state.isAdActive ? 2.0 : 1.0), initData: window.Telegram?.WebApp?.initData || "" }); } catch (error) {}
   };
 
@@ -510,22 +513,38 @@ export default function App() {
     if (!isSuccess && SAVE_POINTS.includes(currentLvl)) triggerLvlAnim(key, 'up'); else triggerLvlAnim(key, isSuccess ? 'up' : 'down'); triggerAnim(key, isSuccess ? 'success' : 'fail');
     httpsCallable(getFunctions(app), 'upgradeItem')({ userId: getUserId(), type, id, initData: window.Telegram?.WebApp?.initData || "" }).catch(e => console.log(e));
   };
-  useEffect(() => { latestUpgradeRef.current = handleUpgrade; });
 
+  // 최적화용 핸들러 저장소
+  const upgradeFnRef = useRef(handleUpgrade);
+  useEffect(() => { upgradeFnRef.current = handleUpgrade; });
+  const stableOnUpgrade = useCallback((type, id) => upgradeFnRef.current(type, id), []);
+
+  // 🚨 [최적화 2] 자동 강화(AUTO) 통신 혁명! 0.4초마다 날리던 서버 요청을 모아서 딱 1번만 발사합니다!
   const toggleAuto = async (type, id = null) => {
     const key = id || type; const maxLimit = type === 'gear' ? 30 : 50;
     if (autoActiveRef.current[key]) { autoActiveRef.current[key] = false; setAutoUI(p => ({ ...p, [key]: false })); return; } 
     const currentLvl = levelsRef.current[key]; const targetStr = window.prompt(t.nTgt, maxLimit);
     if (!targetStr) return; const target = parseInt(targetStr, 10); if (isNaN(target) || target <= currentLvl || target > maxLimit) return;
+    
     autoActiveRef.current[key] = true; setAutoUI(p => ({ ...p, [key]: true }));
+    
     const runSimulator = async () => {
+      let totalSuccessCost = 0; let totalFailCost = 0;
+
       while (autoActiveRef.current[key]) {
         let simLvl = levelsRef.current[key]; let simBalance = levelsRef.current['balance'];
         if (simLvl >= target || simLvl >= maxLimit) { alert(t.aMax); break; }
+        
         let cost = calculateCost(simLvl, type, levelsRef.current['necklace']); if (simBalance < cost) { alert(t.aErr); break; }
         const ringBonus = (levelsRef.current['ring'] || 0) * 0.001; let successRate = getRealSuccessRate(simLvl, type) + ringBonus;
         const isSuccess = Math.random() < successRate; let nextSimLvl = simLvl;
-        if (isSuccess) nextSimLvl++; else if (simLvl >= 5 && !SAVE_POINTS.includes(simLvl)) nextSimLvl--;
+        
+        if (isSuccess) { nextSimLvl++; totalSuccessCost += cost; } 
+        else { 
+            if (simLvl >= 5 && !SAVE_POINTS.includes(simLvl)) nextSimLvl--; 
+            totalFailCost += cost; 
+        }
+
         setState(s => {
           const rates = getFrontendRates(s.burned); const burnFee = isSuccess ? 0 : cost * rates.burn; const jackpotFee = isSuccess ? 0 : cost * rates.jackpot;
           const newState = { ...s, balance: s.balance - cost, burned: s.burned + burnFee, jackpot: s.jackpot + jackpotFee }; if (type === 'pet') newState.petLevel = nextSimLvl; if (type === 'castle') newState.castleLevel = nextSimLvl; return newState;
@@ -533,14 +552,29 @@ export default function App() {
         if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextSimLvl } : g));
         if (!isSuccess && SAVE_POINTS.includes(simLvl)) triggerLvlAnim(key, 'up'); else triggerLvlAnim(key, isSuccess ? 'up' : 'down'); triggerAnim(key, isSuccess ? 'success' : 'fail'); 
         
-        httpsCallable(getFunctions(app), 'upgradeItem')({ userId: getUserId(), type, id, initData: window.Telegram?.WebApp?.initData || "" }).catch(e => console.log(e));
-        
+        // 프론트엔드 연출을 위한 딜레이 (서버 통신 제거로 렉 발생 차단)
         await new Promise(r => setTimeout(r, 400)); 
       }
+      
       autoActiveRef.current[key] = false; setAutoUI(p => ({ ...p, [key]: false }));
+
+      // 🚨 압축 동기화: AUTO가 끝나는 순간 파이어베이스에 1번만 최종 결과를 전송합니다!
+      if (totalSuccessCost > 0 || totalFailCost > 0) {
+          httpsCallable(getFunctions(app), 'syncAutoUpgrade')({ 
+              userId: getUserId(), type, id, 
+              finalLevel: levelsRef.current[key], 
+              successCost: totalSuccessCost, 
+              failCost: totalFailCost, 
+              initData: window.Telegram?.WebApp?.initData || "" 
+          }).catch(e => console.log("AUTO Sync Error:", e));
+      }
     };
     runSimulator();
   };
+
+  const autoFnRef = useRef(toggleAuto);
+  useEffect(() => { autoFnRef.current = toggleAuto; });
+  const stableOnAuto = useCallback((type, id) => autoFnRef.current(type, id), []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -730,7 +764,7 @@ export default function App() {
             <h3 style={{ color: '#fbbf24', margin: '10px 0 10px 5px', fontSize: '16px', borderTop: '1px solid #333', paddingTop: '20px' }}>{t.gTit} (<span style={{color: '#fff'}}>{totalGearLevel} {t.lvl}</span>)</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '25px' }} className="gears-grid">
               {gears.map((g, i) => (
-                <UpgradeCard key={g.id} type="gear" item={{...g, name: gearNames[i], statText: `${statNames[i]}: ${(g.lvl * g.base).toFixed(1)}${g.unit}`, bonusText: `${t.gBf}+${g.lvl * 2}%`, successRateDisplay: getSuccessRateDisplay(g.lvl, 'gear') }} isMax={g.lvl >= 30} cost={getCost(g.lvl)} onUpgrade={handleUpgrade} onAuto={toggleAuto} autoActive={autoUI[g.id]} animClass={lvlAnims[g.id] === 'up' ? 'lvl-up' : lvlAnims[g.id] === 'down' ? 'lvl-down' : ''} boxAnimClass={anims[g.id] === 'success' ? 'anim-success' : anims[g.id] === 'fail' ? 'anim-fail' : ''} t={t} />
+                <UpgradeCard key={g.id} type="gear" item={{...g, name: gearNames[i], statText: `${statNames[i]}: ${(g.lvl * g.base).toFixed(1)}${g.unit}`, bonusText: `${t.gBf}+${g.lvl * 2}%`, successRateDisplay: getSuccessRateDisplay(g.lvl, 'gear') }} isMax={g.lvl >= 30} cost={getCost(g.lvl)} onUpgrade={stableOnUpgrade} onAuto={stableOnAuto} autoActive={autoUI[g.id]} animClass={lvlAnims[g.id] === 'up' ? 'lvl-up' : lvlAnims[g.id] === 'down' ? 'lvl-down' : ''} boxAnimClass={anims[g.id] === 'success' ? 'anim-success' : anims[g.id] === 'fail' ? 'anim-fail' : ''} t={t} />
               ))}
             </div>
 
@@ -738,7 +772,7 @@ export default function App() {
             {['pet', 'castle'].map((type, i) => {
               const isPet = type === 'pet'; const isUnlocked = isPet ? isPetUnlocked : isCastleUnlocked; const lvl = isPet ? state.petLevel : state.castleLevel; const isMax = lvl >= 50; const cost = isPet ? getPetCost(lvl) : getCastleCost(lvl); const isHunting = (isPet ? state.petHuntEndTime : state.castleHuntEndTime) > Date.now();
               return (
-                <UpgradeCard key={type} type={type} item={{ id: type, name: isPet ? t.p1 : t.p2, imgFile: isPet ? 'pet.jpg' : 'castle.jpg', emoji: isPet ? '🐉' : '🏰', lvl: lvl, locked: !isUnlocked, lockMsg: isPet ? t.lck1 : t.lck2, bonusText: `${t.pBf}+${(isPet ? lvl * 3 : lvl * 5) + (isPet ? getPetBonus(lvl) : getCastleBonus(lvl))}%`, successRateDisplay: getSuccessRateDisplay(lvl, type) }} isMax={isMax} cost={cost} onUpgrade={handleUpgrade} onAuto={toggleAuto} autoActive={autoUI[type]} animClass={lvlAnims[type] === 'up' ? 'lvl-up' : lvlAnims[type] === 'down' ? 'lvl-down' : ''} boxAnimClass={anims[type] === 'success' ? 'anim-success' : anims[type] === 'fail' ? 'anim-fail' : ''} specialHunt={{ isHunting, huntText: `12H ⚔️`, onStart: () => { const now = Date.now(); if (state.petHuntEndTime > now || state.castleHuntEndTime > now) return; const duration = 12 * 60 * 60 * 1000; if (isPet) setState(s => ({ ...s, petHuntEndTime: now + duration })); else setState(s => ({ ...s, castleHuntEndTime: now + duration })); alert("OK!"); } }} t={t} />
+                <UpgradeCard key={type} type={type} item={{ id: type, name: isPet ? t.p1 : t.p2, imgFile: isPet ? 'pet.jpg' : 'castle.jpg', emoji: isPet ? '🐉' : '🏰', lvl: lvl, locked: !isUnlocked, lockMsg: isPet ? t.lck1 : t.lck2, bonusText: `${t.pBf}+${(isPet ? lvl * 3 : lvl * 5) + (isPet ? getPetBonus(lvl) : getCastleBonus(lvl))}%`, successRateDisplay: getSuccessRateDisplay(lvl, type) }} isMax={isMax} cost={cost} onUpgrade={stableOnUpgrade} onAuto={stableOnAuto} autoActive={autoUI[type]} animClass={lvlAnims[type] === 'up' ? 'lvl-up' : lvlAnims[type] === 'down' ? 'lvl-down' : ''} boxAnimClass={anims[type] === 'success' ? 'anim-success' : anims[type] === 'fail' ? 'anim-fail' : ''} specialHunt={{ isHunting, huntText: `12H ⚔️`, onStart: () => { const now = Date.now(); if (state.petHuntEndTime > now || state.castleHuntEndTime > now) return; const duration = 12 * 60 * 60 * 1000; if (isPet) setState(s => ({ ...s, petHuntEndTime: now + duration })); else setState(s => ({ ...s, castleHuntEndTime: now + duration })); alert("OK!"); } }} t={t} />
               );
             })}
           </div>
