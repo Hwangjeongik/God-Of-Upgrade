@@ -7,7 +7,7 @@ import PreRegister from './PreRegister';
 
 const MAX_SUPPLY = 10000000000000; 
 const SAVE_POINTS = [10, 20, 30, 40]; 
-const ADMIN_WALLET_ADDRESS = "EQBsVg5qEXsxR8VpIEYSy7_myS0qXNtKjjtUrxT1lL6rSOJJ";
+const ADMIN_WALLET_ADDRESS = "UQBeUaO9-hrCsfk8UWtaafeu3EXV08Gnoww4bbMdanCZwgmQ";
 
 // 🌍 7개국어 100% 완벽 다국어 사전
 const i18n = {
