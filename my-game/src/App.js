@@ -327,15 +327,77 @@ export default function App() {
     }
   };
 
-  // 🚨 [핵심 수정 1] 앱 시작 시 휴대폰 금고(localStorage)에서 오프라인 채굴량 복구!
+  // 🚨 [핵심 수술 부위 1] 재접속 시 백엔드 DB 장부와 완벽 동기화 및 오프라인 채굴량 정밀 복원!
   useEffect(() => {
     httpsCallable(getFunctions(app), 'syncUserInfo')({ userId: getUserId(), title: userRankTitle, name: state.userName, initData: window.Telegram?.WebApp?.initData || "" }).then(res => {
         if (res.data && res.data.userData) {
-          const savedPending = parseFloat(localStorage.getItem('gou_offline_pending')) || 0;
-          const savedUnclaimedTime = parseInt(localStorage.getItem('gou_offline_time')) || 0;
+          const d = res.data.userData;
+          const sys = res.data.systemData || {}; // 백엔드에서 넘겨주는 시스템 장부
+
+          // 서버 시간 기준 오프라인 시간 계산
+          const serverNow = Date.now();
+          let elapsedMs = serverNow - (d.lastClaimTime || serverNow);
+          if (elapsedMs > 12 * 60 * 60 * 1000) elapsedMs = 12 * 60 * 60 * 1000;
+          if (elapsedMs < 0) elapsedMs = 0;
+
+          // 유저 스탯을 기반으로 오프라인 채굴량 정확히 역산
+          let tempTotalGear = 0; let tAtk=0, tHp=0, tDef=0, tAcc=0;
+          if (d.gears) {
+              d.gears.forEach(g => {
+                  tempTotalGear += g.lvl || 0;
+                  if(g.id === 'sword') tAtk = g.lvl * 10;
+                  if(g.id === 'armor') tHp = g.lvl * 100;
+                  if(g.id === 'helmet') tDef = g.lvl * 5;
+                  if(g.id === 'gloves') tAcc = g.lvl * 2;
+              });
+          }
+          const minL = d.gears ? Math.min(...d.gears.map(g=>g.lvl||0)) : 0;
+          const setB = minL >= 30 ? 500 : minL >= 20 ? 200 : minL >= 10 ? 100 : 0;
+          const pLvl = d.petLevel || 0; const cLvl = d.castleLevel || 0;
+          const isPUnl = tempTotalGear >= 210; const isCUnl = pLvl >= 50;
+
+          const pB = pLvl>=50?1000:pLvl>=40?800:pLvl>=30?600:pLvl>=20?400:pLvl>=10?200:0;
+          const cB = cLvl>=50?1500:cLvl>=40?1200:cLvl>=30?900:cLvl>=20?600:cLvl>=10?300:0;
+          const tempBonusPct = (tempTotalGear * 2) + setB + (isPUnl?pLvl*3:0) + pB + (isCUnl?cLvl*5:0) + cB;
+
+          // 헌트 배수
+          const hArr = [
+              { mult: 1, reqSum: 0, req: {atk:0, hp:0, def:0, acc:0}},
+              { mult: 1.5, reqSum: 35, req: {atk:50, hp:500, def:25, acc:10}},
+              { mult: 2.5, reqSum: 70, req: {atk:100, hp:1000, def:50, acc:20}},
+              { mult: 5, reqSum: 110, req: {atk:170, hp:1700, def:75, acc:34}},
+              { mult: 12, reqSum: 150, req: {atk:230, hp:2300, def:115, acc:46}}
+          ];
+          const vHunt = hArr.slice().reverse().find(h => tAtk >= h.req.atk && tHp >= h.req.hp && tDef >= h.req.def && tAcc >= h.req.acc && tempTotalGear >= h.reqSum) || hArr[0];
+          let huntMult = vHunt.mult;
+          if ((d.castleHuntEndTime || 0) > serverNow) huntMult = 50;
+          else if ((d.petHuntEndTime || 0) > serverNow) huntMult = 30;
+
+          const burned = sys.burn || 0;
+          const isP2 = burned >= 10000000000000 * 0.6;
+          const isP1 = !isP2 && burned >= 10000000000000 * 0.3;
+          const gMult = isP2 ? 0.25 : (isP1 ? 0.5 : 1.0);
+
+          const gainPerSec = ((300000 * huntMult * (1 + tempBonusPct / 100)) / 86400) * gMult;
+          const offlinePending = (elapsedMs / 1000) * gainPerSec;
+          const offlineUnclaimedTime = Math.floor(elapsedMs / 1000);
+
+          setState(s => ({
+            ...s,
+            balance: d.balance ?? 50000,
+            petLevel: d.petLevel ?? 0,
+            castleLevel: d.castleLevel ?? 0,
+            tickets: d.tickets ?? 3,
+            adViewsLeft: d.adViewsLeft ?? 3,
+            nextAdChargeTime: d.nextAdChargeTime ?? 0,
+            nextBuffAdTime: d.nextBuffAdTime ?? 0,
+            lastLotterySlot: d.lastLotterySlot ?? "",
+            jackpot: sys.jackpot || 0,   // 🚨 이제 잭팟이 0으로 안 보입니다!
+            burned: sys.burn || 0,       // 🚨 소각량도 완벽 복구됩니다!
+            pendingGOU: offlinePending,  // 🚨 오프라인 채굴량 완벽 적용!
+            unclaimedTime: offlineUnclaimedTime // 🚨 오프라인 시간 완벽 적용!
+          }));
           
-          const d = res.data.userData; 
-          setState(s => ({ ...s, balance: d.balance ?? 50000, petLevel: d.petLevel ?? 0, castleLevel: d.castleLevel ?? 0, tickets: d.tickets ?? 3, adViewsLeft: d.adViewsLeft ?? 3, nextAdChargeTime: d.nextAdChargeTime ?? 0, nextBuffAdTime: d.nextBuffAdTime ?? 0, lastLotterySlot: d.lastLotterySlot ?? "", pendingGOU: savedPending, unclaimedTime: savedUnclaimedTime }));
           if (d.gears && d.gears.length > 0) setGears(prev => prev.map(g => { const saved = d.gears.find(sg => sg.id === g.id); return saved ? { ...g, lvl: saved.lvl } : g; }));
         }
     }).catch(e => console.log(e));
@@ -376,11 +438,11 @@ export default function App() {
     });
   };
 
-  // 🚨 [핵심 수정 2] 수확 시 오프라인 금고 초기화!
   const claimGOU = async () => {
     const gain = Math.floor(state.pendingGOU); if (gain < 10) return alert(t.aMin);
     setState(s => ({ ...s, balance: s.balance + gain, pendingGOU: 0, unclaimedTime: 0 })); triggerAnim('claim', 'success');
     
+    // 로컬 스토리지도 초기화
     localStorage.setItem('gou_offline_pending', '0');
     localStorage.setItem('gou_offline_time', '0');
     
@@ -415,7 +477,6 @@ export default function App() {
     } catch (error) { console.log("Ad cancelled."); }
   };
 
-  // 🚨 [핵심 수정 3] 복권 시간 변수들을 위로 끌어올림 (충돌 방지)
   const currentHour = new Date(Date.now() + 9 * 3600000).getUTCHours(); 
   const isHotTime = (currentHour >= 12 && currentHour < 14) || (currentHour >= 18 && currentHour < 20); 
   const currentLotterySlot = `${new Date(Date.now() + 9 * 3600000).toDateString()}-${currentHour >= 12 && currentHour < 14 ? 'lunch' : (currentHour >= 18 && currentHour < 20 ? 'dinner' : 'none')}`;
@@ -472,7 +533,6 @@ export default function App() {
         if (type === 'gear') setGears(p => p.map(g => g.id === id ? { ...g, lvl: nextSimLvl } : g));
         if (!isSuccess && SAVE_POINTS.includes(simLvl)) triggerLvlAnim(key, 'up'); else triggerLvlAnim(key, isSuccess ? 'up' : 'down'); triggerAnim(key, isSuccess ? 'success' : 'fail'); 
         
-        // 🚨 [핵심 수정 4] 자동 강화 성공/실패 시에도 파이어베이스에 무조건 기록! (재접속 시 데이터 날아감 방지)
         httpsCallable(getFunctions(app), 'upgradeItem')({ userId: getUserId(), type, id, initData: window.Telegram?.WebApp?.initData || "" }).catch(e => console.log(e));
         
         await new Promise(r => setTimeout(r, 400)); 
@@ -482,7 +542,6 @@ export default function App() {
     runSimulator();
   };
 
-  // 🚨 [핵심 수정 5] 1초마다 채굴될 때 휴대폰 금고(localStorage)에 채굴량 백업!
   useEffect(() => {
     const timer = setInterval(() => {
       setState(s => {
@@ -493,7 +552,6 @@ export default function App() {
         
         const newPending = nUnclaimed < 43200 ? s.pendingGOU + gainPerSec : s.pendingGOU;
         
-        // 휴대폰 금고에 1초마다 백업
         localStorage.setItem('gou_offline_pending', newPending);
         localStorage.setItem('gou_offline_time', nUnclaimed);
 
